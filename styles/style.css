@@ -1,42 +1,143 @@
 html {
-  font-size: 10px;
-  font-family: 'Open Sans', sans-serif;
-}
-
-h1 {
-  font-size: 60px;
-  text-align: center;
-}
-
-p, li {
-  font-size: 16px;
-  line-height: 2;
-  letter-spacing: 1px;
-}
-
-
-html {
-  background-color: #00539F;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Open Sans", "Microsoft Yahei", sans-serif;
 }
 
 body {
-  width: 600px;
+  background-color: #f5f7fa;
+  color: #333;
+  line-height: 1.7;
+}
+
+a {
+  text-decoration: none;
+  color: #0066cc;
+}
+
+a:hover {
+  color: #004099;
+  text-decoration: underline;
+}
+
+ul {
+  list-style: none;
+}
+
+nav {
+  background-color: #2c3e50;
+  padding: 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+.nav-container {
+  width: 90%;
+  max-width: 1100px;
   margin: 0 auto;
-  background-color: #FF9500;
-  padding: 0 20px 20px 20px;
-  border: 5px solid black;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-h1 {
-  margin: 0;
-  padding: 20px 0;
-  color: #00539F;
-  text-shadow: 3px 3px 1px black;
+.logo {
+  color: #fff;
+  font-size: 22px;
+  font-weight: bold;
 }
 
-img {
+.nav-list li a {
+  color: #fff;
+  font-size: 16px;
+  transition: color 0.3s ease;
+}
+
+.nav-list li a:hover {
+  color: #4fc08d;
+  text-decoration: none;
+}
+
+.container {
+  width: 90%;
+  max-width: 1100px;
+  margin: 40px auto;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
   display: block;
-  margin: 0 auto;
-  max-width: 100%;  
-  height: auto;
+}
+
+.profile-box {
+  background: #fff;
+  padding: 35px;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  display: flex;
+  gap:35px;
+  flex-wrap:wrap;
+  align-items: flex-start;
+}
+
+.avatar {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #eee;
+}
+
+.profile-info h2 {
+  font-size: 26px;
+  margin-bottom: 10px;
+}
+
+.profile-info p {
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+.section-title {
+  margin: 35px 0 15px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #4fc08d;
+}
+
+.blog-card {
+  background: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  margin-bottom: 25px;
+}
+
+.blog-card h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.blog-date {
+  color: #888;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.blog-img {
+  max-width: 100%;
+  max-height: 350px;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+
+footer {
+  text-align: center;
+  padding: 25px;
+  background: #2c3e50;
+  color: #fff;
+  margin-top: 60px;
 }

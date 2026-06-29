@@ -2,26 +2,63 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>My test page</title>
+    <meta name ="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nathan Penny's personal website</title>
     <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
     <link href="styles/style.css" rel="stylesheet" type="text/css">
   </head>
   <body>
-    <h1>Mozilla is cool</h1>
-    <img src="images/firefox-icon.png" alt="The Firefox logo: a flaming fox surrounding the Earth.">
+    <nav>
+      <div class="nav-container">
+        <div class="logo">Nathan Penny's personal website FOR FUN</div>
+        <ul class="nav-list">
+          <li><a href="#home" onclick="switchPage('home')">About</a></li>
+          <li><a href="#blog" onclick="switchPage('blog')">Blog</a></li>
+        </ul>
+      </div>
+    </nav>
 
-    <p>At Mozilla, we’re a global community of</p>
+    <main class="container">
+      <!--page1: About-->
+      <div id="home" class="page active">
+        <div class="profile-box">
+          <img class="avatar" src="./images/NathanPenny.png" alt="Nathan Penny rocking a traditional Chinese outfit.">
+          <div class="profile-info">
+            <h2>Nathan Penny</h2>
+            <p>Tsinghua University undergraduate</p>
+            <p>Email: hello@nathanpenny.fun</p>
+            <p>Github: <a href="https://github.com/nathanpenny520" target="_blank">github.com/nathanpenny520</a></p>
+            <p>I love computer and animation</p>
+          </div>
+        </div>
 
-    <ul> <!-- changed to list in the tutorial -->
-      <li>technologists</li>
-      <li>thinkers</li>
-      <li>builders</li>
-    </ul>
+        <h3 class="section-title">Personality</h3>
+        <div class="blog-card">
+          <p>introvert and greedy</p>
+        </div>
+      </div>
 
-    <p>working together to keep the Internet alive and accessible, so people worldwide can be informed contributors and creators of the Web. We believe this act of human collaboration across an open platform is essential to individual growth and our collective future.</p>
+        <!--page2: Blog-->
+        <div id="blog" class="page">
+          <h2>My blog about anything fun</h2>
+          <p style="margin: 8px 0 25px; color: #666;">Life so bitter and here just for fun</p>
+        <!--Beginning of my first blog-->
+        <div class="blog-card">
+          <h3>FIFA and UFO</h3>
+          <div class="blog-date">Time stamp: 2026-06-28</div>
+          <p>Guys, I am already on board to the galaxy out of our solar system, hoping I can still watch the FIFA world cup on the UFO. </p>
+          <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-up.png" alt="looking up to UFO"> 
+          <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-down.png" alt="looking down from UFO"> 
+          <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-inside.png" alt="Inside the UFO"> 
+        </div>
+        <!--End of my first blog-->
+       </div>
+    </main>
 
-    <p>Read the <a href="https://www.mozilla.org/en-US/about/manifesto/">Mozilla Manifesto</a> to learn even more about the values and principles that guide the pursuit of our mission.</p>
-    <button>Change user</button>
+    <footer>
+      <p>© 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
+    </footer>
+
     <script src="scripts/main.js"></script>
   </body>
 </html>

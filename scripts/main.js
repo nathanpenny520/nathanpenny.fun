@@ -1,39 +1,9 @@
-// Image switcher code
+function switchPage(pageId){
+  const allPages = document.querySelectorAll('.page');
+  allPages.forEach(page =>{
+    page.classList.remove('active');
+  });
 
-const myImage = document.querySelector("img");
-
-myImage.addEventListener("click", () => {
-  const mySrc = myImage.getAttribute("src");
-  if (mySrc === "images/firefox-icon.png") {
-    myImage.setAttribute("src", "images/NathanPenny.png");
-  } else {
-    myImage.setAttribute("src", "images/firefox-icon.png");
-  }
-});
-
-
-// Personalized welcome message code
-
-let myButton = document.querySelector('button');
-let myHeading = document.querySelector('h1');
-
-function setUserName() {
-  let myName = prompt('Please enter your name.');
-  if(!myName) {
-    setUserName();
-  } else {
-    localStorage.setItem('name', myName);
-    myHeading.textContent = 'Mozilla is cool, ' + myName;
-  }
+  document.getElementById(pageId).classList.add('active');
 }
 
-if(!localStorage.getItem('name')) {
-  setUserName();
-} else {
-  let storedName = localStorage.getItem('name');
-  myHeading.textContent = 'Mozilla is cool, ' + storedName;
-}
-
-myButton.addEventListener("click", () => {
-  setUserName();
-});
