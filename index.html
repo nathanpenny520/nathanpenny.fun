@@ -2,10 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name ="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nathan Penny's personal website</title>
+    <meta name="description" content="Nathan Penny's personal website in rapid development">
+    <meta name="keywords" content="html,css,javascript,blog">
+    <meta name="author" content="Nathan Penny">
     <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
     <link href="styles/style.css" rel="stylesheet" type="text/css">
+    <script src="scripts/main.js" defer></script>
   </head>
   <body>
     <nav>
@@ -27,31 +31,64 @@
             <h2>Nathan Penny</h2>
             <p>Tsinghua University undergraduate</p>
             <p>Email: hello@nathanpenny.fun</p>
-            <p>Github: <a href="https://github.com/nathanpenny520" target="_blank">github.com/nathanpenny520</a></p>
+            <p>Github: <a href="https://github.com/nathanpenny520" target="_blank"><ins>github.com/nathanpenny520</ins></a></p>
             <p>I love computer and animation</p>
           </div>
         </div>
 
         <h3 class="section-title">Personality</h3>
         <div class="blog-card">
-          <p>introvert and greedy</p>
+          <p><em>Introvert and greedy</em>, responsilble and reliable most of the time.</p>
+        </div>
+
+        <h3 class="section-title">Ability</h3>
+        <div class="blog-card">
+          <p><em>Nothing glorious</em>, on the road to do something great.<br><strong> But First blooms are here:</strong></p>
+          <ol>
+            <li>Mathematics and Physics</li>
+            <li>Programming</li>
+            <li>Communication and Leadership</li>
+            <li>Content Marketing</li>
+          </ol>
         </div>
       </div>
 
         <!--page2: Blog-->
         <div id="blog" class="page">
-          <h2>My blog about anything fun</h2>
+          <h2>My blog about anything <strong>fun</strong></h2>
           <p style="margin: 8px 0 25px; color: #666;">Life so bitter and here just for fun</p>
+
+          <div class="search-container">
+            <input
+            type="text"
+            id="blogSearch"
+            placeholder="Search field"
+            oninput="filterBlogs()"
+            >
+          </div>
         <!--Beginning of my first blog-->
         <div class="blog-card">
           <h3>FIFA and UFO</h3>
-          <div class="blog-date">Time stamp: 2026-06-28</div>
+          <div class="blog-date">Time stamp: 2026-06-29</div>
           <p>Guys, I am already on board to the galaxy out of our solar system, hoping I can still watch the FIFA world cup on the UFO. </p>
           <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-up.png" alt="looking up to UFO"> 
           <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-down.png" alt="looking down from UFO"> 
           <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-inside.png" alt="Inside the UFO"> 
         </div>
         <!--End of my first blog-->
+
+        <div class="blog-card">
+          <h3>Poem of html</h3>
+          <div class="blog-date">Time stamp: 2026-06-30</div>
+          <p>
+          从前有个人叫小高<br>
+          他说写 HTML 感觉最好<br>
+          但他写的代码结构语义一团糟<br>
+          他写的标签谁也懂不了。
+          </p>
+          <img class="blog-img" src="./images/blog-img/2026-06-30/poem-of-html.png" alt="A delicate poem describing the beauty of html"> 
+        </div>
+
        </div>
     </main>
 
@@ -59,6 +96,5 @@
       <p>© 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
     </footer>
 
-    <script src="scripts/main.js"></script>
   </body>
 </html>
