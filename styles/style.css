@@ -124,8 +124,84 @@ nav {
 }
 
 
+.page.blog-layout.active {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+}
+
+.blog-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px;
+  align-self: flex-start;
+}
+
+.blog-sidebar .search-container {
+  margin-bottom: 20px;
+}
+
+.blog-toc {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.blog-toc h3 {
+  font-size: 18px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #4fc08d;
+}
+
+.blog-toc ul {
+  list-style: none;
+}
+
+.blog-toc li {
+  margin-bottom: 10px;
+}
+
+.blog-toc a {
+  color: #333;
+  font-size: 15px;
+  transition: color 0.3s ease;
+}
+
+.blog-toc a:hover {
+  color: #007acc;
+  text-decoration: none;
+}
+
+.blog-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.blog-card {
+  scroll-margin-top: 80px;
+}
+
+@media (max-width: 768px) {
+  .page.blog-layout.active {
+    flex-direction: column;
+  }
+
+  .blog-sidebar {
+    width: 100%;
+    position: static;
+    order: -1;
+  }
+
+  .blog-toc {
+    padding: 15px;
+  }
+}
+
 /* ==========================================================================
-   5. BLOG PAGE COMPONENTS 
+   5. BLOG PAGE COMPONENTS
    ========================================================================== */
 /* 5.1 search field */
 .search-container {

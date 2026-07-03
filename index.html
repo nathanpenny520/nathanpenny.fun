@@ -8,16 +8,18 @@
     <meta name="keywords" content="html,css,javascript,blog">
     <meta name="author" content="Nathan Penny">
     <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
-    <link href="styles/style.css" rel="stylesheet" type="text/css">
-    <script src="scripts/main.js" defer></script>
+    <link href="./styles/style.css" rel="stylesheet" type="text/css">
+    <script src="./scripts/main.js" defer></script>
   </head>
   <body>
     <nav>
       <div class="nav-container">
+        <a href="#home" onclick="event.preventDefault(); switchPage('home')" style="text-decoration: none; color: inherit;">
         <div class="logo">Nathan Penny's personal website FOR FUN</div>
+        </a>
         <ul class="nav-list">
-          <li><a href="#home" onclick="switchPage('home')">About</a></li>
-          <li><a href="#blog" onclick="switchPage('blog')">Blog</a></li>
+          <li><a href="#home" onclick="event.preventDefault(); switchPage('home')">About</a></li>
+          <li><a href="#blog" onclick="event.preventDefault(); switchPage('blog')">Blog</a></li>
         </ul>
       </div>
     </nav>
@@ -33,7 +35,7 @@
             <p>Email: <a href="mailto:hello@nathanpenny.fun">hello@nathanpenny.fun</a></p>
             <p>GitHub: <a href="https://github.com/nathanpenny520" target="_blank" rel="noopener noreferrer">github.com/nathanpenny520</a></p>
             <p>I love computer and animation</p>
-            <p>download my CV from<a href="pdfs/CV.pdf" download="Nathan-Penny-CV.pdf"> here</a></p>
+            <p>download my CV from<a href="./pdfs/NathanPenny-CV-for-fun.pdf" download="Nathan-Penny-CV.pdf"> here</a></p>
           </div>
         </div>
 
@@ -55,57 +57,69 @@
       </div>
         <!--------------------------------------------------->
         <!--------------------page2: Blog-------------------->
-        <div id="blog" class="page">
-          <h2>My blog about anything <strong>fun</strong></h2>
-          <p style="margin: 8px 0 25px; color: #666;">Life so bitter and here just for fun</p>
+        <div id="blog" class="page blog-layout">
+          <aside class="blog-sidebar">
+            <div class="search-container">
+              <input
+                type="text"
+                id="blogSearch"
+                placeholder="Search field"
+                oninput="filterBlogs()"
+              >
+            </div>
+            <nav class="blog-toc">
+              <h3>Blog Posts</h3>
+              <ul>
+                <li><a href="#post-fifa-ufo" onclick="event.preventDefault(); scrollToBlogPost('post-fifa-ufo')">FIFA and UFO</a></li>
+                <li><a href="#post-poem-html" onclick="event.preventDefault(); scrollToBlogPost('post-poem-html')">Poem of html</a></li>
+                <li><a href="#post-violet-evergarden" onclick="event.preventDefault(); scrollToBlogPost('post-violet-evergarden')">A fantastic anime show</a></li>
+              </ul>
+            </nav>
+          </aside>
 
-          <div class="search-container">
-            <input
-            type="text"
-            id="blogSearch"
-            placeholder="Search field"
-            oninput="filterBlogs()"
-            >
+          <div class="blog-main">
+            <h2>My blog about anything <strong>fun</strong></h2>
+            <p style="margin: 8px 0 25px; color: #666;">Life so bitter and here just for fun</p>
+
+            <!--Beginning of my first blog-->
+            <article id="post-fifa-ufo" class="blog-card">
+              <h3>FIFA and UFO</h3>
+              <div class="blog-date">Time stamp: 2026-06-29</div>
+              <p>Guys, I am already on board to the galaxy out of our solar system, hoping I can still watch the FIFA world cup on the UFO. </p>
+              <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-up.png" alt="looking up to UFO">
+              <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-down.png" alt="looking down from UFO">
+              <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-inside.png" alt="Inside the UFO">
+            </article>
+            <!--End of my first blog-->
+
+            <article id="post-poem-html" class="blog-card">
+              <h3>Poem of html</h3>
+              <div class="blog-date">Time stamp: 2026-06-30</div>
+              <p>
+              从前有个人叫小高<br>
+              他说写 HTML 感觉最好<br>
+              但他写的代码结构语义一团糟<br>
+              他写的标签谁也懂不了。
+              </p>
+              <img class="blog-img" src="./images/blog-img/2026-06-30/poem-of-html.png" alt="A delicate poem describing the beauty of html">
+            </article>
+
+            <article id="post-violet-evergarden" class="blog-card">
+              <h3>A fantastic anime show</h3>
+              <div class="blog-date">Time stamp: 2026-07-02</div>
+              <p>
+              Violet Evergarden the first episode<br>
+              </p>
+              <video controls class="responsive-video" poster="./images/blog-img/2026-07-02/Violet-Evergarden.webp">
+              <source src="https://storage.nathanpenny.fun/nathanpenny-fav/videos/%5Bsubbers%5D%20Violet%20Evergarden%20-%2001%20%5BBDRip%201080p%20zh-Hans%5D.mp4" type="video/mp4">
+              Your browser does not support the video tag
+              </video>
+              <h2>Summary</h2>
+              <p>Raised as a cold, emotionless <strong>"weapon"</strong> in a brutal war, a young girl named Violet loses both her arms and her beloved commander, Gilbert. In his final moments, Gilbert tells her, "I love you."</p>
+              <p>Unable to understand the meaning of these words, the war-torn Violet later becomes an <strong>"Auto Memory Doll"</strong>—a ghostwriter who pens heartfelt letters for people who cannot express their own feelings.</p>
+            </article>
           </div>
-         <!--Beginning of my first blog-->
-        <div class="blog-card">
-          <h3>FIFA and UFO</h3>
-          <div class="blog-date">Time stamp: 2026-06-29</div>
-          <p>Guys, I am already on board to the galaxy out of our solar system, hoping I can still watch the FIFA world cup on the UFO. </p>
-          <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-up.png" alt="looking up to UFO"> 
-          <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-down.png" alt="looking down from UFO"> 
-          <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-inside.png" alt="Inside the UFO"> 
         </div>
-         <!--End of my first blog-->
-
-        <div class="blog-card">
-          <h3>Poem of html</h3>
-          <div class="blog-date">Time stamp: 2026-06-30</div>
-          <p>
-          从前有个人叫小高<br>
-          他说写 HTML 感觉最好<br>
-          但他写的代码结构语义一团糟<br>
-          他写的标签谁也懂不了。
-          </p>
-          <img class="blog-img" src="./images/blog-img/2026-06-30/poem-of-html.png" alt="A delicate poem describing the beauty of html"> 
-        </div>
-
-        <div class="blog-card">
-          <h3>A fantastic anime show</h3>
-          <div class="blog-date">Time stamp: 2026-07-02</div>
-          <p>
-          Violet Evergarden the first episode<br>
-          </p>
-          <video controls class="responsive-video" poster="./images/blog-img/2026-07-02/Violet-Evergarden.webp">
-          <source src="https://storage.nathanpenny.fun/nathanpenny-fav/videos/%5Bsubbers%5D%20Violet%20Evergarden%20-%2001%20%5BBDRip%201080p%20zh-Hans%5D.mp4" type="video/mp4">
-          Your browser does not support the video tag
-          </video>
-          <h2>Summary</h2>
-          <p>Raised as a cold, emotionless <strong>"weapon"</strong> in a brutal war, a young girl named Violet loses both her arms and her beloved commander, Gilbert. In his final moments, Gilbert tells her, "I love you."</p>
-          <p>Unable to understand the meaning of these words, the war-torn Violet later becomes an <strong>"Auto Memory Doll"</strong>—a ghostwriter who pens heartfelt letters for people who cannot express their own feelings.</p>
-        </div>
-
-      </div>
     </main>
 
     <footer>

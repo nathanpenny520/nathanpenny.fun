@@ -4,7 +4,30 @@ function switchPage(pageId){
     page.classList.remove('active');
   });
 
-  document.getElementById(pageId).classList.add('active');
+  const activePage = document.getElementById(pageId);
+  activePage.classList.add('active');
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+
+function scrollToBlogPost(postId) {
+  const blogPage = document.getElementById('blog');
+  const isAlreadyOnBlog = blogPage.classList.contains('active');
+  if (!isAlreadyOnBlog) {
+    switchPage('blog');
+  }
+
+  setTimeout(() => {
+    const post = document.getElementById(postId);
+    if (!post) return;
+    const nav = document.querySelector('nav');
+    const offset = nav ? nav.offsetHeight + 20 : 80;
+    const top = post.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: top, behavior: 'smooth' });
+  }, isAlreadyOnBlog ? 0 : 50);
 }
 
 function filterBlogs() {
