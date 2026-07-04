@@ -272,6 +272,42 @@ nav {
   margin: 0 auto;
 }
 
+.responsive-audio {
+  width: 100%;
+  display: block;
+  margin: 12px 0;
+}
+
+/* 5.3 table */
+.table-wrapper {
+  overflow-x: auto;
+  margin: 20px 0;
+}
+
+.table-wrapper table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.table-wrapper th,
+.table-wrapper td {
+  border: 1px solid #e0e0e0;
+  padding: 12px 15px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.table-wrapper th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.table-wrapper tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
 
 /* ==========================================================================
    6. FOOTER 
