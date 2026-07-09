@@ -56,6 +56,29 @@
             <li>Content Marketing</li>
           </ol>
         </div>
+
+        <h3 class="section-title">Visitor Form</h3>
+        <div class="blog-card">
+          <form id="visitorForm" class="visitor-form">
+            <div class="form-row">
+              <label for="visitorName">Nickname</label>
+              <input type="text" id="visitorName" name="name" placeholder="Enter your nickname" required>
+            </div>
+            <div class="form-row">
+              <label for="visitorEmail">Email</label>
+              <input type="email" id="visitorEmail" name="email" placeholder="Enter your email" required>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="form-submit">Submit</button>
+              <span id="formStatus" class="form-status"></span>
+            </div>
+          </form>
+        </div>
+
+        <h3 class="section-title">Visitor Messages</h3>
+        <div id="visitorList" class="blog-card visitor-list">
+          <p class="visitor-loading">Loading messages...</p>
+        </div>
       </div>
         <!--------------------------------------------------->
         <!--------------------page2: Blog-------------------->

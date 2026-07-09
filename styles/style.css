@@ -308,6 +308,138 @@ nav {
   background-color: #f8f9fa;
 }
 
+/* 5.4 visitor form */
+.visitor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.visitor-form .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.visitor-form label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.visitor-form input[type="text"],
+.visitor-form input[type="email"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.visitor-form input[type="text"]:focus,
+.visitor-form input[type="email"]:focus {
+  outline: none;
+  border-color: #1abc9c;
+  box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.15);
+}
+
+.visitor-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.visitor-form .form-submit {
+  padding: 10px 22px;
+  background-color: #1abc9c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.visitor-form .form-submit:hover {
+  background-color: #16a085;
+}
+
+.visitor-form .form-submit:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.form-status {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-status.success {
+  color: #27ae60;
+}
+
+.form-status.error {
+  color: #e74c3c;
+}
+
+.visitor-list .visitor-loading,
+.visitor-list .visitor-empty,
+.visitor-list .visitor-error {
+  margin: 0;
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+.visitor-list .visitor-error {
+  color: #e74c3c;
+}
+
+.visitor-entry {
+  padding: 14px 0;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.visitor-entry:last-child {
+  border-bottom: none;
+}
+
+.visitor-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.visitor-meta strong {
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+.visitor-meta time {
+  font-size: 12px;
+  color: #95a5a6;
+  white-space: nowrap;
+}
+
+.visitor-email {
+  margin: 0;
+  font-size: 14px;
+  color: #34495e;
+  word-break: break-all;
+}
+
 
 /* ==========================================================================
    6. FOOTER 
