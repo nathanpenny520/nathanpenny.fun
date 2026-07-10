@@ -9,273 +9,52 @@
     <meta name="author" content="Nathan Penny">
     <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
     <link href="./styles/style.css" rel="stylesheet" type="text/css">
+    <link rel="icon" type="image/svg+xml" href="./NP-logo.svg">
     <script src="./scripts/main.js" defer></script>
   </head>
   <body>
     <nav>
       <div class="nav-container">
-        <a href="#home" onclick="event.preventDefault(); switchPage('home')" style="text-decoration: none; color: inherit;">
-        <div class="logo">Nathan Penny's personal website FOR FUN</div>
+        <a href="./index.html" class="nav-brand" aria-label="Go to homepage">
+          <img class="site-logo" src="./NP-logo.svg" alt="Nathan Penny logo">
+          <div class="logo">Nathan Penny's personal website FOR FUN</div>
         </a>
+
         <ul class="nav-list">
-          <li><a href="#home" onclick="event.preventDefault(); switchPage('home')">About</a></li>
-          <li><a href="#blog" onclick="event.preventDefault(); switchPage('blog')">Blog</a></li>
+          <li><a href="./index.html">Home</a></li>
+          <li><a href="./pages/about.html">About</a></li>
+          <li><a href="./pages/blog.html">Blog</a></li>
+          <li><a href="./pages/gallery.html">Gallery</a></li>
         </ul>
       </div>
     </nav>
 
     <main class="container">
-      <!--page1: About-->
-      <div id="home" class="page active">
-        <div class="profile-box">
-          <a href="./pages/gallery.html">
-          <img class="avatar" src="./images/NathanPenny.png" alt="Nathan Penny rocking a traditional Chinese outfit.">
-          </a>
-          <div class="profile-info">
-            <h2>Nathan Penny</h2>
-            <p>Tsinghua University undergraduate</p>
-            <p>Email: <a href="mailto:hello@nathanpenny.fun">hello@nathanpenny.fun</a></p>
-            <p>GitHub: <a href="https://github.com/nathanpenny520" target="_blank" rel="noopener noreferrer">github.com/nathanpenny520</a></p>
-            <p>I love computer and animation</p>
-            <p>download my CV from<a href="./pdfs/NathanPenny-CV-for-fun.pdf" download="Nathan-Penny-CV.pdf"> here</a></p>
-          </div>
-        </div>
+      <section class="hero">
+        <img class="hero-logo" src="./NP-logo.svg" alt="Nathan Penny logo">
+        <h1>Welcome to Nathan Penny's Website</h1>
+        <p class="hero-subtitle">A personal space for fun, learning, and random thoughts.</p>
+      </section>
 
-        <h3 class="section-title">Personality</h3>
-        <div class="blog-card">
-          <p><em>Introvert and greedy</em>, responsilble and reliable most of the time.</p>
-        </div>
-
-        <h3 class="section-title">Ability</h3>
-        <div class="blog-card">
-          <p><em>Nothing glorious</em>, on the road to do something great.<br><strong> But First blooms are here:</strong></p>
-          <ol>
-            <li>Mathematics and Physics</li>
-            <li>Programming</li>
-            <li>Communication and Leadership</li>
-            <li>Content Marketing</li>
-          </ol>
-        </div>
-
-        <h3 class="section-title">Visitor Form</h3>
-        <div class="blog-card">
-          <form id="visitorForm" class="visitor-form">
-            <div class="form-row">
-              <label for="visitorName">Nickname</label>
-              <input type="text" id="visitorName" name="name" placeholder="Enter your nickname" required>
-            </div>
-            <div class="form-row">
-              <label for="visitorEmail">Email</label>
-              <input type="email" id="visitorEmail" name="email" placeholder="Enter your email" required>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="form-submit">Submit</button>
-              <span id="formStatus" class="form-status"></span>
-            </div>
-          </form>
-        </div>
-
-        <h3 class="section-title">Visitor Messages</h3>
-        <div id="visitorList" class="blog-card visitor-list">
-          <p class="visitor-loading">Loading messages...</p>
-        </div>
-      </div>
-        <!--------------------------------------------------->
-        <!--------------------page2: Blog-------------------->
-        <div id="blog" class="page blog-layout">
-          <aside class="blog-sidebar">
-            <div class="search-container">
-              <input
-                type="text"
-                id="blogSearch"
-                placeholder="Search field"
-                oninput="filterBlogs()"
-              >
-            </div>
-            <nav class="blog-toc">
-              <h3>Blog Posts</h3>
-              <ul>
-                <li><a href="#post-fifa-ufo" onclick="event.preventDefault(); scrollToBlogPost('post-fifa-ufo')">FIFA and UFO</a></li>
-                <li><a href="#post-poem-html" onclick="event.preventDefault(); scrollToBlogPost('post-poem-html')">Poem of html</a></li>
-                <li><a href="#post-violet-evergarden" onclick="event.preventDefault(); scrollToBlogPost('post-violet-evergarden')">A fantastic anime show</a></li>
-                <li><a href="#post-wanzai-song" onclick="event.preventDefault(); scrollToBlogPost('post-wanzai-song')">The WanZai Song</a></li>
-                <li><a href="#post-solar-system" onclick="event.preventDefault(); scrollToBlogPost('post-solar-system')">The Solar System in a Table</a></li>
-              </ul>
-            </nav>
-          </aside>
-
-          <div class="blog-main">
-            <h2>My blog about anything <strong>fun</strong></h2>
-            <p style="margin: 8px 0 25px; color: #666;">Life so bitter and here just for fun</p>
-
-            <!--Beginning of my first blog-->
-            <article id="post-fifa-ufo" class="blog-card">
-              <h3>FIFA and UFO</h3>
-              <div class="blog-date">Time stamp: 2026-06-29</div>
-              <p>Guys, I am already on board to the galaxy out of our solar system, hoping I can still watch the FIFA world cup on the UFO. </p>
-              <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-up.png" alt="looking up to UFO">
-              <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-down.png" alt="looking down from UFO">
-              <img class="blog-img" src="./images/blog-img/2026-06-29/UFO-inside.png" alt="Inside the UFO">
-            </article>
-            <!--End of my first blog-->
-
-            <article id="post-poem-html" class="blog-card">
-              <h3>Poem of html</h3>
-              <div class="blog-date">Time stamp: 2026-06-30</div>
-              <p>
-              从前有个人叫小高<br>
-              他说写 HTML 感觉最好<br>
-              但他写的代码结构语义一团糟<br>
-              他写的标签谁也懂不了。
-              </p>
-              <img class="blog-img" src="./images/blog-img/2026-06-30/poem-of-html.png" alt="A delicate poem describing the beauty of html">
-            </article>
-
-            <article id="post-violet-evergarden" class="blog-card">
-              <h3>A fantastic anime show</h3>
-              <div class="blog-date">Time stamp: 2026-07-02</div>
-              <p>
-              Violet Evergarden the first episode<br>
-              </p>
-              <video controls class="responsive-video" poster="./images/blog-img/2026-07-02/Violet-Evergarden.webp">
-              <source src="https://storage.nathanpenny.fun/nathanpenny-fav/videos/%5Bsubbers%5D%20Violet%20Evergarden%20-%2001%20%5BBDRip%201080p%20zh-Hans%5D.mp4" type="video/mp4">
-              Your browser does not support the video tag
-              </video>
-              <h2>Summary</h2>
-              <p>Raised as a cold, emotionless <strong>"weapon"</strong> in a brutal war, a young girl named Violet loses both her arms and her beloved commander, Gilbert. In his final moments, Gilbert tells her, "I love you."</p>
-              <p>Unable to understand the meaning of these words, the war-torn Violet later becomes an <strong>"Auto Memory Doll"</strong>—a ghostwriter who pens heartfelt letters for people who cannot express their own feelings.</p>
-            </article>
-
-            <article id="post-wanzai-song" class="blog-card">
-              <h3>The WanZai Song</h3>
-              <div class="blog-date">Time stamp: 2026-07-04</div>
-              <p>
-              The WanZai Song is a song that introduces the character of WanZai. And I love it so I share it here.
-              </p>
-              <audio controls class="responsive-audio">
-                <source src="./audio/wanzai-song.mp3" type="audio/mpeg">
-                Your browser does not support the audio tag
-              </audio>
-             </article>
-
-            <article id="post-solar-system" class="blog-card">
-              <h3>The Solar System in a Table</h3>
-              <div class="blog-date">Time stamp: 2026-07-04</div>
-              <p>
-                Here is a quick reference table for the eight planets in our solar system. The values are rounded for simplicity.
-              </p>
-
-              <div class="table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Planet</th>
-                      <th>Diameter (km)</th>
-                      <th>Distance from Sun (million km)</th>
-                      <th>Moons</th>
-                      <th>Day Length</th>
-                      <th>Year Length</th>
-                      <th>Atmosphere</th>
-                      <th>Notable Feature</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Mercury</td>
-                      <td>4,880</td>
-                      <td>58</td>
-                      <td>0</td>
-                      <td>59 Earth days</td>
-                      <td>88 Earth days</td>
-                      <td>Extremely thin</td>
-                      <td>Smallest planet; fastest orbit</td>
-                    </tr>
-                    <tr>
-                      <td>Venus</td>
-                      <td>12,104</td>
-                      <td>108</td>
-                      <td>0</td>
-                      <td>243 Earth days</td>
-                      <td>225 Earth days</td>
-                      <td>Thick CO₂</td>
-                      <td>Hottest planet; spins backwards</td>
-                    </tr>
-                    <tr>
-                      <td>Earth</td>
-                      <td>12,742</td>
-                      <td>150</td>
-                      <td>1</td>
-                      <td>24 hours</td>
-                      <td>365.25 days</td>
-                      <td>Nitrogen & Oxygen</td>
-                      <td>Only known planet with life</td>
-                    </tr>
-                    <tr>
-                      <td>Mars</td>
-                      <td>6,779</td>
-                      <td>228</td>
-                      <td>2</td>
-                      <td>24.6 hours</td>
-                      <td>687 Earth days</td>
-                      <td>Thin CO₂</td>
-                      <td>Largest volcano: Olympus Mons</td>
-                    </tr>
-                    <tr>
-                      <td>Jupiter</td>
-                      <td>139,820</td>
-                      <td>778</td>
-                      <td>95+</td>
-                      <td>9.9 hours</td>
-                      <td>11.9 Earth years</td>
-                      <td>Hydrogen & Helium</td>
-                      <td>Great Red Spot; largest planet</td>
-                    </tr>
-                    <tr>
-                      <td>Saturn</td>
-                      <td>116,460</td>
-                      <td>1,434</td>
-                      <td>146+</td>
-                      <td>10.7 hours</td>
-                      <td>29.5 Earth years</td>
-                      <td>Hydrogen & Helium</td>
-                      <td>Prominent ring system</td>
-                    </tr>
-                    <tr>
-                      <td>Uranus</td>
-                      <td>50,724</td>
-                      <td>2,873</td>
-                      <td>27</td>
-                      <td>17.2 hours</td>
-                      <td>84 Earth years</td>
-                      <td>Hydrogen, Helium, Methane</td>
-                      <td>Rotates on its side</td>
-                    </tr>
-                    <tr>
-                      <td>Neptune</td>
-                      <td>49,244</td>
-                      <td>4,495</td>
-                      <td>14</td>
-                      <td>16.1 hours</td>
-                      <td>165 Earth years</td>
-                      <td>Hydrogen, Helium, Methane</td>
-                      <td>Strongest winds in the solar system</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <p>
-                A few takeaways: the inner planets (Mercury, Venus, Earth, Mars) are small, rocky, and close to the Sun. The outer planets (Jupiter, Saturn, Uranus, Neptune) are giant worlds made mostly of gas or ice, with many moons and ring systems. Even with rounded numbers, the size gap between Earth and Jupiter is astonishing.
-              </p>
-            </article>
-
-          </div>
-        </div>
+      <section class="page-cards">
+        <a href="./pages/about.html" class="page-card">
+          <h2>About</h2>
+          <p>Learn more about who I am, what I do, and leave a message.</p>
+        </a>
+        <a href="./pages/blog.html" class="page-card">
+          <h2>Blog</h2>
+          <p>Read my posts about UFOs, poems, anime, music, and the solar system.</p>
+        </a>
+        <a href="./pages/gallery.html" class="page-card">
+          <h2>Gallery</h2>
+          <p>A place for future photos, artworks, and visual collections.</p>
+        </a>
+      </section>
     </main>
 
     <footer>
-      <p>© 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
+      <img class="footer-logo" src="./NP-logo.svg" alt="Nathan Penny logo">
+      <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
     </footer>
-
   </body>
 </html>

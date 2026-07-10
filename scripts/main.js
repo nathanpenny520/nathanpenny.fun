@@ -1,51 +1,33 @@
-function switchPage(pageId){
-  const allPages = document.querySelectorAll('.page');
-  allPages.forEach(page =>{
-    page.classList.remove('active');
-  });
-
-  const activePage = document.getElementById(pageId);
-  activePage.classList.add('active');
-
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-}
-
+// Smooth-scroll to a blog post, leaving space for the sticky navigation bar.
 function scrollToBlogPost(postId) {
-  const blogPage = document.getElementById('blog');
-  const isAlreadyOnBlog = blogPage.classList.contains('active');
-  if (!isAlreadyOnBlog) {
-    switchPage('blog');
-  }
+  const post = document.getElementById(postId);
+  if (!post) return;
 
-  setTimeout(() => {
-    const post = document.getElementById(postId);
-    if (!post) return;
-    const nav = document.querySelector('nav');
-    const offset = nav ? nav.offsetHeight + 20 : 80;
-    const top = post.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top: top, behavior: 'smooth' });
-  }, isAlreadyOnBlog ? 0 : 50);
+  const nav = document.querySelector('nav');
+  const offset = nav ? nav.offsetHeight + 20 : 80;
+  const top = post.getBoundingClientRect().top + window.scrollY - offset;
+  window.scrollTo({ top: top, behavior: 'smooth' });
 }
 
+// Filter blog cards by the text entered in the sidebar search box.
 function filterBlogs() {
-  const query = document.getElementById('blogSearch').value.toLowerCase().trim();
-  const blogPage = document.getElementById('blog');
-  const blogCards = blogPage.getElementsByClassName('blog-card');
+  const searchInput = document.getElementById('blogSearch');
+  if (!searchInput) return;
+
+  const query = searchInput.value.toLowerCase().trim();
+  const blogMain = document.querySelector('.blog-main');
+  if (!blogMain) return;
+
+  const blogCards = blogMain.getElementsByClassName('blog-card');
 
   for (let i = 0; i < blogCards.length; i++) {
     const card = blogCards[i];
     const cardText = card.textContent.toLowerCase();
-    if (cardText.includes(query)) {
-      card.style.display = ""; 
-    } else {
-      card.style.display = "none";
-    }
+    card.style.display = cardText.includes(query) ? "" : "none";
   }
 }
 
+// Load Google Analytics 4 tracking script asynchronously.
 (function() {
   const GA_ID = 'G-5X78JT0JSQ';
   const script = document.createElement('script');
@@ -61,8 +43,10 @@ function filterBlogs() {
   gtag('config', GA_ID);
 })();
 
+// Cloudflare Worker endpoint that handles visitor form submissions.
 const API_URL = 'https://workers.nathanpenny.fun';
 
+// Fetch visitor messages from the backend and render them in the About page.
 async function loadVisitorMessages() {
   const list = document.getElementById('visitorList');
   if (!list) return;
@@ -96,6 +80,7 @@ async function loadVisitorMessages() {
   }
 }
 
+// Convert special HTML characters to entities so user content cannot inject markup.
 function escapeHtml(text) {
   if (text == null) return '';
   const div = document.createElement('div');
@@ -103,6 +88,7 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// Bind the visitor form on the About page and POST its data to the backend.
 function initVisitorForm() {
   const form = document.getElementById('visitorForm');
   const status = document.getElementById('formStatus');
@@ -149,12 +135,14 @@ function initVisitorForm() {
   });
 }
 
+// Update the small status text next to the submit button.
 function showStatus(element, message, type) {
   if (!element) return;
   element.textContent = message;
   element.className = 'form-status' + (type ? ' ' + type : '');
 }
 
+// Initialize page-specific features once the DOM is ready.
 window.addEventListener('DOMContentLoaded', () => {
   initVisitorForm();
   loadVisitorMessages();

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | Nathan Penny's personal website</title>
+    <meta name="description" content="About Nathan Penny - a Tsinghua undergraduate who loves computer and animation.">
+    <meta name="keywords" content="html,css,javascript,blog,Nathan Penny">
+    <meta name="author" content="Nathan Penny">
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
+    <link href="../styles/style.css" rel="stylesheet" type="text/css">
+    <link rel="icon" type="image/svg+xml" href="../NP-logo.svg">
+    <script src="../scripts/main.js" defer></script>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-container">
+        <a href="../index.html" class="nav-brand" aria-label="Go to homepage">
+          <img class="site-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
+          <div class="logo">Nathan Penny's personal website FOR FUN</div>
+        </a>
+
+        <ul class="nav-list">
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="./about.html">About</a></li>
+          <li><a href="./blog.html">Blog</a></li>
+          <li><a href="./gallery.html">Gallery</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main class="container">
+      <div class="profile-box">
+        <a href="./gallery.html">
+          <img class="avatar" src="../images/NathanPenny.png" alt="Nathan Penny rocking a traditional Chinese outfit.">
+        </a>
+        <div class="profile-info">
+          <h2>Nathan Penny</h2>
+          <p>Tsinghua University undergraduate</p>
+          <p>Email: <a href="mailto:hello@nathanpenny.fun">hello@nathanpenny.fun</a></p>
+          <p>GitHub: <a href="https://github.com/nathanpenny520" target="_blank" rel="noopener noreferrer">github.com/nathanpenny520</a></p>
+          <p>I love computer and animation</p>
+          <p>download my CV from<a href="../pdfs/NathanPenny-CV-for-fun.pdf" download="Nathan-Penny-CV.pdf"> here</a></p>
+        </div>
+      </div>
+
+      <h3 class="section-title">Personality</h3>
+      <div class="blog-card">
+        <p><em>Introvert and greedy</em>, responsilble and reliable most of the time.</p>
+      </div>
+
+      <h3 class="section-title">Ability</h3>
+      <div class="blog-card">
+        <p><em>Nothing glorious</em>, on the road to do something great.<br><strong> But First blooms are here:</strong></p>
+        <ol>
+          <li>Mathematics and Physics</li>
+          <li>Programming</li>
+          <li>Communication and Leadership</li>
+          <li>Content Marketing</li>
+        </ol>
+      </div>
+
+      <h3 class="section-title">Visitor Form</h3>
+      <div class="blog-card">
+        <form id="visitorForm" class="visitor-form">
+          <div class="form-row">
+            <label for="visitorName">Nickname</label>
+            <input type="text" id="visitorName" name="name" placeholder="Enter your nickname" required>
+          </div>
+          <div class="form-row">
+            <label for="visitorEmail">Email</label>
+            <input type="email" id="visitorEmail" name="email" placeholder="Enter your email" required>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="form-submit">Submit</button>
+            <span id="formStatus" class="form-status"></span>
+          </div>
+        </form>
+      </div>
+
+      <h3 class="section-title">Visitor Messages</h3>
+      <div id="visitorList" class="blog-card visitor-list">
+        <p class="visitor-loading">Loading messages...</p>
+      </div>
+    </main>
+
+    <footer>
+      <img class="footer-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
+      <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
+    </footer>
+  </body>
+</html>
