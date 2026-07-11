@@ -177,6 +177,7 @@ nav {
 .page-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  text-decoration: none;
 }
 
 .page-card h2 {

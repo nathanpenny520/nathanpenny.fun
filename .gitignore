@@ -1,3 +1,17 @@
-/learning-resource/
+# macOS system files
 .DS_Store
+
+# Windows system files
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Project specific
+/learning-resource/
 roadmap.md
