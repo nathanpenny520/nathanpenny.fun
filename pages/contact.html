@@ -50,12 +50,11 @@
           <p>Short videos and daily moments.</p>
         </a>
 
-        <div class="social-card">
+        <button class="social-card qr-trigger" type="button" aria-label="Show WeChat QR code">
           <div class="social-icon social-wechat"><i class="fa-brands fa-weixin"></i></div>
           <h2>Wechat official account</h2>
-          <img class="qr-code" src="../images/wechat-account.jpg" alt="WeChat official account QR code">
-          <p>Scan the QR code to follow.</p>
-        </div>
+          <p>Click to show QR code.</p>
+        </button>
 
         <a href="https://blog.csdn.net/nathanpenny" target="_blank" rel="noopener noreferrer" class="social-card">
           <div class="social-icon social-csdn"><i class="fa-solid fa-code"></i></div>
@@ -112,6 +111,15 @@
         </div>
       </section>
     </main>
+
+    <div class="qr-modal" id="qrModal" role="dialog" aria-modal="true" aria-label="WeChat QR code" hidden>
+      <div class="qr-modal-content">
+        <button class="qr-modal-close" id="qrModalClose" type="button" aria-label="Close">&times;</button>
+        <h3>WeChat Official Account</h3>
+        <img src="../images/wechat-account.jpg" alt="WeChat official account QR code">
+        <p>Scan to follow</p>
+      </div>
+    </div>
 
     <footer>
       <img class="footer-logo" src="../NP-logo.svg" alt="Nathan Penny logo">

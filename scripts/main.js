@@ -401,6 +401,33 @@ function initCommentForm() {
   });
 }
 
+// WeChat QR code modal on the Contact page.
+function initQrModal() {
+  const trigger = document.querySelector('.qr-trigger');
+  const modal = document.getElementById('qrModal');
+  const closeBtn = document.getElementById('qrModalClose');
+  if (!trigger || !modal || !closeBtn) return;
+
+  function openModal() {
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modal.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  trigger.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (!modal.hidden && event.key === 'Escape') closeModal();
+  });
+}
+
 // Initialize page-specific features once the DOM is ready.
 window.addEventListener('DOMContentLoaded', () => {
   initVisitorForm();
@@ -409,6 +436,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initGallerySearch();
   initCommentForm();
   loadComments();
+  initQrModal();
 });
 
 console.log("script loads successfully!");

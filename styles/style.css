@@ -853,6 +853,13 @@ nav {
   text-decoration: none;
   color: inherit;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
 }
 
 .social-card:hover {
@@ -893,13 +900,73 @@ nav {
   line-height: 1.5;
 }
 
-.qr-code {
-  width: 140px;
-  height: 140px;
-  object-fit: contain;
+.qr-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.qr-modal[hidden] {
+  display: none;
+}
+
+.qr-modal-content {
+  position: relative;
+  background: #fff;
+  padding: 28px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+}
+
+.qr-modal-content h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.qr-modal-content img {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
   border-radius: 8px;
-  margin: 10px 0;
-  border: 1px solid #eee;
+  display: block;
+  margin: 0 auto;
+}
+
+.qr-modal-content p {
+  margin: 14px 0 0;
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+.qr-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f0f0f0;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.qr-modal-close:hover {
+  background: #e0e0e0;
 }
 
 .contact-email .blog-card p {
