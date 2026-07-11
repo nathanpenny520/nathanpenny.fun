@@ -1,0 +1,50 @@
+[
+  {
+    "id": "nathan-avatar",
+    "src": "../images/NathanPenny.png",
+    "title": "Nathan Penny",
+    "description": "Personal avatar used across the site.",
+    "category": "portrait",
+    "date": "2026-06-21"
+  },
+  {
+    "id": "violet-evergarden",
+    "src": "../images/blog-img/2026-07-02/Violet-Evergarden.webp",
+    "title": "Violet Evergarden",
+    "description": "A screenshot shared in the blog.",
+    "category": "anime",
+    "date": "2026-07-02"
+  },
+  {
+    "id": "poem-of-html",
+    "src": "../images/blog-img/2026-06-30/poem-of-html.png",
+    "title": "Poem of HTML",
+    "description": "Visual poem about HTML and web development.",
+    "category": "art",
+    "date": "2026-06-30"
+  },
+  {
+    "id": "ufo-up",
+    "src": "../images/blog-img/2026-06-29/UFO-up.png",
+    "title": "UFO Up",
+    "description": "UFO pixel art facing upward.",
+    "category": "pixel",
+    "date": "2026-06-29"
+  },
+  {
+    "id": "ufo-down",
+    "src": "../images/blog-img/2026-06-29/UFO-down.png",
+    "title": "UFO Down",
+    "description": "UFO pixel art facing downward.",
+    "category": "pixel",
+    "date": "2026-06-29"
+  },
+  {
+    "id": "ufo-inside",
+    "src": "../images/blog-img/2026-06-29/UFO-inside.png",
+    "title": "UFO Inside",
+    "description": "Interior view of the UFO pixel art.",
+    "category": "pixel",
+    "date": "2026-06-29"
+  }
+]

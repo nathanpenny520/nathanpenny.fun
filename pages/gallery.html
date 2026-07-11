@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gallery | Nathan Penny's personal website</title>
-    <meta name="description" content="Gallery page for Nathan Penny's personal website.">
-    <meta name="keywords" content="html,css,javascript,gallery">
+    <meta name="description" content="Image gallery for Nathan Penny's personal website.">
+    <meta name="keywords" content="html,css,javascript,gallery,images">
     <meta name="author" content="Nathan Penny">
     <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
     <link href="../styles/style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/svg+xml" href="../NP-logo.svg">
     <script src="../scripts/main.js" defer></script>
   </head>
@@ -25,6 +26,7 @@
           <li><a href="./about.html">About</a></li>
           <li><a href="./blog.html">Blog</a></li>
           <li><a href="./gallery.html">Gallery</a></li>
+          <li><a href="./contact.html">Contact</a></li>
         </ul>
       </div>
     </nav>
@@ -32,18 +34,28 @@
     <main class="container">
       <section class="hero">
         <h1>Gallery</h1>
-        <p class="hero-subtitle">This page is under construction. Cool stuff will be here soon!</p>
+        <p class="hero-subtitle">A collection of images, screenshots, and random visuals.</p>
       </section>
 
-      <section class="page-cards">
-        <a href="./about.html" class="page-card">
-          <h2>About</h2>
-          <p>Go back to learn more about me.</p>
-        </a>
-        <a href="./blog.html" class="page-card">
-          <h2>Blog</h2>
-          <p>Read my latest posts.</p>
-        </a>
+      <section class="gallery-section" aria-label="Image gallery">
+        <div class="gallery-controls">
+          <div class="gallery-filters" id="galleryFilters" role="group" aria-label="Filter images by category">
+            <button class="filter-btn active" data-category="all" type="button">All</button>
+          </div>
+          <input
+            class="gallery-search"
+            id="gallerySearch"
+            type="search"
+            placeholder="Search images..."
+            aria-label="Search images"
+          >
+        </div>
+
+        <div class="gallery-grid" id="galleryGrid" role="list">
+          <p class="gallery-loading">Loading gallery...</p>
+        </div>
+
+        <p class="gallery-empty" id="galleryEmpty" hidden>No images match your search.</p>
       </section>
     </main>
 
@@ -51,5 +63,18 @@
       <img class="footer-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
       <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
     </footer>
+
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image preview" hidden>
+      <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Close preview"><i class="fa-solid fa-xmark"></i></button>
+      <button class="lightbox-nav lightbox-prev" id="lightboxPrev" type="button" aria-label="Previous image"><i class="fa-solid fa-chevron-left"></i></button>
+      <div class="lightbox-content">
+        <img id="lightboxImg" src="" alt="">
+        <div class="lightbox-caption">
+          <h3 id="lightboxTitle"></h3>
+          <p id="lightboxDescription"></p>
+        </div>
+      </div>
+      <button class="lightbox-nav lightbox-next" id="lightboxNext" type="button" aria-label="Next image"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
   </body>
 </html>

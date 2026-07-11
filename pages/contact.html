@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | Nathan Penny's personal website</title>
+    <meta name="description" content="Get in touch with Nathan Penny and follow on social media.">
+    <meta name="keywords" content="html,css,javascript,contact,social media">
+    <meta name="author" content="Nathan Penny">
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
+    <link href="../styles/style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="../NP-logo.svg">
+    <script src="../scripts/main.js" defer></script>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-container">
+        <a href="../index.html" class="nav-brand" aria-label="Go to homepage">
+          <img class="site-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
+          <div class="logo">Nathan Penny's personal website FOR FUN</div>
+        </a>
+
+        <ul class="nav-list">
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="./about.html">About</a></li>
+          <li><a href="./blog.html">Blog</a></li>
+          <li><a href="./gallery.html">Gallery</a></li>
+          <li><a href="./contact.html">Contact</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main class="container">
+      <section class="hero">
+        <h1>Contact</h1>
+        <p class="hero-subtitle">Find me on social media or send an email.</p>
+      </section>
+
+      <section class="social-grid" aria-label="Social media links">
+        <a href="https://www.xiaohongshu.com/user/profile/your-id" target="_blank" rel="noopener noreferrer" class="social-card">
+          <div class="social-icon social-xiaohongshu"><i class="fa-solid fa-book-open"></i></div>
+          <h2>Rednote</h2>
+          <p>Share life and discoveries.</p>
+        </a>
+
+        <a href="https://www.douyin.com/user/your-id" target="_blank" rel="noopener noreferrer" class="social-card">
+          <div class="social-icon social-douyin"><i class="fa-brands fa-tiktok"></i></div>
+          <h2>抖音</h2>
+          <p>Short videos and daily moments.</p>
+        </a>
+
+        <a href="#wechat" target="_blank" rel="noopener noreferrer" class="social-card">
+          <div class="social-icon social-wechat"><i class="fa-brands fa-weixin"></i></div>
+          <h2>Wechat official account</h2>
+          <p>Scan the QR code to follow.</p>
+        </a>
+
+        <a href="https://blog.csdn.net/your-id" target="_blank" rel="noopener noreferrer" class="social-card">
+          <div class="social-icon social-csdn"><i class="fa-solid fa-code"></i></div>
+          <h2>CSDN</h2>
+          <p>Tech articles and tutorials.</p>
+        </a>
+
+        <a href="https://www.zhihu.com/people/your-id" target="_blank" rel="noopener noreferrer" class="social-card">
+          <div class="social-icon social-zhihu"><i class="fa-brands fa-zhihu"></i></div>
+          <h2>zhihu</h2>
+          <p>Questions, answers, and ideas.</p>
+        </a>
+
+        <a href="https://space.bilibili.com/your-id" target="_blank" rel="noopener noreferrer" class="social-card">
+          <div class="social-icon social-bilibili"><i class="fa-brands fa-bilibili"></i></div>
+          <h2>bilibili</h2>
+          <p>Videos about coding and animation.</p>
+        </a>
+      </section>
+
+      <section class="contact-email">
+        <h2 class="section-title">Email</h2>
+        <div class="blog-card">
+          <p><i class="fa-solid fa-envelope"></i> <a href="mailto:hello@nathanpenny.fun">hello@nathanpenny.fun</a></p>
+        </div>
+      </section>
+
+      <section class="contact-comments">
+        <h2 class="section-title">Leave a Comment</h2>
+        <div class="blog-card">
+          <form id="commentForm" class="visitor-form">
+            <div class="form-row">
+              <label for="commentName">Nickname</label>
+              <input type="text" id="commentName" name="name" placeholder="Enter your nickname" required>
+            </div>
+            <div class="form-row">
+              <label for="commentEmail">Email</label>
+              <input type="email" id="commentEmail" name="email" placeholder="Enter your email" required>
+            </div>
+            <div class="form-row">
+              <label for="commentContent">Comment</label>
+              <textarea id="commentContent" name="content" rows="4" placeholder="Write something..." required></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="form-submit">Post Comment</button>
+              <span id="commentStatus" class="form-status"></span>
+            </div>
+          </form>
+        </div>
+
+        <h2 class="section-title">Discussion</h2>
+        <div id="commentList" class="comment-list">
+          <p class="comment-loading">Loading comments...</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <img class="footer-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
+      <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
+    </footer>
+  </body>
+</html>
