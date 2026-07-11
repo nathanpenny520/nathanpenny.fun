@@ -666,8 +666,9 @@ nav {
   color: #7f8c8d;
   line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 
@@ -890,6 +891,15 @@ nav {
   color: #7f8c8d;
   margin: 0;
   line-height: 1.5;
+}
+
+.qr-code {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin: 10px 0;
+  border: 1px solid #eee;
 }
 
 .contact-email .blog-card p {
