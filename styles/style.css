@@ -52,6 +52,15 @@
   /* Shadows */
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
   --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.12);
+
+  /* Home hero night-sky stage (stars render in dark mode only) */
+  --hero-panel-bg: linear-gradient(180deg, #f2f6fa 0%, #e9eff6 100%);
+  --hero-title-a: #2c3e50;
+  --hero-title-b: #16a085;
+  --hero-title-c: #6a5cff;
+  --aurora-teal: rgba(26, 188, 156, 0.3);
+  --aurora-violet: rgba(122, 102, 255, 0.2);
+  --aurora-blue: rgba(106, 176, 243, 0.28);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -94,6 +103,15 @@
     /* Shadows */
     --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.45);
     --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.6);
+
+    /* Home hero night-sky stage (stars render in dark mode only) */
+    --hero-panel-bg: linear-gradient(180deg, rgba(14, 22, 34, 0.82) 0%, rgba(20, 32, 46, 0.8) 100%);
+    --hero-title-a: #e8edf2;
+    --hero-title-b: #48d1b4;
+    --hero-title-c: #8f7bff;
+    --aurora-teal: rgba(26, 188, 156, 0.26);
+    --aurora-violet: rgba(124, 108, 255, 0.24);
+    --aurora-blue: rgba(106, 176, 243, 0.2);
   }
 
   /* The all-black Douyin icon needs an edge to stay visible on dark cards */
@@ -142,6 +160,15 @@
   /* Shadows */
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.45);
   --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.6);
+
+  /* Home hero night-sky stage (stars render in dark mode only) */
+  --hero-panel-bg: linear-gradient(180deg, rgba(14, 22, 34, 0.82) 0%, rgba(20, 32, 46, 0.8) 100%);
+  --hero-title-a: #e8edf2;
+  --hero-title-b: #48d1b4;
+  --hero-title-c: #8f7bff;
+  --aurora-teal: rgba(26, 188, 156, 0.26);
+  --aurora-violet: rgba(124, 108, 255, 0.24);
+  --aurora-blue: rgba(106, 176, 243, 0.2);
 }
 
 :root[data-theme="dark"] .social-douyin {
@@ -300,9 +327,154 @@ nav {
    HOME PAGE
    ========================================================================== */
 
-.hero {
+/* Anchors (the hero scroll cue) glide instead of jumping, unless the visitor
+   prefers reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Framed stage so the sky, aurora, and stars stay contained behind the copy */
+.hero-stage {
+  position: relative;
+  overflow: hidden;
   text-align: center;
-  padding: 50px 20px 30px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 18px;
+  background: var(--hero-panel-bg);
+  box-shadow: var(--shadow-card);
+  padding: 70px 20px 90px;
+}
+
+/* Clipped backdrop layer: the aurora blobs and the star canvas live in here */
+.hero-sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: radial-gradient(55% 60% at 72% 18%, var(--aurora-blue), transparent 70%);
+  pointer-events: none;
+}
+
+/* Two soft color blobs drifting on their own slow schedules */
+.hero-aurora::before,
+.hero-aurora::after {
+  content: "";
+  position: absolute;
+  width: 65%;
+  height: 85%;
+  border-radius: 50%;
+  filter: blur(55px);
+}
+
+.hero-aurora::before {
+  left: -18%;
+  top: -40%;
+  background: radial-gradient(closest-side, var(--aurora-teal), transparent 72%);
+  animation: aurora-drift-a 26s ease-in-out infinite alternate;
+}
+
+.hero-aurora::after {
+  right: -22%;
+  bottom: -50%;
+  background: radial-gradient(closest-side, var(--aurora-violet), transparent 72%);
+  animation: aurora-drift-b 34s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift-a {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(12%, 18%) scale(1.15); }
+}
+
+@keyframes aurora-drift-b {
+  from { transform: translate(0, 0) scale(1.05) rotate(0deg); }
+  to   { transform: translate(-14%, -12%) scale(0.95) rotate(8deg); }
+}
+
+/* Full-page starfield canvas, fixed behind everything (the body background
+   propagates to the root canvas, so z-index -1 still paints above it).
+   Hidden in light mode (the pastel aurora carries the hero there). */
+#starField {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+:root[data-theme="dark"] #starField {
+  opacity: 0.9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) #starField {
+    opacity: 0.9;
+  }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Gradient headline, the Linear-style signature (solid-color fallback stays
+   via the .hero h1 rule below if clipping is unsupported) */
+.hero-title {
+  background: linear-gradient(92deg, var(--hero-title-a) 15%, var(--hero-title-b) 55%, var(--hero-title-c) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@supports (-webkit-text-fill-color: transparent) {
+  .hero-title {
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* Staggered entrance for the hero content */
+.hero-logo,
+.hero-title,
+.hero-subtitle {
+  animation: hero-rise 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.hero-title {
+  animation-delay: 0.12s;
+}
+
+.hero-subtitle {
+  animation-delay: 0.24s;
+}
+
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll cue on the bottom edge of the stage */
+.hero-scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  color: var(--color-text-faint);
+  font-size: 15px;
+  animation: cue-bob 2.4s ease-in-out infinite;
+  z-index: 1;
+}
+
+.hero-scroll-cue:hover {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+@keyframes cue-bob {
+  0%, 100% { transform: translate(-50%, 0); }
+  50%      { transform: translate(-50%, 7px); }
 }
 
 .hero-logo {
@@ -328,6 +500,17 @@ nav {
   margin: 0;
 }
 
+@media (max-width: 768px) {
+  .hero-stage {
+    padding: 54px 16px 76px;
+    border-radius: 14px;
+  }
+
+  .hero h1 {
+    font-size: 26px;
+  }
+}
+
 /* Three large cards linking to About, Blog, and Gallery */
 .page-cards {
   display: grid;
@@ -337,6 +520,7 @@ nav {
 }
 
 .page-card {
+  position: relative;
   display: block;
   background: var(--color-surface);
   padding: 24px;
@@ -364,6 +548,115 @@ nav {
   color: var(--color-text-muted);
   margin: 0;
   line-height: 1.5;
+}
+
+/* Soft teal sheen sweeping in from the top edge on hover */
+.page-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(120% 90% at 50% -30%, rgba(26, 188, 156, 0.16), transparent 60%);
+  transition: opacity 0.25s ease;
+}
+
+.page-card:hover::after {
+  opacity: 1;
+}
+
+/* Scroll reveal (data-reveal): main.js adds .will-reveal, then .is-visible
+   once the element approaches the viewport; both classes are removed after
+   the transition so card hover effects keep their own snappy transitions */
+[data-reveal].will-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+[data-reveal].will-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.page-card[data-reveal]:nth-child(2).will-reveal.is-visible {
+  transition-delay: 0.12s;
+}
+
+.page-card[data-reveal]:nth-child(3).will-reveal.is-visible {
+  transition-delay: 0.24s;
+}
+
+/* Meteor impact: a flash and a shockwave ring at the hit point (the divs are
+   created and removed by main.js), plus a brief shake of the page content */
+.impact-flash {
+  position: fixed;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 224, 168, 0.95), rgba(255, 140, 60, 0.4) 45%, transparent 70%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 60;
+  animation: impact-flash 0.5s ease-out forwards;
+}
+
+@keyframes impact-flash {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(0.4); }
+  to   { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
+
+.impact-wave {
+  position: fixed;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 190, 120, 0.85);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 60;
+  animation: impact-wave 0.7s ease-out forwards;
+}
+
+@keyframes impact-wave {
+  from { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%, -50%) scale(24); }
+}
+
+@keyframes impact-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-6px, 4px); }
+  40% { transform: translate(5px, -3px); }
+  60% { transform: translate(-4px, 2px); }
+  80% { transform: translate(3px, -1px); }
+}
+
+.impact-shake {
+  animation: impact-shake 0.45s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-aurora::before,
+  .hero-aurora::after,
+  .hero-scroll-cue,
+  .hero-logo,
+  .hero-title,
+  .hero-subtitle,
+  .impact-flash,
+  .impact-wave,
+  main.impact-shake {
+    animation: none;
+  }
+
+  .page-card::after {
+    transition: none;
+  }
+
+  [data-reveal].will-reveal {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 
@@ -1476,4 +1769,142 @@ footer p {
   .error-btn {
     transition: none;
   }
+}
+
+/* ==========================================================================
+   GAMES
+   One .game-card per game inside .game-shell; new games copy the pattern.
+   ========================================================================== */
+
+.game-shell {
+  max-width: 480px;
+  margin: 0 auto 40px;
+}
+
+.game-card {
+  background: var(--color-surface);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 25px;
+}
+
+.game-head h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: var(--color-heading);
+}
+
+.game-desc {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+
+.game-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.game-hud-item b {
+  color: var(--color-text);
+  font-size: 17px;
+}
+
+/* The playfield stays deep-space dark in both themes so the sprites read well */
+.game-stage {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0b1020 0%, #131a2e 100%);
+  touch-action: none;
+}
+
+.game-stage canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 420 / 560;
+}
+
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  padding: 20px;
+  background: rgba(11, 16, 32, 0.72);
+}
+
+.game-overlay[hidden] {
+  display: none;
+}
+
+.game-overlay-title {
+  color: #fff;
+  font-size: 26px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.game-overlay-text {
+  color: #b8c2cc;
+  font-size: 15px;
+  margin: 0;
+}
+
+.game-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.game-btn {
+  padding: 9px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.game-btn:hover:not(:disabled) {
+  background: var(--color-divider);
+}
+
+.game-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.game-btn-primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 11px 30px;
+}
+
+.game-btn-primary:hover {
+  background: var(--color-accent-strong);
+}
+
+.game-hint {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--color-text-faint);
+  text-align: center;
 }

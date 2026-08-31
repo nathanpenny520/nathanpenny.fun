@@ -33,6 +33,8 @@
     <script src="./scripts/main.js" defer></script>
   </head>
   <body>
+    <canvas id="starField" aria-hidden="true"></canvas>
+
     <nav>
       <div class="nav-container">
         <a href="./index.html" class="nav-brand" aria-label="Go to homepage">
@@ -45,6 +47,7 @@
           <li><a href="./pages/about.html">About</a></li>
           <li><a href="./pages/blog.html">Blog</a></li>
           <li><a href="./pages/gallery.html">Gallery</a></li>
+          <li><a href="./pages/games.html">Games</a></li>
           <li><a href="./pages/contact.html">Contact</a></li>
         </ul>
         <button id="themeToggle" class="theme-toggle" type="button">
@@ -54,26 +57,34 @@
     </nav>
 
     <main class="container">
-      <section class="hero">
-        <img class="hero-logo" src="./NP-logo.svg" alt="Nathan Penny logo">
-        <h1>Welcome to Nathan Penny's Website</h1>
-        <p class="hero-subtitle">A personal space for fun, learning, and random thoughts.</p>
+      <section class="hero hero-stage">
+        <div class="hero-sky" aria-hidden="true">
+          <div class="hero-aurora"></div>
+        </div>
+        <div class="hero-content">
+          <img class="hero-logo" src="./NP-logo.svg" alt="Nathan Penny logo">
+          <h1 class="hero-title">Welcome to Nathan Penny's Website</h1>
+          <p class="hero-subtitle">A personal space for fun, learning, and random thoughts.</p>
+        </div>
+        <a class="hero-scroll-cue" href="#homeCards" aria-label="Scroll down to the page cards">
+          <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+        </a>
       </section>
 
-      <section class="page-cards">
-        <a href="./pages/about.html" class="page-card">
+      <section class="page-cards" id="homeCards">
+        <a href="./pages/about.html" class="page-card" data-reveal>
           <h2>About</h2>
           <p>
             Learn more about who I am, what I do, and leave a message.
           </p>
         </a>
-        <a href="./pages/blog.html" class="page-card">
+        <a href="./pages/blog.html" class="page-card" data-reveal>
           <h2>Blog</h2>
           <p>
             Read my posts about UFOs, poems, anime, music, and the solar system.
           </p>
         </a>
-        <a href="./pages/gallery.html" class="page-card">
+        <a href="./pages/gallery.html" class="page-card" data-reveal>
           <h2>Gallery</h2>
           <p>
             A place for future photos, artworks, and visual collections.

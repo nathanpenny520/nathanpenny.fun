@@ -516,6 +516,347 @@ function initBackToTop() {
 }
 
 // ============================================================================
+// STARFIELD (a fixed full-page canvas behind the content: stars, meteors, and
+// the occasional rock that comes down and hits the page. The aurora drift in
+// the hero is pure CSS on top of it.)
+// ============================================================================
+
+// Rebuild the starfield to fill the current viewport.
+function skyBuildStars(canvas) {
+  const area = canvas.clientWidth * canvas.clientHeight;
+  const count = Math.min(200, Math.max(70, Math.round(area / 5500)));
+  const stars = [];
+
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x: Math.random() * canvas.clientWidth,
+      y: Math.random() * canvas.clientHeight,
+      r: 0.3 + Math.random() * 1.1,
+      alpha: 0.2 + Math.random() * 0.6,
+      speed: 0.3 + Math.random() * 0.9,   // twinkle speed
+      phase: Math.random() * Math.PI * 2,
+      depth: 0.3 + Math.random() * 0.7    // parallax strength
+    });
+  }
+  return stars;
+}
+
+// A burst of short-lived orange sparks flying out of the impact point.
+function skySpawnSparks(state, x, y) {
+  const colors = ['#ffe8b0', '#ffc46b', '#ff9f43', '#ff7b54'];
+
+  for (let i = 0; i < 26; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.5 + Math.random() * 3.5;
+    state.sparks.push({
+      x: x,
+      y: y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1.5,  // bias upward
+      life: 1,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    });
+  }
+}
+
+// Flash, shockwave ring, sparks, and a brief shake of the page content.
+function skyImpact(state, x, y) {
+  skySpawnSparks(state, x, y);
+
+  const main = document.querySelector('main');
+  if (main) {
+    main.classList.remove('impact-shake');
+    void main.offsetWidth;  // restart the animation if one just finished
+    main.classList.add('impact-shake');
+    setTimeout(() => main.classList.remove('impact-shake'), 600);
+  }
+
+  [['impact-flash', 600], ['impact-wave', 850]].forEach(([cls, ttl]) => {
+    const el = document.createElement('div');
+    el.className = cls;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.addEventListener('animationend', () => el.remove());
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), ttl);  // safety net if animationend is missed
+  });
+}
+
+// One animation frame: twinkle the stars, ease the parallax, throw the odd
+// meteor, and every so often drop a rock that hits the page.
+function skyDrawFrame(state, now) {
+  const ctx = state.ctx;
+  const w = state.canvas.clientWidth;
+  const h = state.canvas.clientHeight;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Ease the mouse parallax toward where the mouse points; scrolling shifts
+  // the sky slightly too, which adds depth as the content moves over it.
+  state.parallaxX += (state.targetX - state.parallaxX) * 0.05;
+  state.parallaxY += (state.targetY - state.parallaxY) * 0.05;
+
+  const rgb = state.effectiveTheme() === 'dark' ? '255, 255, 255' : '44, 62, 80';
+  const t = now / 1000;
+
+  for (const star of state.stars) {
+    const twinkle = 0.55 + 0.45 * Math.sin(t * star.speed + star.phase);
+    // Wrap coordinates so parallax and scroll shifts never bare an edge.
+    const x = ((star.x + state.parallaxX * star.depth) % w + w) % w;
+    const y = ((star.y + state.parallaxY * star.depth - state.scrollY * 0.06 * star.depth) % h + h) % h;
+
+    ctx.fillStyle = `rgba(${rgb}, ${star.alpha * twinkle})`;
+    ctx.beginPath();
+    ctx.arc(x, y, star.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (star.r > 1.2) {
+      // The few biggest stars get a faint halo so the sky has depth.
+      ctx.fillStyle = `rgba(${rgb}, ${star.alpha * twinkle * 0.15})`;
+      ctx.beginPath();
+      ctx.arc(x, y, star.r * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Occasional meteor streaking across the sky.
+  if (!state.meteor && now > state.nextShootAt) {
+    state.meteor = {
+      x: w * (0.15 + Math.random() * 0.7),
+      y: h * (0.08 + Math.random() * 0.3),
+      vx: -(4 + Math.random() * 3),
+      vy: 1.6 + Math.random() * 1.2,
+      life: 1
+    };
+  }
+
+  if (state.meteor) {
+    const meteor = state.meteor;
+    meteor.x += meteor.vx;
+    meteor.y += meteor.vy;
+    meteor.life -= 0.016;
+
+    if (meteor.life <= 0) {
+      state.meteor = null;
+      state.nextShootAt = now + 9000 + Math.random() * 11000;
+    } else {
+      const alpha = Math.min(meteor.life * 3, (1 - meteor.life) * 5, 0.9);
+      const grad = ctx.createLinearGradient(
+        meteor.x, meteor.y,
+        meteor.x - meteor.vx * 14, meteor.y - meteor.vy * 14
+      );
+      grad.addColorStop(0, `rgba(${rgb}, ${alpha})`);
+      grad.addColorStop(1, `rgba(${rgb}, 0)`);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 1.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(meteor.x, meteor.y);
+      ctx.lineTo(meteor.x - meteor.vx * 14, meteor.y - meteor.vy * 14);
+      ctx.stroke();
+    }
+  }
+
+  // Every so often: a bigger rock, accelerating down toward a random point.
+  if (!state.rock && now > state.nextImpactAt) {
+    if (now - state.nextImpactAt > 20000) {
+      state.nextImpactAt = now + 20000;  // the tab slept; don't slam on return
+    } else {
+      const x0 = w * (0.2 + Math.random() * 0.6);
+      const y0 = -60;
+      const tx = w * (0.15 + Math.random() * 0.7);
+      const ty = h * (0.45 + Math.random() * 0.4);
+      const len = Math.hypot(tx - x0, ty - y0) || 1;
+      state.rock = {
+        x0: x0,
+        y0: y0,
+        tx: tx,
+        ty: ty,
+        ux: (tx - x0) / len,
+        uy: (ty - y0) / len,
+        t: 0,
+        dur: 55 + Math.random() * 25  // frames
+      };
+    }
+  }
+
+  if (state.rock) {
+    const rock = state.rock;
+    rock.t += 1;
+    const p = Math.min(rock.t / rock.dur, 1);
+    const ease = p * p;  // gravity: the rock accelerates on the way down
+    const x = rock.x0 + (rock.tx - rock.x0) * ease;
+    const y = rock.y0 + (rock.ty - rock.y0) * ease;
+    const trail = 60 + p * 60;  // the tail stretches as it speeds up
+
+    const grad = ctx.createLinearGradient(x, y, x - rock.ux * trail, y - rock.uy * trail);
+    grad.addColorStop(0, 'rgba(255, 214, 140, 0.95)');
+    grad.addColorStop(1, 'rgba(255, 120, 60, 0)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 3.2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - rock.ux * trail, y - rock.uy * trail);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 190, 110, 0.35)';  // glow around the head
+    ctx.beginPath();
+    ctx.arc(x, y, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff2d0';  // the hot head itself
+    ctx.beginPath();
+    ctx.arc(x, y, 2.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (p >= 1) {
+      skyImpact(state, rock.tx, rock.ty);
+      state.rock = null;
+      state.nextImpactAt = now + 35000 + Math.random() * 30000;
+    }
+  }
+
+  // Impact sparks: short-lived, with a bit of gravity.
+  for (let i = state.sparks.length - 1; i >= 0; i--) {
+    const spark = state.sparks[i];
+    spark.x += spark.vx;
+    spark.y += spark.vy;
+    spark.vy += 0.12;
+    spark.life -= 0.02;
+
+    if (spark.life <= 0) {
+      state.sparks.splice(i, 1);
+      continue;
+    }
+
+    ctx.globalAlpha = Math.min(spark.life * 1.4, 1);
+    ctx.fillStyle = spark.color;
+    ctx.beginPath();
+    ctx.arc(spark.x, spark.y, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// Wire up the full-page sky: it only animates in dark mode, and only while
+// the tab is visible. Reduced motion gets a still sky with no events.
+function initStarField() {
+  const canvas = document.getElementById('starField');
+  if (!canvas || !canvas.getContext) return;
+
+  const ctx = canvas.getContext('2d');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const state = {
+    canvas,
+    ctx,
+    stars: [],
+    meteor: null,
+    rock: null,
+    sparks: [],
+    nextShootAt: performance.now() + 5000 + Math.random() * 7000,
+    nextImpactAt: performance.now() + 8000 + Math.random() * 6000,  // an early showpiece, then rare
+    parallaxX: 0,
+    parallaxY: 0,
+    targetX: 0,
+    targetY: 0,
+    scrollY: 0,
+    effectiveTheme,  // shared with the theme-toggle feature below
+    rafId: 0,
+    running: false
+  };
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = canvas.clientHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    state.stars = skyBuildStars(canvas);
+    // Keep still-sky modes (reduced motion) painted after a rebuild.
+    if (!state.running) skyDrawFrame(state, performance.now());
+  }
+
+  function start() {
+    if (state.running) return;
+    if (effectiveTheme() !== 'dark') return;  // stars belong to the night sky only
+    state.running = true;
+    state.rafId = requestAnimationFrame(skyLoop);
+  }
+
+  function stop() {
+    state.running = false;
+    cancelAnimationFrame(state.rafId);
+  }
+
+  function skyLoop(now) {
+    if (!state.running) return;
+    skyDrawFrame(state, now);
+    state.rafId = requestAnimationFrame(skyLoop);
+  }
+
+  // Light mode shows only the pastel sky (CSS hides the canvas there too,
+  // this just stops the wasted animation frames).
+  function syncTheme() {
+    if (effectiveTheme() === 'dark') {
+      start();
+    } else {
+      stop();
+      ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    }
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  window.addEventListener('scroll', () => { state.scrollY = window.scrollY; }, { passive: true });
+
+  if (reducedMotion) return;  // a still sky, drawn once by resize() above
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+    else start();
+  });
+
+  document.addEventListener('mousemove', (event) => {
+    state.targetX = (event.clientX / window.innerWidth - 0.5) * 26;
+    state.targetY = (event.clientY / window.innerHeight - 0.5) * 26;
+  }, { passive: true });
+
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  if (darkQuery.addEventListener) darkQuery.addEventListener('change', syncTheme);
+  new MutationObserver(syncTheme).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  });
+
+  start();
+}
+
+// Reveal-on-scroll for elements tagged with data-reveal. Elements stay visible
+// without JS; with reduced motion they simply never get hidden.
+function initScrollReveal() {
+  const targets = document.querySelectorAll('[data-reveal]');
+  if (!targets.length) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      el.classList.add('is-visible');
+      observer.unobserve(el);
+      // Drop the helper classes once revealed so card hover transitions
+      // don't inherit the slower reveal transition and its delay.
+      setTimeout(() => el.classList.remove('will-reveal', 'is-visible'), 1200);
+    });
+  }, { threshold: 0.15 });
+
+  targets.forEach(el => {
+    el.classList.add('will-reveal');
+    observer.observe(el);
+  });
+}
+
+// ============================================================================
 // UFO EASTER EGG
 // ============================================================================
 
@@ -631,6 +972,8 @@ window.addEventListener('DOMContentLoaded', () => {
   initScrollSpy();
   initReadingTime();
   initBackToTop();
+  initStarField();
+  initScrollReveal();
   initUfoEasterEgg();
 });
 
