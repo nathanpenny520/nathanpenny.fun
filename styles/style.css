@@ -1393,3 +1393,87 @@ footer p {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   404 PAGE
+   Served by Cloudflare Pages (HTTP 404) for any URL matching no real asset.
+   ========================================================================== */
+
+.error-page {
+  text-align: center;
+  padding: 70px 20px 50px;
+}
+
+.error-code {
+  font-size: clamp(80px, 18vw, 170px);
+  line-height: 1;
+  margin: 0;
+  color: var(--color-heading);
+  letter-spacing: 10px;
+}
+
+.error-code-ufo {
+  display: inline-block;
+  font-size: 0.8em;
+  animation: error-ufo-bob 2.4s ease-in-out infinite;
+}
+
+.error-page h1 {
+  font-size: 26px;
+  margin: 18px 0 0;
+  color: var(--color-heading);
+}
+
+.error-copy {
+  color: var(--color-text-muted);
+  max-width: 520px;
+  margin: 15px auto 32px;
+}
+
+.error-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.error-btn {
+  display: inline-block;
+  padding: 12px 26px;
+  border-radius: 8px;
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.error-btn:hover {
+  background: var(--color-accent-strong);
+}
+
+.error-btn-ghost {
+  background: transparent;
+  color: var(--color-link);
+  border: 1px solid var(--color-border);
+}
+
+.error-btn-ghost:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-link-hover);
+}
+
+@keyframes error-ufo-bob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-12px) rotate(4deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-code-ufo {
+    animation: none;
+  }
+
+  .error-btn {
+    transition: none;
+  }
+}

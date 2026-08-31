@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <script>
+      // Apply the saved color theme before first paint to avoid a flash.
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="robots" content="noindex">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <link rel="apple-touch-icon" href="/images/icon-180.png">
+    <title>404 — Beamed up! | Nathan Penny's personal website</title>
+    <meta name="description" content="Page not found — it was probably abducted by a wandering UFO.">
+    <link href="/styles/style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="/fonts/fontawesome/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="/NP-logo.svg">
+    <script src="/scripts/main.js" defer></script>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-container">
+        <a href="/" class="nav-brand" aria-label="Go to homepage">
+          <img class="site-logo" src="/NP-logo.svg" alt="Nathan Penny logo">
+          <div class="logo">Nathan Penny's personal website FOR FUN</div>
+        </a>
+
+        <ul class="nav-list">
+          <li><a href="/">Home</a></li>
+          <li><a href="/pages/about.html">About</a></li>
+          <li><a href="/pages/blog.html">Blog</a></li>
+          <li><a href="/pages/gallery.html">Gallery</a></li>
+          <li><a href="/pages/contact.html">Contact</a></li>
+        </ul>
+        <button id="themeToggle" class="theme-toggle" type="button">
+          <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+      </div>
+    </nav>
+
+    <main class="container error-page">
+      <!--
+        Cloudflare Pages serves this file (with HTTP 404) for any URL that
+        matches no real asset. Asset paths here are root-absolute on purpose:
+        the page renders at arbitrary depths, where relative paths break.
+      -->
+      <p class="error-code" aria-hidden="true">4<span class="error-code-ufo">🛸</span>4</p>
+      <h1>Beamed up!</h1>
+      <p class="error-copy">
+        The page you are looking for was abducted by a wandering UFO.
+        It is probably out there watching the FIFA world cup now.
+      </p>
+      <div class="error-actions">
+        <a class="error-btn" href="/">Return home</a>
+        <a class="error-btn error-btn-ghost" href="/pages/blog.html">Read the blog</a>
+      </div>
+    </main>
+
+    <footer>
+      <img class="footer-logo" src="/NP-logo.svg" alt="Nathan Penny logo">
+      <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
+    </footer>
+  </body>
+</html>
