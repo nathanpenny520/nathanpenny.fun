@@ -2,6 +2,91 @@
    GLOBAL BASICS & RESETS
    ========================================================================== */
 
+:root {
+  color-scheme: light dark;
+
+  /* Surfaces */
+  --color-bg: #f5f7fa;
+  --color-surface: #fff;
+  --color-surface-alt: #f8f9fa;
+
+  /* Text */
+  --color-text: #333;
+  --color-text-soft: #34495e;
+  --color-text-muted: #7f8c8d;
+  --color-text-faint: #95a5a6;
+  --color-heading: #2c3e50;
+
+  /* Links & accents */
+  --color-link: #0066cc;
+  --color-link-hover: #004099;
+  --color-accent: #1abc9c;
+  --color-accent-strong: #16a085;
+  --color-accent-soft: #4fc08d;
+
+  /* Status */
+  --color-success: #27ae60;
+  --color-danger: #e74c3c;
+
+  /* Borders */
+  --color-border: #d0d7de;
+  --color-border-light: #e0e0e0;
+  --color-divider: #ecf0f1;
+
+  /* Nav & footer band */
+  --color-nav-bg: #2c3e50;
+  --color-nav-text: #fff;
+
+  /* Shadows */
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Surfaces */
+    --color-bg: #171d24;
+    --color-surface: #222a33;
+    --color-surface-alt: #2b343e;
+
+    /* Text */
+    --color-text: #ccd4dc;
+    --color-text-soft: #b8c2cc;
+    --color-text-muted: #8a97a4;
+    --color-text-faint: #66727e;
+    --color-heading: #e8edf2;
+
+    /* Links & accents */
+    --color-link: #6ab0f3;
+    --color-link-hover: #9ccaf5;
+    --color-accent: #1abc9c;
+    --color-accent-strong: #48d1b4;
+    --color-accent-soft: #4fc08d;
+
+    /* Status */
+    --color-success: #2ecc71;
+    --color-danger: #ff6f61;
+
+    /* Borders */
+    --color-border: #3b4550;
+    --color-border-light: #303a44;
+    --color-divider: #2c353f;
+
+    /* Nav & footer band */
+    --color-nav-bg: #10161c;
+    --color-nav-text: #e8edf2;
+
+    /* Shadows */
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.45);
+    --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.6);
+  }
+
+  /* The all-black Douyin icon needs an edge to stay visible on dark cards */
+  .social-douyin {
+    box-shadow: inset 0 0 0 1px var(--color-border);
+  }
+}
+
 html {
   margin: 0;
   padding: 0;
@@ -10,18 +95,18 @@ html {
 }
 
 body {
-  background-color: #f5f7fa;
-  color: #333;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   line-height: 1.7;
 }
 
 a {
   text-decoration: none;
-  color: #0066cc;
+  color: var(--color-link);
 }
 
 a:hover {
-  color: #004099;
+  color: var(--color-link-hover);
   text-decoration: underline;
 }
 
@@ -46,7 +131,7 @@ ul {
    ======================================================================== */
 
 nav {
-  background-color: #2c3e50;
+  background-color: var(--color-nav-bg);
   padding: 16px 0;
   position: sticky;
   top: 0;
@@ -71,6 +156,7 @@ nav {
   color: inherit;
 }
 
+/* White chip keeps the dark logo marks readable in both light and dark mode */
 .site-logo {
   width: 36px;
   height: 36px;
@@ -81,7 +167,7 @@ nav {
 }
 
 .logo {
-  color: #fff;
+  color: var(--color-nav-text);
   font-size: 22px;
   font-weight: bold;
   text-decoration: none;
@@ -95,13 +181,13 @@ nav {
 
 /* Top-right navigation links */
 .nav-list li a {
-  color: #fff;
+  color: var(--color-nav-text);
   font-size: 16px;
   transition: color 0.3s ease;
 }
 
 .nav-list li a:hover {
-  color: #4fc08d;
+  color: var(--color-accent-soft);
   text-decoration: none;
 }
 
@@ -140,19 +226,19 @@ nav {
   object-fit: contain;
   background: #fff;
   padding: 6px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-card);
   margin-bottom: 20px;
 }
 
 .hero h1 {
   font-size: 32px;
   margin-bottom: 10px;
-  color: #2c3e50;
+  color: var(--color-heading);
 }
 
 .hero-subtitle {
   font-size: 16px;
-  color: #7f8c8d;
+  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -166,10 +252,10 @@ nav {
 
 .page-card {
   display: block;
-  background: #fff;
+  background: var(--color-surface);
   padding: 24px;
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-card);
   text-decoration: none;
   color: inherit;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -177,19 +263,19 @@ nav {
 
 .page-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  box-shadow: var(--shadow-card-hover);
   text-decoration: none;
 }
 
 .page-card h2 {
   font-size: 20px;
   margin-bottom: 10px;
-  color: #2c3e50;
+  color: var(--color-heading);
 }
 
 .page-card p {
   font-size: 14px;
-  color: #7f8c8d;
+  color: var(--color-text-muted);
   margin: 0;
   line-height: 1.5;
 }
@@ -200,10 +286,10 @@ nav {
    ========================================================================== */
 
 .profile-box {
-  background: #fff;
+  background: var(--color-surface);
   padding: 35px;
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-card);
   display: flex;
   gap: 35px;
   flex-wrap: wrap;
@@ -215,7 +301,7 @@ nav {
   height: 160px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #eee;
+  border: 3px solid var(--color-border-light);
 }
 
 .profile-info h2 {
@@ -232,12 +318,12 @@ nav {
 .section-title {
   margin: 35px 0 15px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #4fc08d;
+  border-bottom: 2px solid var(--color-accent-soft);
 }
 
 
 /* --------------------------------------------------------------------------
-   Visitor form
+   Comment / visitor form
    -------------------------------------------------------------------------- */
 
 .visitor-form {
@@ -255,18 +341,19 @@ nav {
 .visitor-form label {
   font-weight: 600;
   font-size: 14px;
-  color: #2c3e50;
+  color: var(--color-heading);
 }
 
 .visitor-form input[type="text"],
 .visitor-form input[type="email"] {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
-  background: #fff;
+  background: var(--color-surface);
+  color: var(--color-text);
   transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
 }
@@ -274,7 +361,7 @@ nav {
 .visitor-form input[type="text"]:focus,
 .visitor-form input[type="email"]:focus {
   outline: none;
-  border-color: #1abc9c;
+  border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.15);
 }
 
@@ -287,7 +374,7 @@ nav {
 
 .form-submit {
   padding: 10px 22px;
-  background-color: #1abc9c;
+  background-color: var(--color-accent);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -298,11 +385,11 @@ nav {
 }
 
 .form-submit:hover {
-  background-color: #16a085;
+  background-color: var(--color-accent-strong);
 }
 
 .form-submit:disabled {
-  background-color: #95a5a6;
+  background-color: var(--color-text-faint);
   cursor: not-allowed;
 }
 
@@ -312,63 +399,11 @@ nav {
 }
 
 .form-status.success {
-  color: #27ae60;
+  color: var(--color-success);
 }
 
 .form-status.error {
-  color: #e74c3c;
-}
-
-
-/* --------------------------------------------------------------------------
-   Visitor messages list
-   -------------------------------------------------------------------------- */
-
-.visitor-list .visitor-loading,
-.visitor-list .visitor-empty,
-.visitor-list .visitor-error {
-  margin: 0;
-  font-size: 14px;
-  color: #7f8c8d;
-}
-
-.visitor-list .visitor-error {
-  color: #e74c3c;
-}
-
-.visitor-entry {
-  padding: 14px 0;
-  border-bottom: 1px solid #ecf0f1;
-}
-
-.visitor-entry:last-child {
-  border-bottom: none;
-}
-
-.visitor-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-
-.visitor-meta strong {
-  color: #2c3e50;
-  font-size: 15px;
-}
-
-.visitor-meta time {
-  font-size: 12px;
-  color: #95a5a6;
-  white-space: nowrap;
-}
-
-.visitor-email {
-  margin: 0;
-  font-size: 14px;
-  color: #34495e;
-  word-break: break-all;
+  color: var(--color-danger);
 }
 
 
@@ -405,17 +440,17 @@ nav {
 #blogSearch {
   width: 100%;
   padding: 12px 18px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--color-border-light);
   border-radius: 10px;
   font-size: 16px;
-  color: #333;
-  background-color: #fff;
+  color: var(--color-text);
+  background-color: var(--color-surface);
   box-sizing: border-box;
   transition: all 0.3s ease;
 }
 
 #blogSearch:hover {
-  border-color: #b0b0b0;
+  border-color: var(--color-text-faint);
 }
 
 #blogSearch:focus {
@@ -425,23 +460,23 @@ nav {
 }
 
 #blogSearch::placeholder {
-  color: #aaa;
+  color: var(--color-text-faint);
   font-style: italic;
 }
 
 /* Table of contents for blog posts */
 .blog-toc {
-  background: #fff;
+  background: var(--color-surface);
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-card);
 }
 
 .blog-toc h3 {
   font-size: 18px;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #4fc08d;
+  border-bottom: 2px solid var(--color-accent-soft);
 }
 
 .blog-toc ul {
@@ -453,7 +488,7 @@ nav {
 }
 
 .blog-toc a {
-  color: #333;
+  color: var(--color-text);
   font-size: 15px;
   transition: color 0.3s ease;
 }
@@ -465,10 +500,10 @@ nav {
 
 /* Individual blog post card */
 .blog-card {
-  background: #fff;
+  background: var(--color-surface);
   padding: 25px;
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-card);
   margin-bottom: 25px;
   scroll-margin-top: 80px;
 }
@@ -479,7 +514,7 @@ nav {
 }
 
 .blog-date {
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 14px;
   margin-bottom: 12px;
 }
@@ -516,24 +551,24 @@ nav {
   width: 100%;
   min-width: 700px;
   border-collapse: collapse;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .table-wrapper th,
 .table-wrapper td {
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--color-border-light);
   padding: 12px 15px;
   text-align: left;
   font-size: 14px;
 }
 
 .table-wrapper th {
-  background-color: #f8f9fa;
+  background-color: var(--color-surface-alt);
   font-weight: 600;
 }
 
 .table-wrapper tr:nth-child(even) {
-  background-color: #f8f9fa;
+  background-color: var(--color-surface-alt);
 }
 
 
@@ -579,41 +614,42 @@ nav {
 
 .filter-btn {
   padding: 8px 16px;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--color-border);
   border-radius: 20px;
-  background: #fff;
-  color: #555;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .filter-btn:hover {
-  border-color: #1abc9c;
-  color: #1abc9c;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .filter-btn.active {
-  background: #1abc9c;
-  border-color: #1abc9c;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
   color: #fff;
 }
 
 .gallery-search {
   width: 260px;
   padding: 10px 16px;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
-  background: #fff;
+  background: var(--color-surface);
+  color: var(--color-text);
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .gallery-search:focus {
   outline: none;
-  border-color: #1abc9c;
+  border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.15);
 }
 
@@ -624,9 +660,9 @@ nav {
 }
 
 .gallery-item {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -634,7 +670,7 @@ nav {
 
 .gallery-item:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .gallery-item.hidden {
@@ -646,7 +682,7 @@ nav {
   height: 180px;
   object-fit: cover;
   display: block;
-  background: #eef1f5;
+  background: var(--color-surface-alt);
 }
 
 .gallery-info {
@@ -656,7 +692,7 @@ nav {
 .gallery-info h3 {
   margin: 0 0 6px;
   font-size: 16px;
-  color: #2c3e50;
+  color: var(--color-heading);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -665,7 +701,7 @@ nav {
 .gallery-info p {
   margin: 0;
   font-size: 13px;
-  color: #7f8c8d;
+  color: var(--color-text-muted);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -677,7 +713,7 @@ nav {
 .gallery-loading,
 .gallery-empty {
   text-align: center;
-  color: #7f8c8d;
+  color: var(--color-text-muted);
   padding: 40px 0;
   font-size: 15px;
 }
@@ -815,11 +851,12 @@ nav {
 .visitor-form textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
-  background: #fff;
+  background: var(--color-surface);
+  color: var(--color-text);
   transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
   resize: vertical;
@@ -827,7 +864,7 @@ nav {
 
 .visitor-form textarea:focus {
   outline: none;
-  border-color: #1abc9c;
+  border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.15);
 }
 
@@ -848,10 +885,10 @@ nav {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background: #fff;
+  background: var(--color-surface);
   padding: 28px 20px;
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-card);
   text-decoration: none;
   color: inherit;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -866,7 +903,7 @@ nav {
 
 .social-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  box-shadow: var(--shadow-card-hover);
   text-decoration: none;
 }
 
@@ -892,12 +929,12 @@ nav {
 .social-card h2 {
   font-size: 18px;
   margin-bottom: 6px;
-  color: #2c3e50;
+  color: var(--color-heading);
 }
 
 .social-card p {
   font-size: 13px;
-  color: #7f8c8d;
+  color: var(--color-text-muted);
   margin: 0;
   line-height: 1.5;
 }
@@ -919,7 +956,7 @@ nav {
 
 .qr-modal-content {
   position: relative;
-  background: #fff;
+  background: var(--color-surface);
   padding: 28px;
   border-radius: 12px;
   text-align: center;
@@ -930,7 +967,7 @@ nav {
 .qr-modal-content h3 {
   margin: 0 0 16px;
   font-size: 18px;
-  color: #2c3e50;
+  color: var(--color-heading);
 }
 
 .qr-modal-content img {
@@ -945,7 +982,7 @@ nav {
 .qr-modal-content p {
   margin: 14px 0 0;
   font-size: 14px;
-  color: #7f8c8d;
+  color: var(--color-text-muted);
 }
 
 .qr-modal-close {
@@ -955,11 +992,11 @@ nav {
   width: 32px;
   height: 32px;
   border: none;
-  background: #f0f0f0;
+  background: var(--color-surface-alt);
   border-radius: 50%;
   font-size: 22px;
   line-height: 1;
-  color: #555;
+  color: var(--color-text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -968,7 +1005,7 @@ nav {
 }
 
 .qr-modal-close:hover {
-  background: #e0e0e0;
+  background: var(--color-border-light);
 }
 
 .contact-email .blog-card p {
@@ -988,10 +1025,10 @@ nav {
 }
 
 .comment-card {
-  background: #fff;
+  background: var(--color-surface);
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-card);
 }
 
 .comment-header {
@@ -1005,19 +1042,19 @@ nav {
 
 .comment-author {
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-heading);
   font-size: 15px;
 }
 
 .comment-time {
   font-size: 13px;
-  color: #95a5a6;
+  color: var(--color-text-faint);
 }
 
 .comment-content {
   margin: 0;
   font-size: 15px;
-  color: #34495e;
+  color: var(--color-text-soft);
   line-height: 1.7;
   word-break: break-word;
 }
@@ -1026,13 +1063,13 @@ nav {
 .comment-empty,
 .comment-error {
   text-align: center;
-  color: #7f8c8d;
+  color: var(--color-text-muted);
   padding: 30px 0;
   font-size: 15px;
 }
 
 .comment-error {
-  color: #e74c3c;
+  color: var(--color-danger);
 }
 
 
@@ -1043,8 +1080,8 @@ nav {
 footer {
   text-align: center;
   padding: 25px;
-  background: #2c3e50;
-  color: #fff;
+  background: var(--color-nav-bg);
+  color: var(--color-nav-text);
   margin-top: 60px;
 }
 

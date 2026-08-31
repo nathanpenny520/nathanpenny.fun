@@ -1,4 +1,5 @@
 // Smooth-scroll to a blog post, leaving space for the sticky navigation bar.
+// Falls back to an instant jump when the visitor prefers reduced motion.
 function scrollToBlogPost(postId) {
   const post = document.getElementById(postId);
   if (!post) return;
@@ -6,7 +7,8 @@ function scrollToBlogPost(postId) {
   const nav = document.querySelector('nav');
   const offset = nav ? nav.offsetHeight + 20 : 80;
   const top = post.getBoundingClientRect().top + window.scrollY - offset;
-  window.scrollTo({ top: top, behavior: 'smooth' });
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: top, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
 }
 
 // Filter blog cards by the text entered in the sidebar search box.

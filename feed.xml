@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nathan Penny's personal website</title>
+    <link>https://nathanpenny.fun/blog</link>
+    <description>Nathan Penny's blog about anything fun.</description>
+    <language>en</language>
+    <atom:link href="https://nathanpenny.fun/feed.xml" rel="self" type="application/rss+xml"/>
+    <lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate>
+
+    <item>
+      <title>FIFA and UFO</title>
+      <link>https://nathanpenny.fun/blog#post-fifa-ufo</link>
+      <guid isPermaLink="false">post-fifa-ufo</guid>
+      <pubDate>Mon, 29 Jun 2026 00:00:00 +0000</pubDate>
+      <description>On board to the galaxy out of our solar system, hoping I can still watch the FIFA world cup on the UFO.</description>
+    </item>
+
+    <item>
+      <title>Poem of html</title>
+      <link>https://nathanpenny.fun/blog#post-poem-html</link>
+      <guid isPermaLink="false">post-poem-html</guid>
+      <pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate>
+      <description>A visual poem about writing HTML.</description>
+    </item>
+
+    <item>
+      <title>A fantastic anime show</title>
+      <link>https://nathanpenny.fun/blog#post-violet-evergarden</link>
+      <guid isPermaLink="false">post-violet-evergarden</guid>
+      <pubDate>Thu, 02 Jul 2026 00:00:00 +0000</pubDate>
+      <description>Violet Evergarden episode one - a former weapon becomes an Auto Memory Doll, ghostwriting letters she cannot yet understand.</description>
+    </item>
+
+    <item>
+      <title>The WanZai Song</title>
+      <link>https://nathanpenny.fun/blog#post-wanzai-song</link>
+      <guid isPermaLink="false">post-wanzai-song</guid>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
+      <description>A song that introduces the character of WanZai.</description>
+    </item>
+
+    <item>
+      <title>The Solar System in a Table</title>
+      <link>https://nathanpenny.fun/blog#post-solar-system</link>
+      <guid isPermaLink="false">post-solar-system</guid>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
+      <description>A quick reference table for the eight planets in our solar system, with rounded values.</description>
+    </item>
+  </channel>
+</rss>
