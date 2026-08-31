@@ -1,0 +1,22 @@
+// Wrangler config for the comments/visitor backend Worker.
+// Deploy from this directory:  npx wrangler deploy
+//
+// WARNING: the D1 binding below is what the Worker's code calls `env.DB`.
+// Deploying without it makes every /comments and / endpoint fail with 500.
+{
+  "name": "nathanpenny-api",
+  "main": "comments.js",
+  "compatibility_date": "2026-07-09",
+  "workers_dev": true,
+  "preview_urls": false,
+  // Keep dashboard-managed plain-text vars from being wiped on deploy.
+  // (Secrets like TURNSTILE_SECRET are never touched by deploy.)
+  "keep_vars": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nathanpenny",
+      "database_id": "a01603c4-40b4-41f9-bf73-bb9257a9155c"
+    }
+  ]
+}

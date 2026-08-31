@@ -28,7 +28,17 @@ The `visitors` table is assumed to already exist from your original worker.
 
 ## Deploy
 
-Replace your current Worker code with the contents of `comments.js` and deploy.
+The Worker is `nathanpenny-api`; the D1 database `nathanpenny` is bound as
+`env.DB` via `wrangler.jsonc`. Never deploy without that binding — every
+endpoint fails with 500 without it. From this directory:
+
+```sh
+npx wrangler deploy
+```
+
+The custom domain `workers.nathanpenny.fun` and the `TURNSTILE_SECRET` secret
+are managed outside this repo (dashboard / secret store) and survive deploys;
+check the secret with `npx wrangler secret list`.
 
 ## Turnstile (comment spam protection)
 
