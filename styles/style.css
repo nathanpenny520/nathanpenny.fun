@@ -412,7 +412,8 @@ nav {
   gap: 6px;
 }
 
-.visitor-form label {
+.visitor-form label,
+.visitor-form .form-row-title {
   font-weight: 600;
   font-size: 14px;
   color: var(--color-heading);

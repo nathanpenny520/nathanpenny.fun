@@ -2,7 +2,7 @@
 // Bump CACHE_VERSION whenever deployed assets change meaningfully; old
 // caches are deleted on activation.
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `nathanpenny-fun-${CACHE_VERSION}`;
 
 // Core assets precached at install time so the site shell works offline.
@@ -51,8 +51,11 @@ self.addEventListener('fetch', (event) => {
   // (analytics, the comments API, and the remote video are all cross-origin).
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  // Pages: network-first so deployments show up, cached copy as offline fallback.
-  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html')) {
+  // Pages and code files (css/js/json/xml): network-first so deployments show
+  // up immediately, with the cached copy as the offline fallback.
+  const isPage = event.request.mode === 'navigate' || url.pathname.endsWith('.html');
+  const isCode = /\.(css|js|json|xml)$/.test(url.pathname);
+  if (isPage || isCode) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -65,7 +68,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: cache-first, filled on first use (blog images, audio, ...).
+  // Static assets (images, audio, fonts): cache-first, filled on first use.
   event.respondWith(
     caches.match(event.request).then((hit) => hit || fetch(event.request).then((response) => {
       const copy = response.clone();

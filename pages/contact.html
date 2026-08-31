@@ -33,6 +33,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/svg+xml" href="../NP-logo.svg">
     <link rel="alternate" type="application/rss+xml" title="Nathan Penny's blog (RSS)" href="https://nathanpenny.fun/feed.xml">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="../scripts/main.js" defer></script>
   </head>
   <body>
@@ -51,7 +52,7 @@
           <li><a href="./contact.html">Contact</a></li>
         </ul>
         <button id="themeToggle" class="theme-toggle" type="button">
-          <i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i>
+          <i class="fa-solid fa-moon" aria-hidden="true"></i>
         </button>
       </div>
     </nav>
@@ -122,6 +123,10 @@
             <div class="form-row">
               <label for="commentContent">Comment</label>
               <textarea id="commentContent" name="content" rows="4" placeholder="Write something..." required></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-row-title">Human check</div>
+              <div class="cf-turnstile" data-sitekey="0x4AAAAAAEi9jEAVJcTDwgU0" data-action="comment" data-theme="auto"></div>
             </div>
             <div class="form-actions">
               <button type="submit" class="form-submit">Post Comment</button>

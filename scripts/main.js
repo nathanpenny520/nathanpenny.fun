@@ -286,9 +286,15 @@ function initCommentForm() {
     const name = document.getElementById('commentName').value.trim();
     const email = document.getElementById('commentEmail').value.trim();
     const content = document.getElementById('commentContent').value.trim();
+    const turnstileToken = form.querySelector('[name="cf-turnstile-response"]')?.value.trim() || '';
 
     if (!name || !email || !content) {
       showStatus(status, 'Please fill in all fields.', 'error');
+      return;
+    }
+
+    if (!turnstileToken) {
+      showStatus(status, 'Please complete the human check first.', 'error');
       return;
     }
 
@@ -301,7 +307,7 @@ function initCommentForm() {
       const response = await fetch(COMMENTS_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, content })
+        body: JSON.stringify({ name, email, content, 'cf-turnstile-response': turnstileToken })
       });
 
       const result = await response.json();
@@ -318,6 +324,8 @@ function initCommentForm() {
     } finally {
       submitButton.disabled = false;
       submitButton.textContent = 'Post Comment';
+      // Turnstile tokens are single-use: get a fresh one for the next attempt.
+      if (window.turnstile) window.turnstile.reset();
     }
   });
 }
@@ -350,14 +358,16 @@ function initQrModal() {
 }
 
 // ============================================================================
-// THEME TOGGLE (light / dark / follow system)
+// THEME TOGGLE (light <-> dark; first visit follows the system preference)
 // ============================================================================
 
 const THEME_KEY = 'theme';
 
-// Current explicit theme: "light", "dark", or undefined (follow system).
-function currentTheme() {
-  return document.documentElement.dataset.theme || null;
+// The theme currently on screen: an explicit choice, or the system default.
+function effectiveTheme() {
+  const explicit = document.documentElement.dataset.theme;
+  if (explicit === 'light' || explicit === 'dark') return explicit;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 // Apply an explicit theme, or clear it to follow the system preference.
@@ -370,41 +380,30 @@ function applyTheme(theme) {
   updateThemeToggle();
 }
 
+// The button shows what clicking will switch to: moon in light mode, sun in dark.
 function updateThemeToggle() {
   const button = document.getElementById('themeToggle');
   if (!button) return;
 
   const icon = button.querySelector('i');
-  const theme = currentTheme();
+  const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
 
   button.className = 'theme-toggle';
-  if (theme === 'light') {
-    icon.className = 'fa-solid fa-sun';
-    button.title = 'Theme: light. Click for dark.';
-    button.setAttribute('aria-label', button.title);
-  } else if (theme === 'dark') {
-    icon.className = 'fa-solid fa-moon';
-    button.title = 'Theme: dark. Click to follow system.';
-    button.setAttribute('aria-label', button.title);
-  } else {
-    icon.className = 'fa-solid fa-circle-half-stroke';
-    button.title = 'Theme: system. Click for light.';
-    button.setAttribute('aria-label', button.title);
-  }
+  icon.className = next === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+  button.title = `Switch to ${next} mode`;
+  button.setAttribute('aria-label', button.title);
 }
 
-// Cycle the theme: light -> dark -> follow system -> light.
 function initThemeToggle() {
   const button = document.getElementById('themeToggle');
   if (!button) return;
 
   updateThemeToggle();
   button.addEventListener('click', () => {
-    const next = currentTheme() === 'light' ? 'dark' : currentTheme() === 'dark' ? null : 'light';
+    const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
     applyTheme(next);
     try {
-      if (next) localStorage.setItem(THEME_KEY, next);
-      else localStorage.removeItem(THEME_KEY);
+      localStorage.setItem(THEME_KEY, next);
     } catch (error) {
       // Private browsing may block storage; the toggle still works until reload.
     }

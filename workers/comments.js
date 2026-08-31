@@ -1,6 +1,42 @@
 // Cloudflare Worker backend for the comments system.
 // Based on the existing visitor form worker, extended with /comments endpoints.
 
+// Turnstile server-side verification for POST /comments.
+const TURNSTILE_ACTION = "comment";
+// Production frontends only — never include localhost here.
+const TURNSTILE_HOSTNAMES = new Set([
+  "nathanpenny.fun",
+  "blog.nathanpenny.fun",
+  "nathanpenny520.github.io"
+]);
+
+// Returns true only when the token is present, single-use fresh, solved for
+// the expected action, and produced on an approved frontend hostname.
+// The secret lives in the Worker secret store: `wrangler secret put TURNSTILE_SECRET`.
+async function verifyTurnstile(env, token) {
+  if (!env.TURNSTILE_SECRET) return false;
+  if (typeof token !== "string" || token.length === 0 || token.length > 2048) return false;
+
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        secret: env.TURNSTILE_SECRET,
+        response: token
+      })
+    });
+    if (!response.ok) return false;
+
+    const result = await response.json();
+    return result.success === true
+      && result.action === TURNSTILE_ACTION
+      && TURNSTILE_HOSTNAMES.has(result.hostname);
+  } catch (error) {
+    return false;
+  }
+}
+
 export default {
   async fetch(request, env) {
     const allowedOrigins = [
@@ -43,7 +79,8 @@ export default {
         }
 
         if (request.method === "POST") {
-          const { name, email, content } = await request.json();
+          const body = await request.json();
+          const { name, email, content } = body;
 
           if (!name || !email || !content) {
             return new Response(
@@ -56,6 +93,17 @@ export default {
             return new Response(
               JSON.stringify({ error: "One or more fields are too long" }),
               { status: 400, headers: corsHeaders }
+            );
+          }
+
+          if (!(await verifyTurnstile(env, body["cf-turnstile-response"]))) {
+            const status = env.TURNSTILE_SECRET ? 403 : 500;
+            const message = env.TURNSTILE_SECRET
+              ? "Captcha verification failed. Please try again."
+              : "Server captcha configuration missing";
+            return new Response(
+              JSON.stringify({ error: message }),
+              { status: status, headers: corsHeaders }
             );
           }
 
