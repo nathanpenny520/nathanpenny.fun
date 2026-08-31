@@ -11,6 +11,7 @@ A hand-rolled static personal website + blog (`nathanpenny.fun`) with no build s
 There is no build, lint, or test tooling — nothing to install.
 
 - **Preview locally**: serve the repo root with any static file server, e.g. `python -m http.server 8080` (port 8080 is the dev origin allowed by the Worker's CORS list, so the visitor/comment features work locally too).
+- **Regenerate blog post pages**: `python3 tools/gen_post_pages.py` (see Blog content below).
 - **Deploy the site**: `git push origin main` — the host (Cloudflare Pages, plus a mirror on GitHub Pages) picks up the pushed files. Images, HTML, CSS, and JSON are pushed as-is.
 - **Deploy the Worker**: the code in `workers/comments.js` is deployed manually to Cloudflare (see `workers/README.md`); it is NOT part of the git-deployed static site.
 
@@ -54,7 +55,11 @@ The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css` (s
 
 ### Blog content
 
-Posts are static `<article class="blog-card" id="post-...">` blocks written directly into `pages/blog.html`. To add a post, add an article there and add a matching TOC entry in the `.blog-toc` sidebar (`onclick` calls `scrollToBlogPost('post-...')`, so the `id` must match).
+Posts are static `<article id="post-..." class="blog-card">` blocks written directly into `pages/blog.html`, and each also has a generated single-post page at `blog/<slug>/index.html` (slug = the id without the `post-` prefix). To publish or edit a post:
+
+1. Add/edit the article in `pages/blog.html` and a matching TOC entry in the `.blog-toc` sidebar (`onclick` calls `scrollToBlogPost('post-...')`, so the `id` must match).
+2. Add/edit its `<item>` in `feed.xml` — the item description doubles as the post's meta description.
+3. Run `python3 tools/gen_post_pages.py` from the repo root. It (re)generates the `blog/<slug>/` pages — full `<head>` with canonical URL, article og tags and BlogPosting JSON-LD, sidebar post list, newer/older links — and also refreshes `sitemap.xml`, upgrades `feed.xml` item links to the permalinks, and wraps each post title on the blog list page in a `rel=bookmark` permalink. The script is stdlib-only and idempotent.
 
 ## Backend (Cloudflare Worker)
 

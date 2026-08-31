@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <script>
+      // Apply the saved color theme before first paint to avoid a flash.
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <link rel="manifest" href="../../manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <link rel="apple-touch-icon" href="../../images/icon-180.png">
+    <title>The Solar System in a Table | Nathan Penny's blog</title>
+    <meta name="description" content="A quick reference table for the eight planets in our solar system, with rounded values.">
+    <meta name="author" content="Nathan Penny">
+    <link rel="canonical" href="https://nathanpenny.fun/blog/solar-system/">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Nathan Penny's personal website">
+    <meta property="og:title" content="The Solar System in a Table">
+    <meta property="og:description" content="A quick reference table for the eight planets in our solar system, with rounded values.">
+    <meta property="og:url" content="https://nathanpenny.fun/blog/solar-system/">
+    <meta property="og:image" content="https://nathanpenny.fun/images/og-image.jpg">
+    <meta property="article:published_time" content="2026-07-04">
+    <meta name="twitter:card" content="summary_large_image">
+    <link href="../../styles/style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="../../fonts/fontawesome/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="../../NP-logo.svg">
+    <link rel="alternate" type="application/rss+xml" title="Nathan Penny's blog (RSS)" href="https://nathanpenny.fun/feed.xml">
+    <script type="application/ld+json">
+    {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://nathanpenny.fun/blog/solar-system/"
+    },
+    "headline": "The Solar System in a Table",
+    "description": "A quick reference table for the eight planets in our solar system, with rounded values.",
+    "image": "https://nathanpenny.fun/images/og-image.jpg",
+    "author": {
+        "@type": "Person",
+        "name": "Nathan Penny",
+        "url": "https://nathanpenny.fun/about"
+    },
+    "publisher": {
+        "@type": "Person",
+        "name": "Nathan Penny"
+    },
+    "datePublished": "2026-07-04",
+    "dateModified": "2026-07-04"
+}
+    </script>
+    <script src="../../scripts/main.js" defer></script>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-container">
+        <a href="../../index.html" class="nav-brand" aria-label="Go to homepage">
+          <img class="site-logo" src="../../NP-logo.svg" alt="Nathan Penny logo">
+          <div class="logo">Nathan Penny's personal website FOR FUN</div>
+        </a>
+
+        <ul class="nav-list">
+          <li><a href="../../index.html">Home</a></li>
+          <li><a href="../../pages/about.html">About</a></li>
+          <li><a href="../../pages/blog.html">Blog</a></li>
+          <li><a href="../../pages/gallery.html">Gallery</a></li>
+          <li><a href="../../pages/contact.html">Contact</a></li>
+        </ul>
+        <button id="themeToggle" class="theme-toggle" type="button">
+          <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+      </div>
+    </nav>
+
+    <main class="container blog-layout">
+      <aside class="blog-sidebar">
+        <nav class="blog-toc">
+          <h3>Blog Posts</h3>
+          <ul>
+            <li><a href="../fifa-ufo/">FIFA and UFO</a></li>
+            <li><a href="../poem-html/">Poem of html</a></li>
+            <li><a href="../violet-evergarden/">A fantastic anime show</a></li>
+            <li><a href="../wanzai-song/">The WanZai Song</a></li>
+            <li><a href="../solar-system/" class="active" aria-current="page">The Solar System in a Table</a></li>
+          </ul>
+        </nav>
+        <p class="back-to-blog"><a href="../../pages/blog.html"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i> All posts</a></p>
+      </aside>
+
+      <div class="blog-main">
+        <article id="post-solar-system" class="blog-card">
+
+          <h3><a class="post-link" href="../../blog/solar-system/" rel="bookmark">The Solar System in a Table</a></h3>
+          <div class="blog-date">Time stamp: 2026-07-04</div>
+          <p>
+            Here is a quick reference table for the eight planets in our solar system. The values are rounded for simplicity.
+          </p>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Planet</th>
+                  <th>Diameter (km)</th>
+                  <th>Distance from Sun (million km)</th>
+                  <th>Moons</th>
+                  <th>Day Length</th>
+                  <th>Year Length</th>
+                  <th>Atmosphere</th>
+                  <th>Notable Feature</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Mercury</td>
+                  <td>4,880</td>
+                  <td>58</td>
+                  <td>0</td>
+                  <td>59 Earth days</td>
+                  <td>88 Earth days</td>
+                  <td>Extremely thin</td>
+                  <td>Smallest planet; fastest orbit</td>
+                </tr>
+                <tr>
+                  <td>Venus</td>
+                  <td>12,104</td>
+                  <td>108</td>
+                  <td>0</td>
+                  <td>243 Earth days</td>
+                  <td>225 Earth days</td>
+                  <td>Thick CO₂</td>
+                  <td>Hottest planet; spins backwards</td>
+                </tr>
+                <tr>
+                  <td>Earth</td>
+                  <td>12,742</td>
+                  <td>150</td>
+                  <td>1</td>
+                  <td>24 hours</td>
+                  <td>365.25 days</td>
+                  <td>Nitrogen &amp; Oxygen</td>
+                  <td>Only known planet with life</td>
+                </tr>
+                <tr>
+                  <td>Mars</td>
+                  <td>6,779</td>
+                  <td>228</td>
+                  <td>2</td>
+                  <td>24.6 hours</td>
+                  <td>687 Earth days</td>
+                  <td>Thin CO₂</td>
+                  <td>Largest volcano: Olympus Mons</td>
+                </tr>
+                <tr>
+                  <td>Jupiter</td>
+                  <td>139,820</td>
+                  <td>778</td>
+                  <td>95+</td>
+                  <td>9.9 hours</td>
+                  <td>11.9 Earth years</td>
+                  <td>Hydrogen &amp; Helium</td>
+                  <td>Great Red Spot; largest planet</td>
+                </tr>
+                <tr>
+                  <td>Saturn</td>
+                  <td>116,460</td>
+                  <td>1,434</td>
+                  <td>146+</td>
+                  <td>10.7 hours</td>
+                  <td>29.5 Earth years</td>
+                  <td>Hydrogen &amp; Helium</td>
+                  <td>Prominent ring system</td>
+                </tr>
+                <tr>
+                  <td>Uranus</td>
+                  <td>50,724</td>
+                  <td>2,873</td>
+                  <td>27</td>
+                  <td>17.2 hours</td>
+                  <td>84 Earth years</td>
+                  <td>Hydrogen, Helium, Methane</td>
+                  <td>Rotates on its side</td>
+                </tr>
+                <tr>
+                  <td>Neptune</td>
+                  <td>49,244</td>
+                  <td>4,495</td>
+                  <td>14</td>
+                  <td>16.1 hours</td>
+                  <td>165 Earth years</td>
+                  <td>Hydrogen, Helium, Methane</td>
+                  <td>Strongest winds in the solar system</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            A few takeaways: the inner planets (Mercury, Venus, Earth, Mars) are small, rocky, and close to the Sun. The outer planets (Jupiter, Saturn, Uranus, Neptune) are giant worlds made mostly of gas or ice, with many moons and ring systems. Even with rounded numbers, the size gap between Earth and Jupiter is astonishing.
+          </p>
+        
+        </article>
+
+        <nav class="post-nav" aria-label="Adjacent posts">
+        <a class="post-nav-link" href="../wanzai-song/">&laquo; The WanZai Song</a>
+        <span class="post-nav-placeholder">oldest post &raquo;</span>
+        </nav>
+      </div>
+    </main>
+
+    <footer>
+      <img class="footer-logo" src="../../NP-logo.svg" alt="Nathan Penny logo">
+      <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
+    </footer>
+  </body>
+</html>
