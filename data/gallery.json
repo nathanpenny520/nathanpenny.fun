@@ -1,7 +1,7 @@
 [
   {
     "id": "nathan-avatar",
-    "src": "../images/NathanPenny.png",
+    "src": "../images/NathanPenny.webp",
     "title": "Nathan Penny",
     "description": "Personal avatar used across the site.",
     "category": "portrait",
@@ -17,7 +17,7 @@
   },
   {
     "id": "poem-of-html",
-    "src": "../images/blog-img/2026-06-30/poem-of-html.png",
+    "src": "../images/blog-img/2026-06-30/poem-of-html.webp",
     "title": "Poem of HTML",
     "description": "Visual poem about HTML and web development.",
     "category": "art",
@@ -25,26 +25,26 @@
   },
   {
     "id": "ufo-up",
-    "src": "../images/blog-img/2026-06-29/UFO-up.png",
+    "src": "../images/blog-img/2026-06-29/UFO-up.webp",
     "title": "UFO Up",
-    "description": "UFO pixel art facing upward.",
-    "category": "pixel",
+    "description": "A UFO hovering over the Tsinghua gate at night.",
+    "category": "photo",
     "date": "2026-06-29"
   },
   {
     "id": "ufo-down",
-    "src": "../images/blog-img/2026-06-29/UFO-down.png",
+    "src": "../images/blog-img/2026-06-29/UFO-down.webp",
     "title": "UFO Down",
-    "description": "UFO pixel art facing downward.",
-    "category": "pixel",
+    "description": "The view looking down from the UFO.",
+    "category": "photo",
     "date": "2026-06-29"
   },
   {
     "id": "ufo-inside",
-    "src": "../images/blog-img/2026-06-29/UFO-inside.png",
+    "src": "../images/blog-img/2026-06-29/UFO-inside.webp",
     "title": "UFO Inside",
-    "description": "Interior view of the UFO pixel art.",
-    "category": "pixel",
+    "description": "Interior view of the UFO.",
+    "category": "photo",
     "date": "2026-06-29"
   }
 ]

@@ -43,42 +43,8 @@ function filterBlogs() {
   gtag('config', GA_ID);
 })();
 
-// Cloudflare Worker endpoint that handles visitor form submissions.
+// Cloudflare Worker endpoint that handles comment submissions.
 const API_URL = 'https://workers.nathanpenny.fun';
-
-// Fetch visitor messages from the backend and render them in the About page.
-async function loadVisitorMessages() {
-  const list = document.getElementById('visitorList');
-  if (!list) return;
-
-  try {
-    const response = await fetch(API_URL);
-    if (!response.ok) throw new Error('Network response was not ok');
-
-    const data = await response.json();
-    list.innerHTML = '';
-
-    if (!Array.isArray(data) || data.length === 0) {
-      list.innerHTML = '<p class="visitor-empty">No messages yet. Be the first one!</p>';
-      return;
-    }
-
-    data.forEach(item => {
-      const entry = document.createElement('div');
-      entry.className = 'visitor-entry';
-      entry.innerHTML = `
-        <div class="visitor-meta">
-          <strong>${escapeHtml(item.name)}</strong>
-          <time>${new Date(item.created_at).toLocaleString()}</time>
-        </div>
-        <p class="visitor-email">${escapeHtml(item.email)}</p>
-      `;
-      list.appendChild(entry);
-    });
-  } catch (error) {
-    list.innerHTML = `<p class="visitor-error">Failed to load messages: ${escapeHtml(error.message)}</p>`;
-  }
-}
 
 // Convert special HTML characters to entities so user content cannot inject markup.
 function escapeHtml(text) {
@@ -86,53 +52,6 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = String(text);
   return div.innerHTML;
-}
-
-// Bind the visitor form on the About page and POST its data to the backend.
-function initVisitorForm() {
-  const form = document.getElementById('visitorForm');
-  const status = document.getElementById('formStatus');
-  if (!form) return;
-
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    const name = document.getElementById('visitorName').value.trim();
-    const email = document.getElementById('visitorEmail').value.trim();
-
-    if (!name || !email) {
-      showStatus(status, 'Please fill in all fields.', 'error');
-      return;
-    }
-
-    const submitButton = form.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    submitButton.textContent = 'Submitting...';
-    showStatus(status, '', '');
-
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Submission failed');
-      }
-
-      form.reset();
-      showStatus(status, 'Submitted successfully!', 'success');
-      loadVisitorMessages();
-    } catch (error) {
-      showStatus(status, 'Error: ' + error.message, 'error');
-    } finally {
-      submitButton.disabled = false;
-      submitButton.textContent = 'Submit';
-    }
-  });
 }
 
 // Update the small status text next to the submit button.
@@ -430,13 +349,9 @@ function initQrModal() {
 
 // Initialize page-specific features once the DOM is ready.
 window.addEventListener('DOMContentLoaded', () => {
-  initVisitorForm();
-  loadVisitorMessages();
   loadGallery();
   initGallerySearch();
   initCommentForm();
   loadComments();
   initQrModal();
 });
-
-console.log("script loads successfully!");

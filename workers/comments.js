@@ -24,6 +24,14 @@ export default {
 
     const url = new URL(request.url);
 
+    // Reject oversized payloads early so the database cannot be flooded.
+    const MAX_LENGTHS = { name: 50, email: 200, content: 2000 };
+    function hasInvalidLength(fields) {
+      return Object.entries(MAX_LENGTHS).some(
+        ([field, max]) => fields[field] !== undefined && String(fields[field]).length > max
+      );
+    }
+
     try {
       // Comments API (used by contact.html)
       if (url.pathname === "/comments") {
@@ -40,6 +48,13 @@ export default {
           if (!name || !email || !content) {
             return new Response(
               JSON.stringify({ error: "All fields are required" }),
+              { status: 400, headers: corsHeaders }
+            );
+          }
+
+          if (hasInvalidLength({ name, email, content })) {
+            return new Response(
+              JSON.stringify({ error: "One or more fields are too long" }),
               { status: 400, headers: corsHeaders }
             );
           }
@@ -71,6 +86,13 @@ export default {
           );
         }
 
+        if (hasInvalidLength({ name, email })) {
+          return new Response(
+            JSON.stringify({ error: "One or more fields are too long" }),
+            { status: 400, headers: corsHeaders }
+          );
+        }
+
         await env.DB.prepare("INSERT INTO visitors (name, email) VALUES (?, ?)")
                     .bind(name, email)
                     .run();
@@ -82,7 +104,10 @@ export default {
       }
 
       if (request.method === "GET") {
-        const { results } = await env.DB.prepare("SELECT * FROM visitors ORDER BY created_at DESC").all();
+        // Email is deliberately excluded: this endpoint is publicly readable.
+        const { results } = await env.DB.prepare(
+          "SELECT id, name, created_at FROM visitors ORDER BY created_at DESC"
+        ).all();
         return new Response(JSON.stringify(results), { headers: corsHeaders });
       }
 
