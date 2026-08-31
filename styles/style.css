@@ -43,7 +43,10 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  /* Auto dark: follow the system unless the visitor forced a light theme */
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
     /* Surfaces */
     --color-bg: #171d24;
     --color-surface: #222a33;
@@ -85,6 +88,56 @@
   .social-douyin {
     box-shadow: inset 0 0 0 1px var(--color-border);
   }
+}
+
+/* Manual dark theme (site toggle) — keep this block in sync with the media
+   query block above */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --color-bg: #171d24;
+  --color-surface: #222a33;
+  --color-surface-alt: #2b343e;
+
+  /* Text */
+  --color-text: #ccd4dc;
+  --color-text-soft: #b8c2cc;
+  --color-text-muted: #8a97a4;
+  --color-text-faint: #66727e;
+  --color-heading: #e8edf2;
+
+  /* Links & accents */
+  --color-link: #6ab0f3;
+  --color-link-hover: #9ccaf5;
+  --color-accent: #1abc9c;
+  --color-accent-strong: #48d1b4;
+  --color-accent-soft: #4fc08d;
+
+  /* Status */
+  --color-success: #2ecc71;
+  --color-danger: #ff6f61;
+
+  /* Borders */
+  --color-border: #3b4550;
+  --color-border-light: #303a44;
+  --color-divider: #2c353f;
+
+  /* Nav & footer band */
+  --color-nav-bg: #10161c;
+  --color-nav-text: #e8edf2;
+
+  /* Shadows */
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme="dark"] .social-douyin {
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 html {
@@ -189,6 +242,27 @@ nav {
 .nav-list li a:hover {
   color: var(--color-accent-soft);
   text-decoration: none;
+}
+
+/* Light/dark theme toggle in the nav bar */
+.theme-toggle {
+  border: none;
+  background: transparent;
+  color: var(--color-nav-text);
+  font-size: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease, background 0.2s ease;
+}
+
+.theme-toggle:hover {
+  color: var(--color-accent-soft);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 768px) {
@@ -1098,4 +1172,162 @@ footer {
 footer p {
   margin: 0;
   font-size: 14px;
+}
+
+
+/* ==========================================================================
+   WIDGETS: PROGRESS BAR, BACK TO TOP, UFO EASTER EGG, TOAST
+   ========================================================================== */
+
+/* Blog reading progress bar (fixed at the very top of the viewport) */
+#readingProgress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+/* Highlight the table-of-contents entry for the post currently on screen */
+.blog-toc a.active {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* Estimated reading time appended to each post date line */
+.reading-time {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Floating back-to-top button */
+#backToTop {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: var(--shadow-card-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.2s ease;
+  z-index: 900;
+}
+
+#backToTop.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+#backToTop:hover {
+  background: var(--color-accent-strong);
+}
+
+/* The wandering UFO: flies across the screen, visitors can click to catch it */
+.ufo {
+  position: fixed;
+  top: 12vh;
+  left: 0;
+  border: none;
+  background: transparent;
+  font-size: 36px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 1100;
+  animation: ufo-fly 9s linear forwards;
+}
+
+.ufo.ufo-rtl {
+  animation-name: ufo-fly-rtl;
+}
+
+/* Gentle vertical wobble while flying */
+.ufo span {
+  display: inline-block;
+  animation: ufo-bob 1.6s ease-in-out infinite;
+}
+
+/* Caught: quick beam-flash then zoom away */
+.ufo.caught {
+  animation: ufo-caught 0.7s ease-in forwards;
+}
+
+.ufo.caught::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 3px;
+  height: 45vh;
+  background: linear-gradient(var(--color-accent-soft), transparent);
+  transform: translateX(-50%);
+}
+
+@keyframes ufo-fly {
+  from { transform: translateX(-80px); }
+  to   { transform: translateX(calc(100vw + 80px)); }
+}
+
+@keyframes ufo-fly-rtl {
+  from { transform: translateX(calc(100vw + 80px)); }
+  to   { transform: translateX(-80px); }
+}
+
+@keyframes ufo-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+@keyframes ufo-caught {
+  40% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(0.2) translateY(-40vh); opacity: 0; }
+}
+
+/* Small feedback toast */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translate(-50%, 16px);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-light);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card-hover);
+  padding: 12px 20px;
+  font-size: 14px;
+  max-width: min(90vw, 420px);
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 1200;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #backToTop,
+  .toast {
+    transition: none;
+  }
 }

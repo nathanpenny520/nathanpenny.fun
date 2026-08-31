@@ -2,8 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <script>
+      // Apply the saved color theme before first paint to avoid a flash.
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <link rel="apple-touch-icon" href="../images/icon-180.png">
     <title>Blog | Nathan Penny's personal website</title>
     <meta name="description" content="Nathan Penny's blog about anything fun.">
     <meta name="keywords" content="html,css,javascript,blog">
@@ -40,6 +50,9 @@
           <li><a href="./gallery.html">Gallery</a></li>
           <li><a href="./contact.html">Contact</a></li>
         </ul>
+        <button id="themeToggle" class="theme-toggle" type="button">
+          <i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i>
+        </button>
       </div>
     </nav>
 
