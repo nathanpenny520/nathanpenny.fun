@@ -34,9 +34,11 @@ Friendly URLs (`/about`, `/blog`, ...) are mapped to the `pages/` files by `_red
 
 `manifest.json` + `sw.js` (service worker) + `images/icon-{180,192,512}.png` make the site installable and available offline. `sw.js` precaches the site shell and serves pages network-first (so deploys show up) and static assets cache-first. Bump `CACHE_VERSION` in `sw.js` when a deploy changes cached assets in a way users must see immediately.
 
-### Single stylesheet
+### Stylesheets
 
-`styles/style.css` is the only CSS file, organized top-to-bottom by page into sections marked with banner comments: `GLOBAL BASICS & RESETS`, `LAYOUT`, `HEADER & NAVIGATION`, `ABOUT PAGE`, `BLOG PAGE`, `GALLERY PAGE`, `CONTACT PAGE`, `COMMENTS`, `FOOTER`, `WIDGETS: PROGRESS BAR, BACK TO TOP, UFO EASTER EGG, TOAST`. All colors are CSS custom properties defined in `:root`; the dark palette lives in TWO sync'd blocks — `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])` (auto) and `:root[data-theme="dark"]` (manual toggle) — keep them in sync when changing colors. Add new styles under the matching section banner rather than at the end of the file.
+`styles/style.css` is the site's own stylesheet, organized top-to-bottom by page into sections marked with banner comments: `GLOBAL BASICS & RESETS`, `LAYOUT`, `HEADER & NAVIGATION`, `ABOUT PAGE`, `BLOG PAGE`, `GALLERY PAGE`, `CONTACT PAGE`, `COMMENTS`, `FOOTER`, `WIDGETS: PROGRESS BAR, BACK TO TOP, UFO EASTER EGG, TOAST`. All colors are CSS custom properties defined in `:root`; the dark palette lives in TWO sync'd blocks — `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])` (auto) and `:root[data-theme="dark"]` (manual toggle) — keep them in sync when changing colors. Add new styles under the matching section banner rather than at the end of the file.
+
+The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css` (self-hosted Font Awesome 6.5.2, see Other notes).
 
 ### Single script
 
@@ -71,5 +73,6 @@ Schema (created manually in D1, see `workers/README.md`): a `visitors` table and
 
 - `audio/` holds a single mp3 used by one blog post; `pdfs/` and `docs/` hold the CV download.
 - `learning-resource/` is gitignored (personal study notes) and is not part of the site.
-- Google Analytics 4 is loaded in `main.js` with a hardcoded measurement ID (`G-5X78JT0JSQ`).
+- Google Analytics 4 is loaded in `main.js` with a hardcoded measurement ID (`G-5X78JT0JSQ`), deferred until after window `load` + idle so unreachable regions (mainland China) don't stall page load. Cloudflare Web Analytics is also active, auto-injected by the Cloudflare dashboard.
+- Third-party assets are self-hosted under `fonts/` for China accessibility: Open Sans (latin 400, the only weight in use) via a `@font-face` at the top of `style.css`, and Font Awesome 6.5.2 as a vendored copy in `fonts/fontawesome/` (woff2 only; `fa-regular` is unused but declared). The pages load no CSS/JS from external CDNs.
 - The site logo is `NP-logo.svg`; `images/NathanPenny.png` is the avatar used in About/Gallery.

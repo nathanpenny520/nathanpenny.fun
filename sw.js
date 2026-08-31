@@ -2,7 +2,7 @@
 // Bump CACHE_VERSION whenever deployed assets change meaningfully; old
 // caches are deleted on activation.
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `nathanpenny-fun-${CACHE_VERSION}`;
 
 // Core assets precached at install time so the site shell works offline.
@@ -14,6 +14,12 @@ const PRECACHE = [
   './pages/gallery.html',
   './pages/contact.html',
   './styles/style.css',
+  './fonts/open-sans-latin-400.woff2',
+  './fonts/fontawesome/css/all.min.css',
+  './fonts/fontawesome/webfonts/fa-solid-900.woff2',
+  './fonts/fontawesome/webfonts/fa-brands-400.woff2',
+  './fonts/fontawesome/webfonts/fa-regular-400.woff2',
+  './fonts/fontawesome/webfonts/fa-v4compatibility.woff2',
   './scripts/main.js',
   './data/gallery.json',
   './feed.xml',

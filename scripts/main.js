@@ -29,20 +29,38 @@ function filterBlogs() {
   }
 }
 
-// Load Google Analytics 4 tracking script asynchronously.
+// Load Google Analytics 4 tracking script only after the page has fully
+// loaded and the browser is idle. googletagmanager.com is unreachable in
+// some regions (e.g. mainland China); loading that late keeps a hanging
+// request off the critical path there, while visits that can reach Google
+// are still measured normally. (Cloudflare Web Analytics stays instant.)
 (function() {
   const GA_ID = 'G-5X78JT0JSQ';
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
-  document.head.appendChild(script);
 
-  window.dataLayer = window.dataLayer || [];
-  function gtag() {
-    window.dataLayer.push(arguments);
+  // Safari lacks requestIdleCallback; a short timeout is an adequate stand-in.
+  const whenIdle = window.requestIdleCallback
+    ? function(cb) { window.requestIdleCallback(cb, { timeout: 3000 }); }
+    : function(cb) { window.setTimeout(cb, 1500); };
+
+  function loadGa() {
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      window.dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', GA_ID);
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+    document.head.appendChild(script);
   }
-  gtag('js',new Date());
-  gtag('config', GA_ID);
+
+  if (document.readyState === 'complete') {
+    whenIdle(loadGa);
+  } else {
+    window.addEventListener('load', function() { whenIdle(loadGa); }, { once: true });
+  }
 })();
 
 // Cloudflare Worker endpoint that handles comment submissions.

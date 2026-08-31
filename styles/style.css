@@ -2,6 +2,18 @@
    GLOBAL BASICS & RESETS
    ========================================================================== */
 
+/* Self-hosted Open Sans (latin subset, weight 400 — the only weight in use;
+   bolder text is synthesized by the browser, exactly as with the old Google
+   Fonts stylesheet). Kept local so the site loads in regions where Google
+   services are unreachable. CJK glyphs fall through to "Microsoft Yahei". */
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/open-sans-latin-400.woff2") format("woff2");
+}
+
 :root {
   color-scheme: light dark;
 
