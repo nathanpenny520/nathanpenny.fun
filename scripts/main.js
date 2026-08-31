@@ -805,15 +805,29 @@ function initStarField() {
     }
   }
 
+  // Rebuild the starfield once the page has fully loaded and laid out: at
+  // DOMContentLoaded time the canvas dimensions can still be 0 (web font and
+  // layout pending), which would leave an empty sky until the next resize.
+  let layoutTimer = 0;
+  function scheduleResize() {
+    if (layoutTimer) cancelAnimationFrame(layoutTimer);
+    layoutTimer = requestAnimationFrame(resize);
+  }
+
   resize();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', scheduleResize);
+  window.addEventListener('load', scheduleResize);
   window.addEventListener('scroll', () => { state.scrollY = window.scrollY; }, { passive: true });
 
   if (reducedMotion) return;  // a still sky, drawn once by resize() above
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stop();
-    else start();
+    if (document.hidden) {
+      stop();
+    } else {
+      start();
+      layoutTimer = requestAnimationFrame(resize);  // stars may need rebuilding after the tab slept
+    }
   });
 
   document.addEventListener('mousemove', (event) => {

@@ -620,8 +620,8 @@ nav {
 }
 
 @keyframes impact-wave {
-  from { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
-  to   { opacity: 0; transform: translate(-50%, -50%) scale(24); }
+  from { opacity: 0.9; box-shadow: 0 0 10px 0 rgba(255, 190, 120, 0.7); }
+  to   { opacity: 0; box-shadow: 0 0 120px 60px rgba(255, 190, 120, 0); }
 }
 
 @keyframes impact-shake {
