@@ -15,3 +15,5 @@ Thumbs.db
 # Project specific
 /learning-resource/
 roadmap.md
+# Wrangler local cache
+.wrangler/
