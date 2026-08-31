@@ -19,12 +19,13 @@ There is no build, lint, or test tooling — nothing to install.
 
 ### Static pages
 
-Five pages share an identical, hand-copied `nav` + `footer` block (there is no templating):
+Six pages share an identical, hand-copied `nav` + `footer` block (there is no templating):
 
 - `index.html` — home
 - `pages/about.html` — profile and CV download
 - `pages/blog.html` — all blog posts as inline `<article>` blocks
 - `pages/gallery.html` — image grid + lightbox
+- `pages/games.html` — the games page (UFO Battle shooter; more games can be added as `.game-card` blocks)
 - `pages/contact.html` — social links, comment form
 
 Because pages live one level deep, **paths inside `pages/*.html` use `../` prefixes** for CSS, JS, images, and logo; `index.html` uses plain `./`. When adding a new page, copy the nav/footer from an existing page and fix the `../` prefixes.
@@ -41,9 +42,9 @@ Friendly URLs (`/about`, `/blog`, ...) are mapped to the `pages/` files by `_red
 
 The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css` (self-hosted Font Awesome 6.5.2, see Other notes).
 
-### Single script
+### Scripts
 
-`scripts/main.js` is the only JS file, loaded with `defer` on every page. It handles GA4, blog scroll/search, gallery + lightbox, comments, the WeChat QR modal, the theme toggle (light/dark/system, persisted in `localStorage`), blog reading extras (progress bar, TOC scrollspy, reading time, back-to-top), the UFO easter egg, and service-worker registration. Each page's `<head>` also contains a tiny inline script that applies the saved theme before first paint to avoid a flash — update it in all five pages if the `theme` storage key changes. Key patterns:
+`scripts/main.js` is loaded with `defer` on every page. It handles GA4, blog scroll/search, gallery + lightbox, comments, the WeChat QR modal, the theme toggle (light/dark/system, persisted in `localStorage`), blog reading extras (progress bar, TOC scrollspy, reading time, back-to-top), the home starfield (full-page dark-mode canvas: twinkling stars, meteors, the occasional rock that hits the page — `#starField` + `skyBuildStars`/`skyDrawFrame`/`initStarField`, dark-mode only via CSS opacity), scroll reveal (`[data-reveal]`), the UFO easter egg, and service-worker registration. `scripts/games.js` is loaded ONLY by `pages/games.html`; everything is wrapped in an IIFE guarded by an element null-check, so other pages never run it. Each page's `<head>` also contains a tiny inline script that applies the saved theme before first paint to avoid a flash — update it in all five pages if the `theme` storage key changes. Key patterns:
 
 - Everything is initialized in the `DOMContentLoaded` listener at the bottom.
 - Each feature is guarded by `document.getElementById(...)` null-checks, so the one shared script can run on every page without erroring where a feature doesn't exist. Match this pattern for new features.
