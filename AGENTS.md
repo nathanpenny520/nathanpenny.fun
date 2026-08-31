@@ -29,7 +29,7 @@ Five pages share an identical, hand-copied `nav` + `footer` block (there is no t
 
 Because pages live one level deep, **paths inside `pages/*.html` use `../` prefixes** for CSS, JS, images, and logo; `index.html` uses plain `./`. When adding a new page, copy the nav/footer from an existing page and fix the `../` prefixes.
 
-Friendly URLs (`/about`, `/blog`, ...) are mapped to the `pages/` files by `_redirects`.
+Friendly URLs (`/about`, `/blog`, ...) are mapped to the `pages/` files by `_redirects`. `404.html` (UFO-themed) is served with HTTP 404 for any URL matching no real asset — it uses root-absolute asset paths because it renders at arbitrary depths.
 
 ### PWA
 
