@@ -810,7 +810,8 @@ html {
    BLOG PAGE
    ========================================================================== */
 
-/* Two-column layout: sticky sidebar + scrollable article list */
+/* Two-column layout used by the single-post pages: sticky sidebar (post TOC)
+   + article. The blog list page is single-column (.blog-page) instead. */
 .container.blog-layout {
   display: flex;
   align-items: flex-start;
@@ -821,7 +822,9 @@ html {
   width: 260px;
   flex-shrink: 0;
   position: sticky;
-  top: 80px;
+  /* Stick below the real nav bar (height measured into --nav-height by
+     main.js) so the two never overlap while scrolling. */
+  top: calc(var(--nav-height, 70px) + 20px);
   align-self: flex-start;
 }
 
@@ -925,22 +928,42 @@ html {
   }
 }
 
-/* Blog search box inside the sidebar */
-.search-container {
-  margin-bottom: 20px;
-  width: 100%;
+/* Blog list page: single centered column — heading, search bar, then the
+   summary cards. No sidebar; the post list doubles as the index. */
+.blog-page {
+  max-width: 820px;
+}
+
+.blog-header {
+  margin-bottom: 5px;
+}
+
+/* Blog search bar above the post list */
+.blog-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 0 10px;
+}
+
+.blog-search > .fa-magnifying-glass {
+  position: absolute;
+  left: 17px;
+  color: var(--color-text-faint);
+  font-size: 15px;
+  pointer-events: none;
 }
 
 #blogSearch {
   width: 100%;
-  padding: 12px 18px;
+  padding: 13px 46px 13px 43px;
   border: 2px solid var(--color-border-light);
-  border-radius: 10px;
+  border-radius: 999px;
   font-size: 16px;
   color: var(--color-text);
   background-color: var(--color-surface);
   box-sizing: border-box;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 #blogSearch:hover {
@@ -955,7 +978,40 @@ html {
 
 #blogSearch::placeholder {
   color: var(--color-text-faint);
-  font-style: italic;
+}
+
+/* Round clear ("x") button inside the search bar; shown only while typing */
+.blog-search-clear {
+  position: absolute;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-faint);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.blog-search-clear[hidden] {
+  display: none;
+}
+
+.blog-search-clear:hover {
+  color: var(--color-text);
+  background: var(--color-surface-alt);
+}
+
+/* Search feedback line: match count or empty-state message while searching */
+.blog-search-meta {
+  margin: 0 0 20px;
+  color: var(--color-text-muted);
+  font-size: 14px;
 }
 
 /* Table of contents for blog posts */
@@ -1261,20 +1317,26 @@ html {
   font-size: 15px;
 }
 
-/* Lightbox overlay */
+/* Lightbox overlay — a native <dialog> stretched over the viewport
+   (resets the UA dialog styles: border, white background, fit-content sizing) */
 .lightbox {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: none;
   z-index: 1000;
   background: rgba(0, 0, 0, 0.9);
-  display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px;
 }
 
-.lightbox[hidden] {
-  display: none;
+.lightbox[open] {
+  display: flex;
 }
 
 .lightbox-content {
@@ -1497,16 +1559,21 @@ html {
 .qr-modal {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: none;
   z-index: 1000;
   background: rgba(0, 0, 0, 0.85);
-  display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
 }
 
-.qr-modal[hidden] {
-  display: none;
+.qr-modal[open] {
+  display: flex;
 }
 
 .qr-modal-content {

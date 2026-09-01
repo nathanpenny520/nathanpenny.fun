@@ -1,27 +1,56 @@
-// Filter blog cards by the text entered in the sidebar search box.
+// Filter blog cards by the text entered in the search bar above the list,
+// and keep the feedback line + clear button in sync.
 function filterBlogs() {
   const searchInput = document.getElementById('blogSearch');
   if (!searchInput) return;
 
   const query = searchInput.value.toLowerCase().trim();
-  const blogMain = document.querySelector('.blog-main');
+  const blogMain = document.querySelector('.blog-page');
   if (!blogMain) return;
 
-  const blogCards = blogMain.getElementsByClassName('blog-card');
+  const blogCards = blogMain.querySelectorAll('.blog-card');
+  let visible = 0;
 
-  for (let i = 0; i < blogCards.length; i++) {
-    const card = blogCards[i];
-    const cardText = card.textContent.toLowerCase();
-    card.style.display = cardText.includes(query) ? "" : "none";
+  blogCards.forEach(card => {
+    const show = card.textContent.toLowerCase().includes(query);
+    card.style.display = show ? "" : "none";
+    if (show) visible++;
+  });
+
+  const clearButton = document.getElementById('blogSearchClear');
+  if (clearButton) clearButton.hidden = query === '';
+
+  // Feedback line: hidden normally, match count (or an empty-state message)
+  // while a search is active.
+  const meta = document.getElementById('blogSearchMeta');
+  if (!meta) return;
+
+  if (query === '') {
+    meta.hidden = true;
+  } else if (visible === 0) {
+    meta.hidden = false;
+    meta.textContent = `No posts match “${searchInput.value.trim()}”.`;
+  } else {
+    meta.hidden = false;
+    meta.textContent = `Found ${visible} ${visible === 1 ? 'post' : 'posts'} matching “${searchInput.value.trim()}”.`;
   }
 }
 
-// Bind the blog search box (listener lives here instead of an inline handler).
+// Bind the blog search bar (listeners live here instead of inline handlers).
 function initBlogSearch() {
   const searchInput = document.getElementById('blogSearch');
   if (!searchInput) return;
 
   searchInput.addEventListener('input', filterBlogs);
+
+  const clearButton = document.getElementById('blogSearchClear');
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      searchInput.value = '';
+      filterBlogs();
+      searchInput.focus();
+    });
+  }
 }
 
 // Publish the sticky nav's height as a CSS custom property so style.css can
@@ -208,9 +237,14 @@ function initLightbox() {
     if (event.target === lightbox) closeLightbox();
   });
 
+  // Esc and focus restore are native to <dialog>; reset state on close.
+  lightbox.addEventListener('close', () => {
+    document.body.style.overflow = '';
+    currentLightboxIndex = -1;
+  });
+
   document.addEventListener('keydown', (event) => {
-    if (lightbox.hidden) return;
-    if (event.key === 'Escape') closeLightbox();
+    if (!lightbox.open) return;
     if (event.key === 'ArrowLeft') navigateLightbox(-1);
     if (event.key === 'ArrowRight') navigateLightbox(1);
   });
@@ -222,17 +256,17 @@ function openLightbox(index) {
 
   currentLightboxIndex = index;
   showLightboxImage(index);
-  lightbox.hidden = false;
-  document.body.style.overflow = 'hidden';
+  if (!lightbox.open) {
+    lightbox.showModal();
+    document.body.style.overflow = 'hidden';
+  }
 }
 
 function closeLightbox() {
   const lightbox = document.getElementById('lightbox');
-  if (!lightbox) return;
+  if (!lightbox || !lightbox.open) return;
 
-  lightbox.hidden = true;
-  document.body.style.overflow = '';
-  currentLightboxIndex = -1;
+  lightbox.close();
 }
 
 function navigateLightbox(direction) {
@@ -372,13 +406,14 @@ function initQrModal() {
     imgEl.src = trigger.dataset.qrImg || '';
     imgEl.alt = trigger.dataset.qrAlt || titleEl.textContent;
     modal.setAttribute('aria-label', titleEl.textContent);
-    modal.hidden = false;
-    document.body.style.overflow = 'hidden';
+    if (!modal.open) {
+      modal.showModal();
+      document.body.style.overflow = 'hidden';
+    }
   }
 
   function closeModal() {
-    modal.hidden = true;
-    document.body.style.overflow = '';
+    modal.close();
   }
 
   triggers.forEach((trigger) => trigger.addEventListener('click', () => openModal(trigger)));
@@ -386,8 +421,9 @@ function initQrModal() {
   modal.addEventListener('click', (event) => {
     if (event.target === modal) closeModal();
   });
-  document.addEventListener('keydown', (event) => {
-    if (!modal.hidden && event.key === 'Escape') closeModal();
+  // Esc and focus restore are native to <dialog>.
+  modal.addEventListener('close', () => {
+    document.body.style.overflow = '';
   });
 }
 
@@ -528,27 +564,6 @@ function initReadingProgress() {
   document.addEventListener('scroll', update, { passive: true });
   window.addEventListener('resize', update);
   update();
-}
-
-// Highlight the table-of-contents entry of the post currently on screen.
-function initScrollSpy() {
-  const tocLinks = document.querySelectorAll('.blog-toc a[href^="#post-"]');
-  if (!tocLinks.length) return;
-
-  const posts = Array.from(tocLinks)
-    .map(link => document.getElementById(link.getAttribute('href').slice(1)))
-    .filter(Boolean);
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      tocLinks.forEach(link => {
-        link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`);
-      });
-    });
-  }, { rootMargin: '-80px 0px -60% 0px' });
-
-  posts.forEach(post => observer.observe(post));
 }
 
 // Append an estimated reading time to each post's date line.
@@ -1070,7 +1085,6 @@ window.addEventListener('DOMContentLoaded', () => {
   loadComments();
   initQrModal();
   initReadingProgress();
-  initScrollSpy();
   initReadingTime();
   initBackToTop();
   initStarField();

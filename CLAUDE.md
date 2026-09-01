@@ -23,7 +23,7 @@ Six pages share an identical, hand-copied `nav` + `footer` block (there is no te
 
 - `index.html` — home
 - `pages/about.html` — profile and CV download
-- `pages/blog.html` — all blog posts as inline `<article>` blocks
+- `pages/blog.html` — single-column post list: heading, search bar (`#blogSearch`, with clear button + match-count line), then one summary card per post (no sidebar; the sticky-sidebar TOC lives only on the single-post pages)
 - `pages/gallery.html` — image grid + lightbox
 - `pages/achievements.html` — the achievements page (publications, projects, etc.; intentionally empty for now — see `docs/achievements.md` for how to fill it in)
 - `pages/contact.html` — social links, comment form
@@ -44,7 +44,7 @@ The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css` (s
 
 ### Scripts
 
-`scripts/main.js` is loaded with `defer` on every page. It handles GA4, the home latest-posts cards (rendered from `feed.xml` into `#latestPostsSection`), blog scroll/search, gallery + lightbox, comments, the WeChat QR modal, the theme toggle (light/dark/system, persisted in `localStorage`), blog reading extras (progress bar, TOC scrollspy, reading time, back-to-top), the home starfield (full-page dark-mode canvas: twinkling stars, meteors, the occasional rock that hits the page — `#starField` + `skyBuildStars`/`skyDrawFrame`/`initStarField`, dark-mode only via CSS opacity), scroll reveal (`[data-reveal]`), the UFO easter egg, and service-worker registration. Each page's `<head>` also contains a tiny inline script that applies the saved theme before first paint to avoid a flash — update it in all five pages if the `theme` storage key changes. Key patterns:
+`scripts/main.js` is loaded with `defer` on every page. It handles GA4, the home latest-posts cards (rendered from `feed.xml` into `#latestPostsSection`), blog list search/filtering, gallery + lightbox, comments, the WeChat QR modal, the theme toggle (light/dark/system, persisted in `localStorage`), blog reading extras (progress bar, reading time, back-to-top), the home starfield (full-page dark-mode canvas: twinkling stars, meteors, the occasional rock that hits the page — `#starField` + `skyBuildStars`/`skyDrawFrame`/`initStarField`, dark-mode only via CSS opacity), scroll reveal (`[data-reveal]`), the UFO easter egg, and service-worker registration. Each page's `<head>` also contains a tiny inline script that applies the saved theme before first paint to avoid a flash — update it in all five pages if the `theme` storage key changes. Key patterns:
 
 - Everything is initialized in the `DOMContentLoaded` listener at the bottom.
 - Each feature is guarded by `document.getElementById(...)` null-checks, so the one shared script can run on every page without erroring where a feature doesn't exist. Match this pattern for new features.
@@ -58,7 +58,7 @@ The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css` (s
 
 Each post lives in `posts/<slug>.md`: frontmatter (`title`, `date: YYYY-MM-DD`, optional `description` — falls back to the first paragraph) plus a Markdown body. Raw HTML blocks pass through untouched (video/audio embeds, tables, images with explicit width/height); plain markdown images automatically get the `blog-img` class; body headings shift down one level (`#` renders as h2); asset paths are relative to `pages/` (`../images/...`) and are pushed one level deeper automatically for the single-post pages.
 
-Publishing = edit/create the `.md` and push: CI (`.github/workflows/gen-posts.yml`) runs the generator and commits the results back to main. Running `python3 tools/gen_post_pages.py` locally does the same. The generator (stdlib-only, idempotent) regenerates, newest post first everywhere: the TOC and `<article>` blocks in `pages/blog.html` between the `posts:toc` / `posts:articles` marker comments (everything else in that file is hand-maintained — don't edit inside the markers), the single-post pages `blog/<slug>/index.html` (canonical URL, article og tags, BlogPosting JSON-LD, sidebar, newer/older nav), `feed.xml`, and `sitemap.xml`.
+Publishing = edit/create the `.md` and push: CI (`.github/workflows/gen-posts.yml`) runs the generator and commits the results back to main. Running `python3 tools/gen_post_pages.py` locally does the same. The generator (stdlib-only, idempotent) regenerates, newest post first everywhere: the `<article>` cards in `pages/blog.html` between the `posts:articles` marker comments (everything else in that file is hand-maintained — don't edit inside the markers), the single-post pages `blog/<slug>/index.html` (canonical URL, article og tags, BlogPosting JSON-LD, sidebar with the all-posts TOC, newer/older nav), `feed.xml`, and `sitemap.xml`.
 
 ## Backend (Cloudflare Worker)
 

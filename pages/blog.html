@@ -54,35 +54,28 @@
       </div>
     </nav>
 
-    <main class="container blog-layout">
-      <aside class="blog-sidebar">
-        <div class="search-container">
-          <input
-            type="text"
-            id="blogSearch"
-            placeholder="Search field"
-            aria-label="Search blog posts"
-          >
-        </div>
-        <nav class="blog-toc">
-          <h3>Blog Posts</h3>
-          <ul>
-          <!-- posts:toc:start -->
-            <li><a href="../wanzai-song/">The WanZai Song</a></li>
-            <li><a href="../solar-system/">The Solar System in a Table</a></li>
-            <li><a href="../violet-evergarden/">A fantastic anime show</a></li>
-            <li><a href="../poem-html/">Poem of html</a></li>
-            <li><a href="../fifa-ufo/">FIFA and UFO</a></li>
-          <!-- posts:toc:end -->
-          </ul>
-        </nav>
-      </aside>
-
-      <div class="blog-main">
+    <main class="container blog-page">
+      <header class="blog-header">
         <h2>My blog about anything <strong>fun</strong></h2>
         <p class="blog-intro">Life so bitter and here just for fun</p>
+      </header>
 
-        <!-- posts:articles:start -->
+      <div class="blog-search" role="search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input
+          type="text"
+          id="blogSearch"
+          placeholder="Search posts…"
+          aria-label="Search blog posts"
+          autocomplete="off"
+        >
+        <button id="blogSearchClear" class="blog-search-clear" type="button" aria-label="Clear search" hidden>
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+      <p id="blogSearchMeta" class="blog-search-meta" aria-live="polite" hidden></p>
+
+      <!-- posts:articles:start -->
 <article id="post-wanzai-song" class="blog-card blog-list-card" data-reveal>
           <a class="post-card-thumb" href="../blog/wanzai-song/" tabindex="-1" aria-hidden="true">
             <img src="../images/og-image.jpg" alt="" loading="lazy" decoding="async">
@@ -144,7 +137,6 @@
         </article>
           <!-- posts:articles:end -->
 
-      </div>
     </main>
 
     <footer>
