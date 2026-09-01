@@ -235,6 +235,19 @@ nav {
   z-index: 99;
 }
 
+/* Anchor jumps (blog TOC, hero scroll cue) must land below the sticky nav.
+   main.js measures the nav into --nav-height so this stays correct at every
+   breakpoint; smooth scrolling only for visitors who allow motion. */
+html {
+  scroll-padding-top: calc(var(--nav-height, 70px) + 20px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 .nav-container {
   width: 90%;
   max-width: 1100px;
@@ -815,6 +828,12 @@ nav {
 .blog-main {
   flex: 1;
   min-width: 0;
+}
+
+/* Muted tagline under the blog list heading (was an inline style) */
+.blog-intro {
+  margin: 8px 0 25px;
+  color: var(--color-text-muted);
 }
 
 /* Blog search box inside the sidebar */

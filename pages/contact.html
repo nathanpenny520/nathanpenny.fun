@@ -168,11 +168,11 @@
           <form id="commentForm" class="visitor-form">
             <div class="form-row">
               <label for="commentName">Nickname</label>
-              <input type="text" id="commentName" name="name" placeholder="Enter your nickname" required>
+              <input type="text" id="commentName" name="name" placeholder="Enter your nickname" autocomplete="nickname" required>
             </div>
             <div class="form-row">
               <label for="commentEmail">Email</label>
-              <input type="email" id="commentEmail" name="email" placeholder="Enter your email" required>
+              <input type="email" id="commentEmail" name="email" placeholder="Enter your email" autocomplete="email" required>
             </div>
             <div class="form-row">
               <label for="commentContent">Comment</label>
@@ -184,7 +184,7 @@
             </div>
             <div class="form-actions">
               <button type="submit" class="form-submit">Post Comment</button>
-              <span id="commentStatus" class="form-status"></span>
+              <span id="commentStatus" class="form-status" aria-live="polite"></span>
             </div>
           </form>
         </div>

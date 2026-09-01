@@ -61,24 +61,24 @@
             type="text"
             id="blogSearch"
             placeholder="Search field"
-            oninput="filterBlogs()"
+            aria-label="Search blog posts"
           >
         </div>
         <nav class="blog-toc">
           <h3>Blog Posts</h3>
           <ul>
-            <li><a href="#post-fifa-ufo" onclick="event.preventDefault(); scrollToBlogPost('post-fifa-ufo')">FIFA and UFO</a></li>
-            <li><a href="#post-poem-html" onclick="event.preventDefault(); scrollToBlogPost('post-poem-html')">Poem of html</a></li>
-            <li><a href="#post-violet-evergarden" onclick="event.preventDefault(); scrollToBlogPost('post-violet-evergarden')">A fantastic anime show</a></li>
-            <li><a href="#post-wanzai-song" onclick="event.preventDefault(); scrollToBlogPost('post-wanzai-song')">The WanZai Song</a></li>
-            <li><a href="#post-solar-system" onclick="event.preventDefault(); scrollToBlogPost('post-solar-system')">The Solar System in a Table</a></li>
+            <li><a href="#post-fifa-ufo">FIFA and UFO</a></li>
+            <li><a href="#post-poem-html">Poem of html</a></li>
+            <li><a href="#post-violet-evergarden">A fantastic anime show</a></li>
+            <li><a href="#post-wanzai-song">The WanZai Song</a></li>
+            <li><a href="#post-solar-system">The Solar System in a Table</a></li>
           </ul>
         </nav>
       </aside>
 
       <div class="blog-main">
         <h2>My blog about anything <strong>fun</strong></h2>
-        <p style="margin: 8px 0 25px; color: #666;">Life so bitter and here just for fun</p>
+        <p class="blog-intro">Life so bitter and here just for fun</p>
 
         <!--Beginning of my first blog-->
         <article id="post-fifa-ufo" class="blog-card">

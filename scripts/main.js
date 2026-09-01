@@ -1,16 +1,3 @@
-// Smooth-scroll to a blog post, leaving space for the sticky navigation bar.
-// Falls back to an instant jump when the visitor prefers reduced motion.
-function scrollToBlogPost(postId) {
-  const post = document.getElementById(postId);
-  if (!post) return;
-
-  const nav = document.querySelector('nav');
-  const offset = nav ? nav.offsetHeight + 20 : 80;
-  const top = post.getBoundingClientRect().top + window.scrollY - offset;
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  window.scrollTo({ top: top, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
-}
-
 // Filter blog cards by the text entered in the sidebar search box.
 function filterBlogs() {
   const searchInput = document.getElementById('blogSearch');
@@ -27,6 +14,28 @@ function filterBlogs() {
     const cardText = card.textContent.toLowerCase();
     card.style.display = cardText.includes(query) ? "" : "none";
   }
+}
+
+// Bind the blog search box (listener lives here instead of an inline handler).
+function initBlogSearch() {
+  const searchInput = document.getElementById('blogSearch');
+  if (!searchInput) return;
+
+  searchInput.addEventListener('input', filterBlogs);
+}
+
+// Publish the sticky nav's height as a CSS custom property so style.css can
+// set scroll-padding-top with it: TOC anchors are plain links and the browser
+// does the scrolling natively, no click interception needed.
+function initNavScrollPadding() {
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+
+  const update = () => {
+    document.documentElement.style.setProperty('--nav-height', nav.offsetHeight + 'px');
+  };
+  window.addEventListener('resize', update, { passive: true });
+  update();
 }
 
 // Load Google Analytics 4 tracking script only after the page has fully
@@ -1051,6 +1060,8 @@ function registerServiceWorker() {
 window.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
   initLatestPosts();
+  initBlogSearch();
+  initNavScrollPadding();
   loadGallery();
   initGallerySearch();
   initCommentForm();
