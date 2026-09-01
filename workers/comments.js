@@ -115,7 +115,7 @@ export default {
       if (url.pathname === "/comments") {
         if (request.method === "GET") {
           const { results } = await env.DB.prepare(
-            "SELECT id, name, content, created_at FROM comments ORDER BY created_at DESC"
+            "SELECT id, name, content, created_at FROM comments ORDER BY created_at DESC LIMIT 100"
           ).all();
           return new Response(JSON.stringify(results || []), { headers: corsHeaders });
         }

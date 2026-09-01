@@ -2,7 +2,7 @@
 // Bump CACHE_VERSION whenever deployed assets change meaningfully; old
 // caches are deleted on activation.
 
-const CACHE_VERSION = 'v9';
+const CACHE_VERSION = 'v10';
 const CACHE_NAME = `nathanpenny-fun-${CACHE_VERSION}`;
 
 // Core assets precached at install time so the site shell works offline.
@@ -14,6 +14,7 @@ const PRECACHE = [
   './pages/gallery.html',
   './pages/contact.html',
   './pages/achievements.html',
+  './404.html',
   './styles/style.css',
   './fonts/open-sans-latin-400.woff2',
   './fonts/fontawesome/css/all.min.css',
@@ -59,7 +60,9 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
 
   // Pages and code files (css/js/json/xml): network-first so deployments show
-  // up immediately, with the cached copy as the offline fallback.
+  // up immediately, with the cached copy as the offline fallback. Offline and
+  // not cached: serve the real 404 page with a 404 status instead of the
+  // homepage masquerading as some other page.
   const isPage = event.request.mode === 'navigate' || url.pathname.endsWith('.html');
   const isCode = /\.(css|js|json|xml)$/.test(url.pathname);
   if (isPage || isCode) {
@@ -70,7 +73,20 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           return response;
         })
-        .catch(() => caches.match(event.request).then((hit) => hit || caches.match('./index.html')))
+        .catch(async () => {
+          const hit = await caches.match(event.request);
+          if (hit) return hit;
+          // Read the body out first: hand-constructing from the cached
+          // Response's stream inside the worker can fail outright.
+          const notFound = await caches.match('./404.html');
+          if (!notFound) return Response.error();
+          const html = await notFound.text();
+          return new Response(html, {
+            status: 404,
+            statusText: 'Not Found',
+            headers: { 'Content-Type': 'text/html; charset=utf-8' }
+          });
+        })
     );
     return;
   }
