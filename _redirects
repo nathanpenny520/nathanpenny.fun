@@ -1,6 +1,9 @@
-/about         /pages/about.html         200
-/blog          /pages/blog.html          200
-/gallery       /pages/gallery.html       200
-/contact       /pages/contact.html       200
-/achievements  /pages/achievements.html  200
-/games         /achievements             301
+# Rewrite friendly URLs to the pages/ files in place (200 = no URL change).
+# Targets omit .html so CF Pages Prettify doesn't canonicalize the rewritten
+# path into a stray 308 to /pages/<name>.
+/about         /pages/about         200
+/blog          /pages/blog          200
+/gallery       /pages/gallery       200
+/contact       /pages/contact       200
+/achievements  /pages/achievements  200
+/games         /achievements        301
