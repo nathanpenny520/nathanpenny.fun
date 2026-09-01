@@ -508,9 +508,11 @@ function initThemeToggle() {
 // ============================================================================
 
 // Thin progress bar at the top of the viewport tracking blog scroll depth.
+// Only on real reading pages (single posts carry a .post-nav); the card list
+// page is short and needs no progress bar.
 function initReadingProgress() {
   const blogMain = document.querySelector('.blog-main');
-  if (!blogMain) return;
+  if (!blogMain || !document.querySelector('.post-nav')) return;
 
   const bar = document.createElement('div');
   bar.id = 'readingProgress';

@@ -12,9 +12,11 @@ Authoring a new or edited post:
 
 The script (re)writes:
 
-  - pages/blog.html        the TOC <li> entries and the <article> blocks
-                           between the posts:toc / posts:articles marker
-                           comments; everything else in the file is untouched
+  - pages/blog.html        the TOC <li> entries and the post cards between
+                           the posts:toc / posts:articles marker comments;
+                           everything else in the file is untouched. The list
+                           shows one summary card per post; full articles live
+                           on the single-post pages.
   - blog/<slug>/index.html one static page per post: full <head> with
                            canonical URL, article og tags and BlogPosting
                            JSON-LD; sidebar with the post list; newer/older
@@ -248,21 +250,38 @@ def og_image_of(body):
 # Rendering: blog list, feed, sitemap, single-post pages
 # ---------------------------------------------------------------------------
 
-def render_list_article(post):
+def render_list_card(post):
+    """List-page card: thumbnail + title + date + excerpt, linking to the
+    single-post page where the full article lives. The thumbnail is the
+    post's first image/poster (or the default og image).
+    """
     return (
-        '<article id="post-{s}" class="blog-card">\n'
-        '          <h3><a class="post-link" href="../blog/{s}/" rel="bookmark">{t}</a></h3>\n'
-        '          <div class="blog-date">Time stamp: {d}</div>\n'
-        "{b}\n"
+        '<article id="post-{s}" class="blog-card blog-list-card" data-reveal>\n'
+        '          <a class="post-card-thumb" href="../blog/{s}/" tabindex="-1" aria-hidden="true">\n'
+        '            <img src="{thumb}" alt="" loading="lazy" decoding="async">\n'
+        "          </a>\n"
+        '          <div class="blog-card-body">\n'
+        '            <h3><a class="post-link" href="../blog/{s}/" rel="bookmark">{t}</a></h3>\n'
+        '            <div class="blog-date">Time stamp: {d}</div>\n'
+        '            <p class="blog-card-excerpt">{x}</p>\n'
+        '            <span class="blog-card-more">Read more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>\n'
+        "          </div>\n"
         "        </article>"
-    ).format(s=post["slug"], t=html.escape(post["title"]), d=post["date"], b=post["body"])
+    ).format(
+        s=post["slug"],
+        t=html.escape(post["title"]),
+        d=post["date"],
+        x=html.escape(post["description"]),
+        thumb="../" + post["og_image"],
+    )
 
 
 def render_toc_li(post, current_slug=None):
     t = html.escape(post["title"])
     if current_slug is None:
-        # Blog list page: in-page anchors pointing at the generated article ids.
-        return '            <li><a href="#post-{s}">{t}</a></li>'.format(s=post["slug"], t=t)
+        # Blog list page: the cards below link here too, but the sidebar list
+        # doubles as a plain index of the single-post pages.
+        return '            <li><a href="../{s}/">{t}</a></li>'.format(s=post["slug"], t=t)
     if post["slug"] == current_slug:
         return '            <li><a href="../{s}/" class="active" aria-current="page">{t}</a></li>'.format(s=post["slug"], t=t)
     return '            <li><a href="../{s}/">{t}</a></li>'.format(s=post["slug"], t=t)
@@ -278,9 +297,9 @@ def inject_region(source, start, end, content):
 def update_blog_html(posts):
     source = read(BLOG_HTML)
     toc = "\n".join(render_toc_li(p) for p in posts)
-    articles = "\n\n        ".join(render_list_article(p) for p in posts)
+    cards = "\n\n        ".join(render_list_card(p) for p in posts)
     new_source = inject_region(source, TOC_START, TOC_END, toc)
-    new_source = inject_region(new_source, ARTICLES_START, ARTICLES_END, articles)
+    new_source = inject_region(new_source, ARTICLES_START, ARTICLES_END, cards)
     if new_source != source:
         write(BLOG_HTML, new_source, "(toc + articles regenerated from posts/)")
     else:
