@@ -1,53 +1,61 @@
 #!/usr/bin/env python3
-"""Generate static single-post pages (blog/<slug>/index.html) from the
-articles in pages/blog.html, plus a fresh sitemap.xml.
+"""Blog pipeline: posts/*.md is the source of truth, this script generates
+everything else. stdlib-only and idempotent.
 
-pages/blog.html stays the single source of truth for post content. Workflow
-for a new or edited post:
+Authoring a new or edited post:
 
-  1. add/edit the <article id="post-..."> block in pages/blog.html
-  2. add/edit its <item> in feed.xml (title, description, pubDate)
-  3. run this script from the repo root:  python3 tools/gen_post_pages.py
+  1. create/edit posts/<slug>.md — frontmatter (title, date, description)
+     plus a Markdown body (raw HTML blocks pass through untouched, e.g. for
+     video/audio embeds or images with explicit width/height)
+  2. run this script from the repo root:  python3 tools/gen_post_pages.py
+     (or just push — CI runs it and commits the results)
 
 The script (re)writes:
-  - blog/<slug>/index.html  one static page per post: full <head> with
-                            canonical URL, article og tags and BlogPosting
-                            JSON-LD; sidebar with the post list; prev/next
-                            links. Reading extras (progress bar, reading
-                            time, back to top) attach automatically because
-                            main.js hooks on .blog-main / .blog-card.
-  - sitemap.xml             the five static pages plus every post
-  - feed.xml                only each item's <link>, upgraded from the old
-                            blog#post-... anchor form to the post permalink
-  - pages/blog.html         only each post's <h3>, wrapped in a rel=bookmark
-                            permalink to the single-post page (idempotent)
 
-Everything else is left untouched. Safe to run repeatedly.
+  - pages/blog.html        the TOC <li> entries and the <article> blocks
+                           between the posts:toc / posts:articles marker
+                           comments; everything else in the file is untouched
+  - blog/<slug>/index.html one static page per post: full <head> with
+                           canonical URL, article og tags and BlogPosting
+                           JSON-LD; sidebar with the post list; newer/older
+                           links. Reading extras (progress bar, reading time,
+                           back to top) attach automatically because main.js
+                           hooks on .blog-main / .blog-card.
+  - feed.xml               regenerated completely, newest post first
+  - sitemap.xml            the static pages plus every post
+
+Posts are ordered newest-first everywhere (blog list, TOC, feed, single-page
+nav). Slug = the .md filename. Inside a body, asset paths are relative to
+pages/ (../images/...) and get pushed one level deeper automatically for the
+single-post pages.
 """
 
+import datetime
+import email.utils
 import html
 import json
 import re
 import sys
-import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BLOG_HTML = ROOT / "pages" / "blog.html"
 FEED = ROOT / "feed.xml"
 SITEMAP = ROOT / "sitemap.xml"
-POSTS_DIR = ROOT / "blog"
+POSTS_SRC = ROOT / "posts"
+POSTS_OUT = ROOT / "blog"
 
 SITE = "https://nathanpenny.fun"
 STATIC_PATHS = ["/", "/about", "/blog", "/gallery", "/achievements", "/contact"]
 PAGE_TITLE_SUFFIX = " | Nathan Penny's blog"
 
-ARTICLE_RE = re.compile(r'<article id="post-([\w-]+)" class="blog-card">(.*?)</article>', re.S)
-H3_RE = re.compile(r"<h3>.*?</h3>", re.S)
-DATE_RE = re.compile(r"Time stamp:\s*(\d{4}-\d{2}-\d{2})")
+TOC_START = "<!-- posts:toc:start -->"
+TOC_END = "<!-- posts:toc:end -->"
+ARTICLES_START = "<!-- posts:articles:start -->"
+ARTICLES_END = "<!-- posts:articles:end -->"
+
 IMG_RE = re.compile(r'<img[^>]+src="\.\./([^"]+)"')
 POSTER_RE = re.compile(r'<video[^>]+poster="\.\./([^"]+)"')
-
 DEFAULT_OG_IMAGE = "images/og-image.jpg"
 
 
@@ -60,8 +68,156 @@ def write(path, text, note=""):
     print(f"  wrote {path.relative_to(ROOT)} {note}")
 
 
+# ---------------------------------------------------------------------------
+# Markdown rendering (trusted, site-author content; raw HTML passes through)
+# ---------------------------------------------------------------------------
+
+def render_inline(text):
+    """Inline markdown: code spans, images, links, bold, italic. Everything
+    else (including inline HTML like <br> or <strong>) passes through as-is.
+    """
+    parts = re.split(r"(`[^`]+`)", text)
+    out = []
+    for part in parts:
+        if part.startswith("`") and part.endswith("`") and len(part) > 2:
+            out.append("<code>" + html.escape(part[1:-1]) + "</code>")
+            continue
+        s = part
+        s = re.sub(
+            r"!\[([^\]]*)\]\(([^)\s]+)\)",
+            r'<img class="blog-img" src="\2" alt="\1" loading="lazy" decoding="async">',
+            s,
+        )
+        s = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", r'<a href="\2">\1</a>', s)
+        s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+        s = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", s)
+        out.append(s)
+    return "".join(out)
+
+
+BLOCK_START = re.compile(r"^(<|```|#{1,4}\s|>\s?|[-*]\s+|---\s*$)")
+
+
+def render_markdown(text):
+    """Block-level markdown. A block whose first line starts with '<' is raw
+    HTML and is emitted verbatim (consume until the next blank line), so
+    video/audio/table embeds and hand-tuned markup just work.
+    """
+    lines = text.split("\n")
+    out = []
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+        if not stripped:
+            i += 1
+            continue
+
+        if stripped.startswith("```"):
+            code = []
+            i += 1
+            while i < len(lines) and not lines[i].strip().startswith("```"):
+                code.append(lines[i])
+                i += 1
+            i += 1  # closing fence
+            out.append("<pre><code>" + html.escape("\n".join(code)) + "</code></pre>")
+            continue
+
+        m = re.match(r"^(#{1,4})\s+(.*)$", stripped)
+        if m:
+            # Body headings shift down one level: the post title (h3 on the
+            # list, h2-level visually) comes from the frontmatter.
+            level = len(m.group(1)) + 1
+            out.append("<h{lvl}>{txt}</h{lvl}>".format(lvl=level, txt=render_inline(m.group(2))))
+            i += 1
+            continue
+
+        if stripped == "---":
+            out.append("<hr>")
+            i += 1
+            continue
+
+        if stripped.startswith(">"):
+            quote = []
+            while i < len(lines) and lines[i].strip().startswith(">"):
+                quote.append(re.sub(r"^\s*>\s?", "", lines[i]))
+                i += 1
+            out.append("<blockquote>\n  <p>" + render_inline(" ".join(q.strip() for q in quote)) + "</p>\n</blockquote>")
+            continue
+
+        if re.match(r"^[-*]\s+", stripped):
+            items = []
+            while i < len(lines) and re.match(r"^\s*[-*]\s+", lines[i]):
+                items.append(re.sub(r"^\s*[-*]\s+", "", lines[i]).strip())
+                i += 1
+            out.append("<ul>\n" + "\n".join("  <li>" + render_inline(x) + "</li>" for x in items) + "\n</ul>")
+            continue
+
+        if stripped.startswith("<"):
+            block = []
+            while i < len(lines) and lines[i].strip():
+                block.append(lines[i].rstrip())
+                i += 1
+            out.append("\n".join(block))
+            continue
+
+        # Paragraph: consume until a blank line or another block starts.
+        block = []
+        while i < len(lines) and lines[i].strip() and not BLOCK_START.match(lines[i].strip()):
+            block.append(lines[i].strip())
+            i += 1
+        if block:
+            out.append("<p>" + render_inline(" ".join(block)) + "</p>")
+
+    return "\n".join(out)
+
+
+# ---------------------------------------------------------------------------
+# Post loading
+# ---------------------------------------------------------------------------
+
+def parse_post(path):
+    text = read(path)
+    m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
+    if not m:
+        sys.exit(f"{path.name}: missing frontmatter block (--- title/date/description ---)")
+    meta = {}
+    for line in m.group(1).split("\n"):
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        meta[key.strip()] = value.strip()
+    if not meta.get("title"):
+        sys.exit(f"{path.name}: frontmatter needs a title:")
+    try:
+        date = datetime.date.fromisoformat(meta["date"])
+    except (KeyError, ValueError):
+        sys.exit(f"{path.name}: frontmatter needs date: YYYY-MM-DD")
+
+    slug = path.stem
+    body = render_markdown(m.group(2).strip("\n"))
+    return {
+        "slug": slug,
+        "title": meta["title"],
+        "date": date.isoformat(),
+        "description": meta.get("description", ""),
+        "body": body,
+    }
+
+
+def load_posts():
+    files = sorted(POSTS_SRC.glob("*.md"))
+    if not files:
+        sys.exit("no posts/*.md files found")
+    posts = [parse_post(p) for p in files]
+    # Newest first everywhere; ties break by slug so the order is stable.
+    posts.sort(key=lambda p: (p["date"], p["slug"]), reverse=True)
+    return posts
+
+
 def excerpt_of(body, limit=165):
-    """Fall back to the first <p> as the meta description when feed.xml has none."""
+    """Fall back to the first <p> as the meta description when the
+    frontmatter has none.
+    """
     m = re.search(r"<p>(.*?)</p>", body, re.S)
     if not m:
         return ""
@@ -71,34 +227,6 @@ def excerpt_of(body, limit=165):
         return text
     cut = text[:limit].rsplit(" ", 1)[0]
     return cut + " …"
-
-
-def feed_descriptions():
-    """Pull each item's description out of feed.xml, keyed by its guid."""
-    descs = {}
-    for item in re.findall(r"<item>.*?</item>", read(FEED), re.S):
-        guid = re.search(r"<guid[^>]*>(.*?)</guid>", item)
-        desc = re.search(r"<description>(.*?)</description>", item, re.S)
-        if guid and desc:
-            descs[guid.group(1).strip()] = html.unescape(desc.group(1).strip())
-    return descs
-
-
-def extract_posts(source):
-    posts = []
-    for m in ARTICLE_RE.finditer(source):
-        slug, body = m.group(1), m.group(2)
-        h3 = H3_RE.search(body)
-        title = html.unescape(re.sub(r"<[^>]+>", "", h3.group(0))).strip() if h3 else slug
-        date = DATE_RE.search(body)
-        posts.append({
-            "slug": slug,
-            "title": title,
-            # Used as datePublished and sitemap lastmod.
-            "date": date.group(1) if date else datetime.date.today().isoformat(),
-            "body": body,
-        })
-    return posts
 
 
 # Posts are served from blog/<slug>/ (two levels below the root), but their
@@ -116,21 +244,96 @@ def og_image_of(body):
     return DEFAULT_OG_IMAGE
 
 
-def permalink_h3(post):
-    return '<h3><a class="post-link" href="../blog/{s}/" rel="bookmark">{t}</a></h3>'.format(
-        s=post["slug"], t=post["title"])
+# ---------------------------------------------------------------------------
+# Rendering: blog list, feed, sitemap, single-post pages
+# ---------------------------------------------------------------------------
+
+def render_list_article(post):
+    return (
+        '<article id="post-{s}" class="blog-card">\n'
+        '          <h3><a class="post-link" href="../blog/{s}/" rel="bookmark">{t}</a></h3>\n'
+        '          <div class="blog-date">Time stamp: {d}</div>\n'
+        "{b}\n"
+        "        </article>"
+    ).format(s=post["slug"], t=html.escape(post["title"]), d=post["date"], b=post["body"])
 
 
-def render_sidebar_toc(posts, current_slug):
-    lines = []
+def render_toc_li(post, current_slug=None):
+    t = html.escape(post["title"])
+    if current_slug is None:
+        # Blog list page: in-page anchors pointing at the generated article ids.
+        return '            <li><a href="#post-{s}">{t}</a></li>'.format(s=post["slug"], t=t)
+    if post["slug"] == current_slug:
+        return '            <li><a href="../{s}/" class="active" aria-current="page">{t}</a></li>'.format(s=post["slug"], t=t)
+    return '            <li><a href="../{s}/">{t}</a></li>'.format(s=post["slug"], t=t)
+
+
+def inject_region(source, start, end, content):
+    pattern = re.compile(re.escape(start) + r".*?" + re.escape(end), re.S)
+    if not pattern.search(source):
+        sys.exit(f"marker pair not found in pages/blog.html: {start}")
+    return pattern.sub(start + "\n" + content + "\n          " + end, source, count=1)
+
+
+def update_blog_html(posts):
+    source = read(BLOG_HTML)
+    toc = "\n".join(render_toc_li(p) for p in posts)
+    articles = "\n\n        ".join(render_list_article(p) for p in posts)
+    new_source = inject_region(source, TOC_START, TOC_END, toc)
+    new_source = inject_region(new_source, ARTICLES_START, ARTICLES_END, articles)
+    if new_source != source:
+        write(BLOG_HTML, new_source, "(toc + articles regenerated from posts/)")
+    else:
+        print("  pages/blog.html already up to date")
+
+
+def render_feed(posts):
+    newest = datetime.date.fromisoformat(posts[0]["date"])
+    last_build = email.utils.format_datetime(
+        datetime.datetime(newest.year, newest.month, newest.day, tzinfo=datetime.timezone.utc)
+    )
+    items = []
     for p in posts:
-        if p["slug"] == current_slug:
-            lines.append('            <li><a href="../{s}/" class="active" aria-current="page">{t}</a></li>'.format(
-                s=p["slug"], t=html.escape(p["title"])))
-        else:
-            lines.append('            <li><a href="../{s}/">{t}</a></li>'.format(
-                s=p["slug"], t=html.escape(p["title"])))
-    return "\n".join(lines)
+        items.append(
+            "    <item>\n"
+            "      <title>{t}</title>\n"
+            "      <link>{s}/blog/{sl}/</link>\n"
+            '      <guid isPermaLink="false">post-{sl}</guid>\n'
+            "      <pubDate>{d}</pubDate>\n"
+            "      <description>{desc}</description>\n"
+            "    </item>".format(
+                t=html.escape(p["title"]),
+                s=SITE,
+                sl=p["slug"],
+                d=email.utils.format_datetime(datetime.datetime.fromisoformat(p["date"]).replace(tzinfo=datetime.timezone.utc)),
+                desc=html.escape(p["description"]),
+            )
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n'
+        "  <channel>\n"
+        "    <title>Nathan Penny's personal website</title>\n"
+        "    <link>{s}/blog</link>\n"
+        "    <description>Nathan Penny's blog about anything fun.</description>\n"
+        "    <language>en</language>\n"
+        '    <atom:link href="{s}/feed.xml" rel="self" type="application/rss+xml"/>\n'
+        "    <lastBuildDate>{lb}</lastBuildDate>\n"
+        "\n"
+        "{items}\n"
+        "  </channel>\n"
+        "</rss>\n"
+    ).format(s=SITE, lb=last_build, items="\n\n".join(items))
+
+
+def render_sitemap(posts, today):
+    entries = ["  <url>\n    <loc>{s}{p}</loc>\n    <lastmod>{d}</lastmod>\n  </url>".format(
+        s=SITE, p=p, d=today) for p in STATIC_PATHS]
+    entries += ["  <url>\n    <loc>{s}/blog/{sl}/</loc>\n    <lastmod>{d}</lastmod>\n  </url>".format(
+        s=SITE, sl=p["slug"], d=p["date"]) for p in posts]
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            + "\n".join(entries) + "\n</urlset>\n")
 
 
 def render_post_nav(post, posts):
@@ -151,10 +354,11 @@ def render_post_nav(post, posts):
     return "\n".join(links)
 
 
-def render_post_page(post, posts, description, og_image):
+def render_post_page(post, posts, og_image):
     slug = post["slug"]
     title = post["title"]
     date = post["date"]
+    description = post["description"]
     canonical = "{s}/blog/{sl}/".format(s=SITE, sl=slug)
     esc_desc = html.escape(description, quote=True)
     esc_title = html.escape(title, quote=True)
@@ -171,6 +375,11 @@ def render_post_page(post, posts, description, og_image):
         "datePublished": date,
         "dateModified": date,
     }
+
+    article_head = (
+        "          <h3>{t}</h3>\n"
+        '          <div class="blog-date">Time stamp: {d}</div>\n'
+    ).format(t=html.escape(title), d=date)
 
     return """<!DOCTYPE html>
 <html lang="en">
@@ -244,7 +453,7 @@ def render_post_page(post, posts, description, og_image):
 
       <div class="blog-main">
         <article id="post-{slug}" class="blog-card">
-{body}
+{article_head}{body}
         </article>
 
         <nav class="post-nav" aria-label="Adjacent posts">
@@ -268,81 +477,39 @@ def render_post_page(post, posts, description, og_image):
         og_image=og_image,
         date=date,
         jsonld=json.dumps(jsonld, indent=4, ensure_ascii=False),
-        toc=render_sidebar_toc(posts, slug),
+        toc="\n".join(render_toc_li(p, current_slug=slug) for p in posts),
         slug=slug,
+        article_head=article_head,
         body=post["page_body"],
         post_nav=render_post_nav(post, posts),
     )
 
 
-def render_sitemap(posts, today):
-    entries = ["  <url>\n    <loc>{s}{p}</loc>\n    <lastmod>{d}</lastmod>\n  </url>".format(
-        s=SITE, p=p, d=today) for p in STATIC_PATHS]
-    entries += ["  <url>\n    <loc>{s}/blog/{sl}/</loc>\n    <lastmod>{d}</lastmod>\n  </url>".format(
-        s=SITE, sl=p["slug"], d=p["date"]) for p in posts]
-    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-            + "\n".join(entries) + "\n</urlset>\n")
-
-
-def upgrade_feed_links(feed_xml, posts):
-    for p in posts:
-        feed_xml = feed_xml.replace(
-            "<link>{s}/blog#post-{sl}</link>".format(s=SITE, sl=p["slug"]),
-            "<link>{s}/blog/{sl}/</link>".format(s=SITE, sl=p["slug"]),
-        )
-    return feed_xml
-
-
-def add_permalinks(blog_source, posts):
-    """Wrap each post's <h3> in a permalink on the blog list page.
-
-    Operates on the original body (with ../ paths) so the plain-text replace
-    finds its match; the deepened copy for the generated page lives in
-    page_body and is untouched here.
-    """
-    for p in posts:
-        new_body = H3_RE.sub(lambda _: permalink_h3(p), p["body"], count=1)
-        if new_body != p["body"]:
-            blog_source = blog_source.replace(p["body"], new_body, 1)
-            p["body"] = new_body
-    return blog_source
-
-
 def main():
     if not BLOG_HTML.exists():
         sys.exit("missing " + str(BLOG_HTML))
+    if not POSTS_SRC.exists():
+        sys.exit("missing " + str(POSTS_SRC) + " (create posts/<slug>.md files)")
 
-    posts = extract_posts(read(BLOG_HTML))
-    if not posts:
-        sys.exit('no <article id="post-..."> blocks found in pages/blog.html')
+    posts = load_posts()
+    for p in posts:
+        if not p["description"]:
+            p["description"] = excerpt_of(p["body"])
+        p["page_body"] = deepen_paths(p["body"])
+        p["og_image"] = og_image_of(p["body"])
 
-    descs = feed_descriptions()
     today = datetime.date.today().isoformat()
-
     print("found {} posts: {}".format(len(posts), ", ".join(p["slug"] for p in posts)))
 
     print("post pages:")
     for p in posts:
-        p["page_body"] = deepen_paths(p["body"])
-        p["description"] = descs.get("post-" + p["slug"]) or excerpt_of(p["body"])
-        p["og_image"] = og_image_of(p["body"])
-        out = POSTS_DIR / p["slug"] / "index.html"
+        out = POSTS_OUT / p["slug"] / "index.html"
         out.parent.mkdir(parents=True, exist_ok=True)
-        write(out, render_post_page(p, posts, p["description"], p["og_image"]))
+        write(out, render_post_page(p, posts, p["og_image"]))
 
+    update_blog_html(posts)
     write(SITEMAP, render_sitemap(posts, today))
-
-    old_feed = read(FEED)
-    new_feed = upgrade_feed_links(old_feed, posts)
-    if new_feed != old_feed:
-        write(FEED, new_feed, "(item links upgraded to permalinks)")
-
-    old_blog = read(BLOG_HTML)
-    new_blog = add_permalinks(old_blog, posts)
-    if new_blog != old_blog:
-        write(BLOG_HTML, new_blog, "(post titles now link to their single-post pages)")
-
+    write(FEED, render_feed(posts))
     print("done")
 
 

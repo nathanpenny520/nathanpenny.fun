@@ -56,11 +56,9 @@ The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css` (s
 
 ### Blog content
 
-Posts are static `<article id="post-..." class="blog-card">` blocks written directly into `pages/blog.html`, and each also has a generated single-post page at `blog/<slug>/index.html` (slug = the id without the `post-` prefix). To publish or edit a post:
+Each post lives in `posts/<slug>.md`: frontmatter (`title`, `date: YYYY-MM-DD`, optional `description` — falls back to the first paragraph) plus a Markdown body. Raw HTML blocks pass through untouched (video/audio embeds, tables, images with explicit width/height); plain markdown images automatically get the `blog-img` class; body headings shift down one level (`#` renders as h2); asset paths are relative to `pages/` (`../images/...`) and are pushed one level deeper automatically for the single-post pages.
 
-1. Add/edit the article in `pages/blog.html` and a matching TOC entry in the `.blog-toc` sidebar (`onclick` calls `scrollToBlogPost('post-...')`, so the `id` must match).
-2. Add/edit its `<item>` in `feed.xml` — the item description doubles as the post's meta description.
-3. Run `python3 tools/gen_post_pages.py` from the repo root. It (re)generates the `blog/<slug>/` pages — full `<head>` with canonical URL, article og tags and BlogPosting JSON-LD, sidebar post list, newer/older links — and also refreshes `sitemap.xml`, upgrades `feed.xml` item links to the permalinks, and wraps each post title on the blog list page in a `rel=bookmark` permalink. The script is stdlib-only and idempotent.
+Publishing = edit/create the `.md` and push: CI (`.github/workflows/gen-posts.yml`) runs the generator and commits the results back to main. Running `python3 tools/gen_post_pages.py` locally does the same. The generator (stdlib-only, idempotent) regenerates, newest post first everywhere: the TOC and `<article>` blocks in `pages/blog.html` between the `posts:toc` / `posts:articles` marker comments (everything else in that file is hand-maintained — don't edit inside the markers), the single-post pages `blog/<slug>/index.html` (canonical URL, article og tags, BlogPosting JSON-LD, sidebar, newer/older nav), `feed.xml`, and `sitemap.xml`.
 
 ## Backend (Cloudflare Worker)
 

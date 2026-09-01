@@ -1,0 +1,44 @@
+# Blog publishing pipeline: editing/adding posts/<slug>.md and pushing is the
+# whole workflow. This action runs the generator and commits the regenerated
+# pages back to main, so no local command is ever needed. The second run this
+# triggers finds no diff and stops, so it cannot loop.
+
+name: Generate blog pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'posts/**'
+      - 'tools/gen_post_pages.py'
+      - 'pages/blog.html'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gen-posts
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate pages, feed, and sitemap from posts/
+        run: python3 tools/gen_post_pages.py
+
+      - name: Commit regenerated files
+        run: |
+          if [[ -z $(git status --porcelain) ]]; then
+            echo "nothing to commit — generated files already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pages/blog.html blog feed.xml sitemap.xml
+          git commit -m "regenerate blog pages from posts/"
+          git pull --rebase origin main
+          git push
