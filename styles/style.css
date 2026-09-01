@@ -542,7 +542,8 @@ nav {
   text-decoration: none;
 }
 
-.page-card h2 {
+.page-card h2,
+.page-card h3 {
   font-size: 20px;
   margin-bottom: 10px;
   color: var(--color-heading);

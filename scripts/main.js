@@ -383,6 +383,65 @@ function initQrModal() {
 }
 
 // ============================================================================
+// HOME: LATEST POSTS (the three newest entries from feed.xml)
+// ============================================================================
+
+// The homepage "Latest posts" cards are rendered client-side from feed.xml,
+// which tools/gen_post_pages.py keeps in sync with pages/blog.html. The
+// section stays hidden until cards are ready, so a failed fetch just means
+// the homepage keeps its original three cards.
+function initLatestPosts() {
+  const list = document.getElementById('latestPosts');
+  const section = document.getElementById('latestPostsSection');
+  if (!list || !section) return;
+
+  fetch('./feed.xml')
+    .then(response => {
+      if (!response.ok) throw new Error('feed unavailable');
+      return response.text();
+    })
+    .then(text => {
+      const feed = new DOMParser().parseFromString(text, 'application/xml');
+      const items = Array.from(feed.getElementsByTagName('item')).slice(0, 3);
+      if (!items.length) throw new Error('empty feed');
+
+      items.forEach(item => {
+        const title = item.getElementsByTagName('title')[0]?.textContent || 'Untitled';
+        const link = item.getElementsByTagName('link')[0]?.textContent || './pages/blog.html';
+        const pub = item.getElementsByTagName('pubDate')[0]?.textContent || '';
+        const description = item.getElementsByTagName('description')[0]?.textContent || '';
+        const date = pub ? new Date(pub) : null;
+
+        // Feed content is authored in this repo, but everything still goes
+        // through textContent — nothing from the feed is ever interpreted.
+        const card = document.createElement('a');
+        card.className = 'page-card';
+        card.href = link;
+
+        const heading = document.createElement('h3');
+        heading.textContent = title;
+
+        const body = document.createElement('p');
+        if (date && !isNaN(date)) {
+          const time = document.createElement('time');
+          time.dateTime = date.toISOString().slice(0, 10);
+          time.textContent = time.dateTime;
+          body.appendChild(time);
+          body.appendChild(document.createTextNode(' — '));
+        }
+        body.appendChild(document.createTextNode(description));
+
+        card.appendChild(heading);
+        card.appendChild(body);
+        list.appendChild(card);
+      });
+
+      section.hidden = false;
+    })
+    .catch(() => { /* the homepage works fine without the section */ });
+}
+
+// ============================================================================
 // THEME TOGGLE (light <-> dark; first visit follows the system preference)
 // ============================================================================
 
@@ -974,8 +1033,15 @@ function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') return;
 
+  // Resolve sw.js relative to this script's own URL, not the document: pages
+  // live at several depths (/pages/, /blog/<slug>/) and a document-relative
+  // './sw.js' would 404 everywhere but the homepage. Script-relative resolution
+  // also survives hosts that serve the site under a subpath.
+  const base = (document.currentScript && document.currentScript.src) || window.location.href;
+  const swUrl = new URL('../sw.js', base).href;
+
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {
+    navigator.serviceWorker.register(swUrl).catch(() => {
       // Registration is a progressive enhancement; ignore failures silently.
     });
   });
@@ -984,6 +1050,7 @@ function registerServiceWorker() {
 // Initialize page-specific features once the DOM is ready.
 window.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
+  initLatestPosts();
   loadGallery();
   initGallerySearch();
   initCommentForm();
