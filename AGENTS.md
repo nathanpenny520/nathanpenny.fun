@@ -4,7 +4,7 @@ This file provides guidance to Codex when working with code in this repository.
 
 ## Overview
 
-A hand-rolled static personal website + blog (`nathanpenny.fun`) with no build step, no package.json, and no framework. Frontend is plain HTML/CSS/vanilla JS; the only backend is a Cloudflare Worker (`workers/comments.js`) backed by a Cloudflare D1 SQLite database for the comments (plus a legacy `visitors` table/endpoint no longer used by the frontend). All site text/content is authored directly in the HTML files.
+A hand-rolled static personal website + blog (`nathanpenny.fun`) with no build step, no package.json, and no framework. Frontend is plain HTML/CSS/vanilla JS; the only backend is a Cloudflare Worker (`workers/comments.js`) backed by a Cloudflare D1 SQLite database for the comments. All site text/content is authored directly in the HTML files.
 
 ## Commands
 
@@ -13,7 +13,7 @@ There is no build, lint, or test tooling — nothing to install.
 - **Preview locally**: serve the repo root with any static file server, e.g. `python -m http.server 8080` (port 8080 is the dev origin allowed by the Worker's CORS list, so the visitor/comment features work locally too).
 - **Regenerate blog post pages**: `python3 tools/gen_post_pages.py` (see Blog content below).
 - **Deploy the site**: `git push origin main` — the host (Cloudflare Pages, plus a mirror on GitHub Pages) picks up the pushed files. Images, HTML, CSS, and JSON are pushed as-is.
-- **Deploy the Worker**: the code in `workers/comments.js` is deployed manually to Cloudflare (see `workers/README.md`); it is NOT part of the git-deployed static site.
+- **Deploy the Worker**: `cd workers && npx wrangler deploy` (config in `workers/wrangler.jsonc`, see `workers/README.md`); it is NOT part of the git-deployed static site.
 
 ## Architecture
 
@@ -44,7 +44,7 @@ The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css` (s
 
 ### Scripts
 
-`scripts/main.js` is loaded with `defer` on every page. It handles GA4, blog scroll/search, gallery + lightbox, comments, the WeChat QR modal, the theme toggle (light/dark/system, persisted in `localStorage`), blog reading extras (progress bar, TOC scrollspy, reading time, back-to-top), the home starfield (full-page dark-mode canvas: twinkling stars, meteors, the occasional rock that hits the page — `#starField` + `skyBuildStars`/`skyDrawFrame`/`initStarField`, dark-mode only via CSS opacity), scroll reveal (`[data-reveal]`), the UFO easter egg, and service-worker registration. Each page's `<head>` also contains a tiny inline script that applies the saved theme before first paint to avoid a flash — update it in all five pages if the `theme` storage key changes. Key patterns:
+`scripts/main.js` is loaded with `defer` on every page. It handles GA4, the home latest-posts cards (rendered from `feed.xml` into `#latestPostsSection`), blog scroll/search, gallery + lightbox, comments, the WeChat QR modal, the theme toggle (light/dark/system, persisted in `localStorage`), blog reading extras (progress bar, TOC scrollspy, reading time, back-to-top), the home starfield (full-page dark-mode canvas: twinkling stars, meteors, the occasional rock that hits the page — `#starField` + `skyBuildStars`/`skyDrawFrame`/`initStarField`, dark-mode only via CSS opacity), scroll reveal (`[data-reveal]`), the UFO easter egg, and service-worker registration. Each page's `<head>` also contains a tiny inline script that applies the saved theme before first paint to avoid a flash — update it in all five pages if the `theme` storage key changes. Key patterns:
 
 - Everything is initialized in the `DOMContentLoaded` listener at the bottom.
 - Each feature is guarded by `document.getElementById(...)` null-checks, so the one shared script can run on every page without erroring where a feature doesn't exist. Match this pattern for new features.
@@ -68,12 +68,10 @@ Posts are static `<article id="post-..." class="blog-card">` blocks written dire
 
 | Method | Path       | Purpose                                          |
 |--------|------------|--------------------------------------------------|
-| GET    | `/`        | List all visitor entries (`SELECT * FROM visitors`) |
-| POST   | `/`        | Insert a visitor `{ name, email }` (legacy form) |
 | GET    | `/comments`| List comments, `email` excluded from results     |
-| POST   | `/comments`| Insert a comment `{ name, email, content, cf-turnstile-response }` — the token is verified server-side against Cloudflare siteverify (`TURNSTILE_SECRET` Worker secret; see `workers/README.md`) |
+| POST   | `/comments`| Insert a comment `{ name, email, content, cf-turnstile-response }` — capped at 5 attempts/60s per IP via the `comment_rate` D1 table (checked first, see `checkRateLimit()`), then the Turnstile token is verified server-side against Cloudflare siteverify (`TURNSTILE_SECRET` Worker secret; see `workers/README.md`) |
 
-Schema (created manually in D1, see `workers/README.md`): a `visitors` table and a `comments` table (`id`, `name`, `email`, `content`, `created_at`). The frontend talks to the worker at `https://workers.nathanpenny.fun` (`API_URL` in `main.js`), and to `.../comments` for the comments feature. CORS is restricted to an allowlist: `nathanpenny.fun`, `blog.nathanpenny.fun`, `nathanpenny520.github.io`, `localhost:8080`.
+Any other path returns 404. Schema (created manually in D1, see `workers/README.md`): a `comments` table (`id`, `name`, `email`, `content`, `created_at`) and a `comment_rate` table for the per-IP rate limit. The frontend talks to the worker at `https://workers.nathanpenny.fun` (`API_URL` in `main.js`), and to `.../comments` for the comments feature. CORS is restricted to an allowlist: `nathanpenny.fun`, `blog.nathanpenny.fun`, `nathanpenny520.github.io`, `localhost:8080`; other origins get no `Access-Control-Allow-Origin` header at all.
 
 ## Other notes
 
