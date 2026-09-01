@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <script>
+      // Apply the saved color theme before first paint to avoid a flash.
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <link rel="apple-touch-icon" href="../images/icon-180.png">
+    <title>Achievements | Nathan Penny's personal website</title>
+    <meta name="description" content="Publications, projects and other milestones by Nathan Penny — collected in one place.">
+    <meta name="keywords" content="achievements,publications,projects,portfolio">
+    <meta name="author" content="Nathan Penny">
+    <link rel="canonical" href="https://nathanpenny.fun/achievements">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Nathan Penny's personal website">
+    <meta property="og:title" content="Achievements | Nathan Penny's personal website">
+    <meta property="og:description" content="Publications, projects and other milestones by Nathan Penny — collected in one place.">
+    <meta property="og:url" content="https://nathanpenny.fun/achievements">
+    <meta property="og:image" content="https://nathanpenny.fun/images/og-image.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <link href="../styles/style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="../fonts/fontawesome/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="../NP-logo.svg">
+    <link rel="alternate" type="application/rss+xml" title="Nathan Penny's blog (RSS)" href="https://nathanpenny.fun/feed.xml">
+    <script src="../scripts/main.js" defer></script>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-container">
+        <a href="../index.html" class="nav-brand" aria-label="Go to homepage">
+          <img class="site-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
+          <div class="logo">Nathan Penny's personal website FOR FUN</div>
+        </a>
+
+        <ul class="nav-list">
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="./about.html">About</a></li>
+          <li><a href="./blog.html">Blog</a></li>
+          <li><a href="./gallery.html">Gallery</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+          <li><a href="./contact.html">Contact</a></li>
+        </ul>
+        <button id="themeToggle" class="theme-toggle" type="button">
+          <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+      </div>
+    </nav>
+
+    <main class="container">
+      <section class="hero">
+        <h1>Achievements</h1>
+        <p class="hero-subtitle">Publications, projects and other milestones, collected in one place.</p>
+      </section>
+
+      <!--
+        HOW TO FILL THIS PAGE
+        =====================
+        Nothing here yet on purpose. When the first achievement lands, delete
+        the .achv-empty block below, uncomment the .achv-wrap template, and
+        swap the sample cards for real ones. Full step-by-step instructions
+        (both English and the field glossary) live in docs/achievements.md.
+      -->
+
+      <div class="achv-empty">
+        <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+        <p>Nothing to show here yet. Publications, projects and other milestones will appear on this page as they happen.</p>
+      </div>
+
+      <!--
+      <div class="achv-wrap">
+        <section class="achv-section" id="publications">
+          <h2><i class="fa-solid fa-book" aria-hidden="true"></i> Publications</h2>
+          <div class="achv-list">
+            <article class="achv-card">
+              <h3>Paper or article title goes here</h3>
+              <p class="achv-meta">
+                <span class="achv-badge">Journal / Conference name</span>
+                <time datetime="2026-09">Sep 2026</time>
+              </p>
+              <p class="achv-desc">One or two sentences on what this is and why it matters.</p>
+              <p class="achv-links">
+                <a href="https://example.org/paper" target="_blank" rel="noopener">Read it here <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="achv-section" id="projects">
+          <h2><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Projects</h2>
+          <div class="achv-list">
+            <article class="achv-card">
+              <h3>Project name goes here</h3>
+              <p class="achv-meta">
+                <span class="achv-badge">Side project</span>
+                <time datetime="2026-09">Sep 2026</time>
+              </p>
+              <p class="achv-desc">One or two sentences on what it does and what you built it with.</p>
+              <p class="achv-links">
+                <a href="https://example.org/demo" target="_blank" rel="noopener">Live demo <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                &middot;
+                <a href="https://github.com/you/repo" target="_blank" rel="noopener">Source code <i class="fa-brands fa-github" aria-hidden="true"></i></a>
+              </p>
+            </article>
+          </div>
+        </section>
+      </div>
+      -->
+    </main>
+
+    <footer>
+      <img class="footer-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
+      <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
+    </footer>
+  </body>
+</html>

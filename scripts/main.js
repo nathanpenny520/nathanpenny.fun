@@ -348,14 +348,21 @@ function initCommentForm() {
   });
 }
 
-// WeChat QR code modal on the Contact page.
+// QR code modal on the Contact page; each .qr-trigger carries the QR data
+// (WeChat, WeChat Channels).
 function initQrModal() {
-  const trigger = document.querySelector('.qr-trigger');
+  const triggers = document.querySelectorAll('.qr-trigger');
   const modal = document.getElementById('qrModal');
   const closeBtn = document.getElementById('qrModalClose');
-  if (!trigger || !modal || !closeBtn) return;
+  const titleEl = document.getElementById('qrModalTitle');
+  const imgEl = document.getElementById('qrModalImg');
+  if (!triggers.length || !modal || !closeBtn || !titleEl || !imgEl) return;
 
-  function openModal() {
+  function openModal(trigger) {
+    titleEl.textContent = trigger.dataset.qrTitle || '';
+    imgEl.src = trigger.dataset.qrImg || '';
+    imgEl.alt = trigger.dataset.qrAlt || titleEl.textContent;
+    modal.setAttribute('aria-label', titleEl.textContent);
     modal.hidden = false;
     document.body.style.overflow = 'hidden';
   }
@@ -365,7 +372,7 @@ function initQrModal() {
     document.body.style.overflow = '';
   }
 
-  trigger.addEventListener('click', openModal);
+  triggers.forEach((trigger) => trigger.addEventListener('click', () => openModal(trigger)));
   closeBtn.addEventListener('click', closeModal);
   modal.addEventListener('click', (event) => {
     if (event.target === modal) closeModal();

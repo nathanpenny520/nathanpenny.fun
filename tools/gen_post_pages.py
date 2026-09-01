@@ -39,7 +39,7 @@ SITEMAP = ROOT / "sitemap.xml"
 POSTS_DIR = ROOT / "blog"
 
 SITE = "https://nathanpenny.fun"
-STATIC_PATHS = ["/", "/about", "/blog", "/gallery", "/games", "/contact"]
+STATIC_PATHS = ["/", "/about", "/blog", "/gallery", "/achievements", "/contact"]
 PAGE_TITLE_SUFFIX = " | Nathan Penny's blog"
 
 ARTICLE_RE = re.compile(r'<article id="post-([\w-]+)" class="blog-card">(.*?)</article>', re.S)
@@ -222,7 +222,7 @@ def render_post_page(post, posts, description, og_image):
           <li><a href="../../pages/about.html">About</a></li>
           <li><a href="../../pages/blog.html">Blog</a></li>
           <li><a href="../../pages/gallery.html">Gallery</a></li>
-          <li><a href="../../pages/games.html">Games</a></li>
+          <li><a href="../../pages/achievements.html">Achievements</a></li>
           <li><a href="../../pages/contact.html">Contact</a></li>
         </ul>
         <button id="themeToggle" class="theme-toggle" type="button">
