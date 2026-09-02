@@ -102,6 +102,41 @@ secret is unset returns 503; unknown prefixes return 400 listing them.
   `gemini-2.5-*` 404 for new keys → use `gemini-3.6-flash`) surface
   verbatim through the proxy.
 
+### Usage
+
+Non-streaming:
+
+```sh
+curl https://workers.nathanpenny.fun/api/ai/v1/chat/completions \
+  -H "Authorization: Bearer npai_…" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gemini-3.6-flash","messages":[{"role":"user","content":"hi"}]}'
+```
+
+Streaming: add `"stream": true` — SSE chunks pass through verbatim.
+
+OpenAI SDK (Python):
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://workers.nathanpenny.fun/api/ai/v1",
+    api_key="npai_…",
+)
+resp = client.chat.completions.create(
+    model="gemini-3.6-flash",
+    messages=[{"role": "user", "content": "hi"}],
+)
+```
+
+JavaScript: `new OpenAI({ baseURL: "https://workers.nathanpenny.fun/api/ai/v1", apiKey: "npai_…" })`.
+
+Any model string routes by prefix (`gpt-`/`chatgpt-`/`o1`/`o3`/`o4` → OpenAI,
+`claude-` → Anthropic, `gemini-` → Google, `grok-` → xAI); `GET
+/api/ai/v1/models` lists a small starter catalog (cosmetic — the proxy does
+not restrict model names).
+
 ## D1 setup
 
 Database `nathanpenny`, bound as `env.DB` (`wrangler.jsonc`). Tables:

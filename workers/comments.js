@@ -146,18 +146,30 @@ async function getAccessJwks(teamDomain) {
 // workers/.dev.vars and must NEVER be set on a deployment.
 async function verifyAccess(request, env) {
   if (env.ADMIN_BYPASS === "1") return true;
-  if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) return false;
+  if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) {
+    console.log("access verify: fail (missing config)");
+    return false;
+  }
 
   const token = request.headers.get("Cf-Access-Jwt-Assertion");
-  if (!token) return false;
+  if (!token) {
+    console.log("access verify: fail (no JWT header on request)");
+    return false;
+  }
   const parts = token.split(".");
-  if (parts.length !== 3) return false;
+  if (parts.length !== 3) {
+    console.log("access verify: fail (malformed JWT)");
+    return false;
+  }
 
   try {
     const header = JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[0])));
     const jwks = await getAccessJwks(env.ACCESS_TEAM_DOMAIN);
     const jwk = (jwks.keys || []).find((k) => k.kid === header.kid && k.kty === "RSA");
-    if (!jwk) return false;
+    if (!jwk) {
+      console.log("access verify: fail (kid not in JWKS)");
+      return false;
+    }
 
     const key = await crypto.subtle.importKey(
       "jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]
@@ -166,13 +178,25 @@ async function verifyAccess(request, env) {
       "RSASSA-PKCS1-v1_5", key, b64urlToBytes(parts[2]),
       new TextEncoder().encode(parts[0] + "." + parts[1])
     );
-    if (!ok) return false;
+    if (!ok) {
+      console.log("access verify: fail (bad signature)");
+      return false;
+    }
 
     const claims = JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[1])));
-    if (!claims.exp || Date.now() / 1000 >= claims.exp) return false;
+    if (!claims.exp || Date.now() / 1000 >= claims.exp) {
+      console.log("access verify: fail (expired)");
+      return false;
+    }
     // Comma-separated so two Access apps (one per path) can share this var.
-    return String(env.ACCESS_AUD).split(",").includes(claims.aud);
+    const audOk = String(env.ACCESS_AUD).split(",").includes(claims.aud);
+    if (!audOk) {
+      // Never log token contents — just the decision inputs' shapes.
+      console.log(`access verify: fail (aud mismatch, claim aud type ${typeof claims.aud})`);
+    }
+    return audOk;
   } catch (error) {
+    console.log(`access verify: fail (exception: ${error.message})`);
     return false;
   }
 }

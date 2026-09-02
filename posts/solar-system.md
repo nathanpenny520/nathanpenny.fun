@@ -9,6 +9,8 @@ category: tech
 Here is a quick reference table for the eight planets in our solar system. The values are rounded for simplicity.
 </p>
 
+![The Solar System](../images/blog-img/2026-09-02/solar-system.jpg)
+
 <div class="table-wrapper">
   <table>
     <thead>

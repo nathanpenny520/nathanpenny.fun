@@ -22,3 +22,8 @@ roadmap.md
 # Wrangler local dev vars (ADMIN_BYPASS / local upstream keys) — never commit
 workers/.dev.vars
 __pycache__/
+
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
