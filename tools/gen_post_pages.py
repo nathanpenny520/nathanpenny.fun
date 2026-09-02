@@ -303,7 +303,7 @@ def render_list_card(post):
         '            <div class="blog-card-meta">{meta}</div>\n'
         '            <div class="blog-date">Time stamp: {d}</div>\n'
         '            <p class="blog-card-excerpt">{x}</p>\n'
-        '            <span class="blog-card-more">Read more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>\n'
+        '            <a class="blog-card-more" href="../blog/{s}/">Read more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>\n'
         "          </div>\n"
         "        </article>"
     ).format(

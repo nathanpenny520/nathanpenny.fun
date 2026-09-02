@@ -257,6 +257,7 @@ function renderGallery(images) {
     item.setAttribute('role', 'listitem');
     item.setAttribute('tabindex', '0');
     item.dataset.index = index;
+    item.setAttribute('data-reveal', '');
 
     item.innerHTML = `
       <img class="gallery-img" src="${escapeHtml(image.src)}" alt="${escapeHtml(image.title || 'Gallery image')}" loading="lazy">
@@ -276,6 +277,8 @@ function renderGallery(images) {
 
     grid.appendChild(item);
   });
+
+  observeReveals(grid);
 }
 
 function updateEmptyState(isEmpty) {
@@ -366,6 +369,10 @@ let creationSongs = [];
 let creationAudio = null;
 let currentSongIndex = -1;
 let creationSeeking = false;
+let musicLibrary = [];
+let musicVisible = [];
+let musicSentinelObserver = null;
+const MUSIC_CHUNK = 30;
 
 function creationFormatTime(seconds) {
   const total = Math.max(0, Math.floor(seconds || 0));
@@ -379,16 +386,21 @@ function creationCoverHtml(song) {
   return '<span class="creation-cover-empty"><i class="fa-solid fa-music" aria-hidden="true"></i></span>';
 }
 
-function renderCreations(grid, featured, librarySongs) {
-  const featuredCount = creationSongs.length - librarySongs.length;
+function markActiveRow() {
+  document.querySelectorAll('.music-row').forEach(row => {
+    row.classList.toggle('active', Number(row.dataset.songIndex) === currentSongIndex);
+  });
+}
 
+function renderCreations(grid, featured) {
   // Deliberately no links back into the blog: the creations section stands
-  // on its own.
+  // on its own. data-reveal + observeReveals() extend the scroll-in entrance
+  // to dynamically rendered content.
   grid.innerHTML = featured.map((item) => {
     if (item.type === 'video') {
       const poster = item.poster ? ` poster="${escapeHtml(item.poster)}"` : '';
       return (
-        '<article class="creation-item" role="listitem" data-type="video">' +
+        '<article class="creation-item" role="listitem" data-type="video" data-reveal>' +
         `<video class="creation-video" controls playsinline preload="metadata" src="${escapeHtml(item.src)}"${poster}></video>` +
         `<div class="creation-body"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div>` +
         '</article>'
@@ -396,7 +408,7 @@ function renderCreations(grid, featured, librarySongs) {
     }
     const songIndex = creationSongs.indexOf(item);
     return (
-      '<article class="creation-item" role="listitem" data-type="song">' +
+      '<article class="creation-item" role="listitem" data-type="song" data-reveal>' +
       `<div class="creation-cover">${creationCoverHtml(item)}` +
       `<button class="creation-play" type="button" data-song-index="${songIndex}" aria-label="Play"><i class="fa-solid fa-play" aria-hidden="true"></i></button>` +
       '</div>' +
@@ -405,22 +417,54 @@ function renderCreations(grid, featured, librarySongs) {
     );
   }).join('');
 
+  observeReveals(grid);
+}
+
+function musicRowHtml(song, index) {
+  return (
+    `<button class="music-row" type="button" data-song-index="${index}" data-reveal>` +
+    `<span class="music-row-cover">${creationCoverHtml(song)}</span>` +
+    '<span class="music-row-text">' +
+    `<span class="music-row-title">${escapeHtml(song.title)}</span>` +
+    `<span class="music-row-sub">${escapeHtml(song.artist)} · ${escapeHtml(song.album)}</span>` +
+    '</span>' +
+    '<i class="fa-solid fa-play music-row-icon" aria-hidden="true"></i>' +
+    '</button>'
+  );
+}
+
+// The library renders in chunks instead of all rows at once: a sentinel below
+// the list pulls in the next MUSIC_CHUNK rows as it scrolls into view. Search
+// resets and re-chunks rather than hiding rows, so a query only ever renders
+// what can actually be seen.
+function renderMusicChunk(reset) {
   const list = document.getElementById('musicList');
-  if (list) {
-    // Rows are buttons (native keyboard/click semantics); role stays off the
-    // container so the button semantics are preserved.
-    list.removeAttribute('role');
-    list.innerHTML = librarySongs.map((song, i) => (
-      `<button class="music-row" type="button" data-song-index="${featuredCount + i}">` +
-      `<span class="music-row-cover">${creationCoverHtml(song)}</span>` +
-      '<span class="music-row-text">' +
-      `<span class="music-row-title">${escapeHtml(song.title)}</span>` +
-      `<span class="music-row-sub">${escapeHtml(song.artist)} · ${escapeHtml(song.album)}</span>` +
-      '</span>' +
-      '<i class="fa-solid fa-play music-row-icon" aria-hidden="true"></i>' +
-      '</button>'
-    )).join('');
+  if (!list) return;
+  const sentinel = document.getElementById('musicSentinel');
+  const start = reset ? 0 : list.querySelectorAll('.music-row').length;
+  if (reset) list.innerHTML = '';
+
+  const slice = musicVisible.slice(start, start + MUSIC_CHUNK);
+  list.insertAdjacentHTML('beforeend', slice.map(song =>
+    musicRowHtml(song, creationSongs.indexOf(song))
+  ).join(''));
+
+  markActiveRow();
+  observeReveals(list);
+
+  const done = start + slice.length >= musicVisible.length;
+  if (sentinel) sentinel.hidden = done;
+  if (sentinel && !done && !musicSentinelObserver) {
+    musicSentinelObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) renderMusicChunk(false);
+      });
+    }, { rootMargin: '320px' });
+    musicSentinelObserver.observe(sentinel);
   }
+
+  const empty = document.getElementById('musicEmpty');
+  if (empty) empty.hidden = musicVisible.length > 0;
 }
 
 function filterCreations(type) {
@@ -457,14 +501,11 @@ function initMusicSearch() {
 
   searchInput.addEventListener('input', () => {
     const query = searchInput.value.toLowerCase().trim();
-    let visible = 0;
-    document.querySelectorAll('.music-row').forEach(row => {
-      const show = row.textContent.toLowerCase().includes(query);
-      row.classList.toggle('hidden', !show);
-      if (show) visible++;
-    });
-    const empty = document.getElementById('musicEmpty');
-    if (empty) empty.hidden = visible > 0;
+    musicVisible = !query
+      ? musicLibrary
+      : musicLibrary.filter(song =>
+          `${song.title} ${song.artist} ${song.album}`.toLowerCase().includes(query));
+    renderMusicChunk(true);
   });
 }
 
@@ -482,12 +523,6 @@ function initCreationPlayer() {
     const playing = !creationAudio.paused;
     playBtn.innerHTML = `<i class="fa-solid ${playing ? 'fa-pause' : 'fa-play'}" aria-hidden="true"></i>`;
     playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-  };
-
-  const markActiveRow = () => {
-    document.querySelectorAll('.music-row').forEach(row => {
-      row.classList.toggle('active', Number(row.dataset.songIndex) === currentSongIndex);
-    });
   };
 
   // One Audio element, created lazily inside the first click gesture — that
@@ -581,7 +616,10 @@ async function loadCreations() {
     if (libraryRes.ok) librarySongs = await libraryRes.json();
 
     creationSongs = [...featured.filter(item => item.type === 'song'), ...librarySongs];
-    renderCreations(grid, featured, librarySongs);
+    musicLibrary = librarySongs;
+    musicVisible = librarySongs;
+    renderCreations(grid, featured);
+    renderMusicChunk(true);
     initCreationFilters();
     initMusicSearch();
     initCreationPlayer();
@@ -1232,27 +1270,38 @@ function initStarField() {
 
 // Reveal-on-scroll for elements tagged with data-reveal. Elements stay visible
 // without JS; with reduced motion they simply never get hidden.
-function initScrollReveal() {
-  const targets = document.querySelectorAll('[data-reveal]');
+let revealObserver = null;
+
+// Register data-reveal elements with the shared observer. Called at init AND
+// after async content renders (gallery, creations, chunked library), since
+// elements added after DOMContentLoaded need observing too.
+function observeReveals(root) {
+  const targets = (root || document).querySelectorAll('[data-reveal]:not(.will-reveal)');
   if (!targets.length) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const el = entry.target;
-      el.classList.add('is-visible');
-      observer.unobserve(el);
-      // Drop the helper classes once revealed so card hover transitions
-      // don't inherit the slower reveal transition and its delay.
-      setTimeout(() => el.classList.remove('will-reveal', 'is-visible'), 1200);
-    });
-  }, { threshold: 0.15 });
+  if (!revealObserver) {
+    revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        el.classList.add('is-visible');
+        revealObserver.unobserve(el);
+        // Drop the helper classes once revealed so card hover transitions
+        // don't inherit the slower reveal transition and its delay.
+        setTimeout(() => el.classList.remove('will-reveal', 'is-visible'), 1200);
+      });
+    }, { threshold: 0.15 });
+  }
 
   targets.forEach(el => {
     el.classList.add('will-reveal');
-    observer.observe(el);
+    revealObserver.observe(el);
   });
+}
+
+function initScrollReveal() {
+  observeReveals(document);
 }
 
 // ============================================================================
