@@ -1,0 +1,1262 @@
+[
+  {
+    "id": "aaron-neville-warm-your-heart-yes-i-love-you",
+    "type": "song",
+    "title": "Yes I Love You",
+    "artist": "Aaron Neville",
+    "album": "Warm Your Heart",
+    "src": "https://storage.nathanpenny.fun/music/Aaron%20Neville/Warm%20Your%20Heart/Yes%20I%20Love%20You-Warm%20Your%20Heart-Aaron%20Neville.mp3",
+    "cover": "../images/music-covers/aaron-neville-warm-your-heart-yes-i-love-you-de2d9a82.jpg"
+  },
+  {
+    "id": "adele-21-someone-like-you",
+    "type": "song",
+    "title": "Someone Like You",
+    "artist": "Adele",
+    "album": "21",
+    "src": "https://storage.nathanpenny.fun/music/Adele/21/Someone%20Like%20You-21-Adele.mp3",
+    "cover": "../images/music-covers/adele-21-someone-like-you-4fa10d61.jpg"
+  },
+  {
+    "id": "air-supply-lost-in-love-all-out-of-love",
+    "type": "song",
+    "title": "All Out of Love",
+    "artist": "Air Supply",
+    "album": "Lost in Love",
+    "src": "https://storage.nathanpenny.fun/music/Air%20Supply/Lost%20in%20Love/All%20Out%20of%20Love-Lost%20in%20Love-Air%20Supply.mp3",
+    "cover": "../images/music-covers/air-supply-lost-in-love-all-out-of-love-2e3f8738.jpg"
+  },
+  {
+    "id": "all-4-one-all-4-one-i-swear",
+    "type": "song",
+    "title": "I Swear",
+    "artist": "All-4-One",
+    "album": "All-4-One",
+    "src": "https://storage.nathanpenny.fun/music/All-4-One/All-4-One/I%20Swear-All-4-One-All-4-One.mp3",
+    "cover": "../images/music-covers/all-4-one-all-4-one-i-swear-89eaa665.jpg"
+  },
+  {
+    "id": "amy-diamond-heartbeats-heartbeats",
+    "type": "song",
+    "title": "Heartbeats",
+    "artist": "Amy Diamond",
+    "album": "Heartbeats",
+    "src": "https://storage.nathanpenny.fun/music/Amy%20Diamond/Heartbeats/Heartbeats-Heartbeats-Amy%20Diamond.mp3",
+    "cover": "../images/music-covers/amy-diamond-heartbeats-heartbeats-fbd5f9b1.jpg"
+  },
+  {
+    "id": "anson-seabra-songs-i-wrote-in-my-bedroom-walked-through-hell",
+    "type": "song",
+    "title": "Walked Through Hell",
+    "artist": "Anson Seabra",
+    "album": "Songs I Wrote in My Bedroom",
+    "src": "https://storage.nathanpenny.fun/music/Anson%20Seabra/Songs%20I%20Wrote%20in%20My%20Bedroom/Walked%20Through%20Hell-Songs%20I%20Wrote%20in%20My%20Bedroom-Anson%20Seabra.mp3",
+    "cover": "../images/music-covers/anson-seabra-songs-i-wrote-in-my-bedroom-walked-through-hell-d650d7ef.jpg"
+  },
+  {
+    "id": "avril-lavigne-let-go-when-you-re-gone",
+    "type": "song",
+    "title": "When You're Gone",
+    "artist": "Avril Lavigne",
+    "album": "Let Go",
+    "src": "https://storage.nathanpenny.fun/music/Avril%20Lavigne/Let%20Go/When%20You%27re%20Gone-Let%20Go-Avril%20Lavigne.mp3",
+    "cover": "../images/music-covers/avril-lavigne-let-go-when-you-re-gone-17f4fc0b.jpg"
+  },
+  {
+    "id": "baby-band-aladdin-original-soundtrack--a-whole-new-world",
+    "type": "song",
+    "title": "A Whole New World",
+    "artist": "Baby Band",
+    "album": "Aladdin (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Baby%20Band/Aladdin%20%28Original%20Soundtrack%29/A%20Whole%20New%20World-Aladdin%20%28Original%20Soundtrack%29-Baby%20Band.mp3",
+    "cover": "../images/music-covers/baby-band-aladdin-original-soundtrack--a-whole-new-world-ca90f748.jpg"
+  },
+  {
+    "id": "babyface-the-day-every-time-i-close-my-eyes",
+    "type": "song",
+    "title": "Every Time I Close My Eyes",
+    "artist": "Babyface",
+    "album": "The Day",
+    "src": "https://storage.nathanpenny.fun/music/Babyface/The%20Day/Every%20Time%20I%20Close%20My%20Eyes-The%20Day-Babyface.mp3",
+    "cover": "../images/music-covers/babyface-the-day-every-time-i-close-my-eyes-733b9685.jpg"
+  },
+  {
+    "id": "backstreet-boys-backstreet-boys-as-long-as-you-love-me",
+    "type": "song",
+    "title": "As Long as You Love Me",
+    "artist": "Backstreet Boys",
+    "album": "Backstreet Boys",
+    "src": "https://storage.nathanpenny.fun/music/Backstreet%20Boys/Backstreet%20Boys/As%20Long%20as%20You%20Love%20Me-Backstreet%20Boys-Backstreet%20Boys.mp3",
+    "cover": "../images/music-covers/backstreet-boys-backstreet-boys-as-long-as-you-love-me-469d89d9.jpg"
+  },
+  {
+    "id": "backstreet-boys-backstreet-boys-i-ll-never-break-your-heart",
+    "type": "song",
+    "title": "I'll Never Break Your Heart",
+    "artist": "Backstreet Boys",
+    "album": "Backstreet Boys",
+    "src": "https://storage.nathanpenny.fun/music/Backstreet%20Boys/Backstreet%20Boys/I%27ll%20Never%20Break%20Your%20Heart-Backstreet%20Boys-Backstreet%20Boys.mp3",
+    "cover": "../images/music-covers/backstreet-boys-backstreet-boys-i-ll-never-break-your-heart-9aab4f67.jpg"
+  },
+  {
+    "id": "backstreet-boys-millennium-i-want-it-that-way",
+    "type": "song",
+    "title": "I Want It That Way",
+    "artist": "Backstreet Boys",
+    "album": "Millennium",
+    "src": "https://storage.nathanpenny.fun/music/Backstreet%20Boys/Millennium/I%20Want%20It%20That%20Way-Millennium-Backstreet%20Boys.mp3",
+    "cover": "../images/music-covers/backstreet-boys-millennium-i-want-it-that-way-c0820c65.jpg"
+  },
+  {
+    "id": "bee-gees-saturday-night-fever-original-soundtrack--how-deep-is-your-love",
+    "type": "song",
+    "title": "How Deep Is Your Love",
+    "artist": "Bee Gees",
+    "album": "Saturday Night Fever (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Bee%20Gees/Saturday%20Night%20Fever%20%28Original%20Soundtrack%29/How%20Deep%20Is%20Your%20Love-Saturday%20Night%20Fever%20%28Original%20Soundtrack%29-Bee%20Gees.mp3",
+    "cover": "../images/music-covers/bee-gees-saturday-night-fever-original-soundtrack--how-deep-is-your-love-a0b8ab1f.jpg"
+  },
+  {
+    "id": "berlin-top-gun-original-soundtrack--take-my-breath-away",
+    "type": "song",
+    "title": "Take My Breath Away",
+    "artist": "Berlin",
+    "album": "Top Gun (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Berlin/Top%20Gun%20%28Original%20Soundtrack%29/Take%20My%20Breath%20Away-Top%20Gun%20%28Original%20Soundtrack%29-Berlin.mp3",
+    "cover": "../images/music-covers/berlin-top-gun-original-soundtrack--take-my-breath-away-e6b9285a.jpg"
+  },
+  {
+    "id": "bertie-higgins-just-another-day-in-paradise-casablanca",
+    "type": "song",
+    "title": "Casablanca",
+    "artist": "Bertie Higgins",
+    "album": "Just Another Day in Paradise",
+    "src": "https://storage.nathanpenny.fun/music/Bertie%20Higgins/Just%20Another%20Day%20in%20Paradise/Casablanca-Just%20Another%20Day%20in%20Paradise-Bertie%20Higgins.mp3",
+    "cover": "../images/music-covers/bertie-higgins-just-another-day-in-paradise-casablanca-f3a08c91.jpg"
+  },
+  {
+    "id": "boney-m-nightflight-to-venus-rivers-of-babylon",
+    "type": "song",
+    "title": "Rivers of Babylon",
+    "artist": "Boney M",
+    "album": "Nightflight to Venus",
+    "src": "https://storage.nathanpenny.fun/music/Boney%20M/Nightflight%20to%20Venus/Rivers%20of%20Babylon-Nightflight%20to%20Venus-Boney%20M.mp3",
+    "cover": "../images/music-covers/boney-m-nightflight-to-venus-rivers-of-babylon-18440be2.jpg"
+  },
+  {
+    "id": "boyz-ii-men-cooleyhighharmony-end-of-the-road",
+    "type": "song",
+    "title": "End of the Road",
+    "artist": "Boyz II Men",
+    "album": "Cooleyhighharmony",
+    "src": "https://storage.nathanpenny.fun/music/Boyz%20II%20Men/Cooleyhighharmony/End%20of%20the%20Road-Cooleyhighharmony-Boyz%20II%20Men.mp3",
+    "cover": "../images/music-covers/boyz-ii-men-cooleyhighharmony-end-of-the-road-45ae7db3.jpg"
+  },
+  {
+    "id": "boyzone-where-we-belong-no-matter-what",
+    "type": "song",
+    "title": "No Matter What",
+    "artist": "Boyzone",
+    "album": "Where We Belong",
+    "src": "https://storage.nathanpenny.fun/music/Boyzone/Where%20We%20Belong/No%20Matter%20What-Where%20We%20Belong-Boyzone.mp3",
+    "cover": "../images/music-covers/boyzone-where-we-belong-no-matter-what-98ad9ded.jpg"
+  },
+  {
+    "id": "brandy-unknown-album-come-a-little-closer",
+    "type": "song",
+    "title": "Come a Little Closer",
+    "artist": "Brandy",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Brandy/Unknown%20Album/Come%20a%20Little%20Closer-Unknown%20Album-Brandy.mp3",
+    "cover": "../images/music-covers/brandy-unknown-album-come-a-little-closer-b8d72961.jpg"
+  },
+  {
+    "id": "brian-hyland-unknown-album-sealed-with-a-kiss",
+    "type": "song",
+    "title": "Sealed with a Kiss",
+    "artist": "Brian Hyland",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Brian%20Hyland/Unknown%20Album/Sealed%20with%20a%20Kiss-Unknown%20Album-Brian%20Hyland.mp3",
+    "cover": "../images/music-covers/brian-hyland-unknown-album-sealed-with-a-kiss-f702b938.jpg"
+  },
+  {
+    "id": "britney-spears-baby-one-more-time-from-the-bottom-of-my-broken-heart",
+    "type": "song",
+    "title": "From the Bottom of My Broken Heart",
+    "artist": "Britney Spears",
+    "album": "Baby One More Time",
+    "src": "https://storage.nathanpenny.fun/music/Britney%20Spears/Baby%20One%20More%20Time/From%20the%20Bottom%20of%20My%20Broken%20Heart-%E2%80%A6Baby%20One%20More%20Time-Britney%20Spears.mp3",
+    "cover": "../images/music-covers/britney-spears-baby-one-more-time-from-the-bottom-of-my-broken-heart-23cf0a58.jpg"
+  },
+  {
+    "id": "bryan-adams-robin-hood-prince-of-thieves-original-soundtrack--everything-i-do-i-do-it-for-you",
+    "type": "song",
+    "title": "Everything I Do (I Do It for You)",
+    "artist": "Bryan Adams",
+    "album": "Robin Hood： Prince of Thieves (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Bryan%20Adams/Robin%20Hood%EF%BC%9A%20Prince%20of%20Thieves%20%28Original%20Soundtrack%29/Everything%20I%20Do%20%28I%20Do%20It%20for%20You%29-Robin%20Hood%EF%BC%9A%20Prince%20of%20Thieves%20%28Original%20Soundtrack%29-Bryan%20Adams.mp3",
+    "cover": "../images/music-covers/bryan-adams-robin-hood-prince-of-thieves-original-soundtrack--everything-i-do-i-do-it-for-you-a189e3ea.jpg"
+  },
+  {
+    "id": "caron-nightingale-unknown-album-promises-don-t-come-easy",
+    "type": "song",
+    "title": "Promises Don't Come Easy",
+    "artist": "Caron Nightingale",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Caron%20Nightingale/Unknown%20Album/Promises%20Don%27t%20Come%20Easy-Unknown%20Album-Caron%20Nightingale.mp3",
+    "cover": "../images/music-covers/caron-nightingale-unknown-album-promises-don-t-come-easy-cb2bcba8.jpg"
+  },
+  {
+    "id": "celine-dion-let-s-talk-about-love-when-i-need-you",
+    "type": "song",
+    "title": "When I Need You",
+    "artist": "Celine Dion",
+    "album": "Let's Talk About Love",
+    "src": "https://storage.nathanpenny.fun/music/Celine%20Dion/Let%27s%20Talk%20About%20Love/When%20I%20Need%20You-Let%27s%20Talk%20About%20Love-Celine%20Dion.mp3",
+    "cover": "../images/music-covers/celine-dion-let-s-talk-about-love-when-i-need-you-e8bc4409.jpg"
+  },
+  {
+    "id": "celine-dion-the-colour-of-my-love-the-power-of-love",
+    "type": "song",
+    "title": "The Power of Love",
+    "artist": "Celine Dion",
+    "album": "The Colour of My Love",
+    "src": "https://storage.nathanpenny.fun/music/Celine%20Dion/The%20Colour%20of%20My%20Love/The%20Power%20of%20Love-The%20Colour%20of%20My%20Love-Celine%20Dion.mp3",
+    "cover": "../images/music-covers/celine-dion-the-colour-of-my-love-the-power-of-love-a13a98a9.jpg"
+  },
+  {
+    "id": "celine-dion-titanic-original-soundtrack--my-heart-will-go-on",
+    "type": "song",
+    "title": "My Heart Will Go On",
+    "artist": "Celine Dion",
+    "album": "Titanic (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Celine%20Dion/Titanic%20%28Original%20Soundtrack%29/My%20Heart%20Will%20Go%20On-Titanic%20%28Original%20Soundtrack%29-Celine%20Dion.mp3",
+    "cover": "../images/music-covers/celine-dion-titanic-original-soundtrack--my-heart-will-go-on-9e099090.jpg"
+  },
+  {
+    "id": "celine-dion-peabo-bryson-beauty-and-the-beast-original-soundtrack--beauty-and-the-beast",
+    "type": "song",
+    "title": "Beauty and the Beast",
+    "artist": "Celine Dion & Peabo Bryson",
+    "album": "Beauty and the Beast (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Celine%20Dion%20%26%20Peabo%20Bryson/Beauty%20and%20the%20Beast%20%28Original%20Soundtrack%29/Beauty%20and%20the%20Beast-Beauty%20and%20the%20Beast%20%28Original%20Soundtrack%29-Celine%20Dion%20%26%20Peabo%20Bryson.mp3",
+    "cover": "../images/music-covers/celine-dion-peabo-bryson-beauty-and-the-beast-original-soundtrack--beauty-and-the-beast-336495ff.jpg"
+  },
+  {
+    "id": "christina-aguilera-mulan-original-soundtrack--reflection",
+    "type": "song",
+    "title": "Reflection",
+    "artist": "Christina Aguilera",
+    "album": "Mulan (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Christina%20Aguilera/Mulan%20%28Original%20Soundtrack%29/Reflection-Mulan%20%28Original%20Soundtrack%29-Christina%20Aguilera.mp3",
+    "cover": "../images/music-covers/christina-aguilera-mulan-original-soundtrack--reflection-26ac2b37.jpg"
+  },
+  {
+    "id": "cliff-richard-silver-ocean-deep",
+    "type": "song",
+    "title": "Ocean Deep",
+    "artist": "Cliff Richard",
+    "album": "Silver",
+    "src": "https://storage.nathanpenny.fun/music/Cliff%20Richard/Silver/Ocean%20Deep-Silver-Cliff%20Richard.mp3",
+    "cover": "../images/music-covers/cliff-richard-silver-ocean-deep-837944c4.jpg"
+  },
+  {
+    "id": "crystal-gayle-crystal-ready-for-the-times-to-get-better",
+    "type": "song",
+    "title": "Ready for the Times to Get Better",
+    "artist": "Crystal Gayle",
+    "album": "Crystal",
+    "src": "https://storage.nathanpenny.fun/music/Crystal%20Gayle/Crystal/Ready%20for%20the%20Times%20to%20Get%20Better-Crystal-Crystal%20Gayle.mp3",
+    "cover": "../images/music-covers/crystal-gayle-crystal-ready-for-the-times-to-get-better-79c8c3ac.jpg"
+  },
+  {
+    "id": "dan-fogelberg-phoenix-longer",
+    "type": "song",
+    "title": "Longer",
+    "artist": "Dan Fogelberg",
+    "album": "Phoenix",
+    "src": "https://storage.nathanpenny.fun/music/Dan%20Fogelberg/Phoenix/Longer-Phoenix-Dan%20Fogelberg.mp3",
+    "cover": "../images/music-covers/dan-fogelberg-phoenix-longer-e37b580c.jpg"
+  },
+  {
+    "id": "dan-hill-longer-fuse-sometimes-when-we-touch",
+    "type": "song",
+    "title": "Sometimes When We Touch",
+    "artist": "Dan Hill",
+    "album": "Longer Fuse",
+    "src": "https://storage.nathanpenny.fun/music/Dan%20Hill/Longer%20Fuse/Sometimes%20When%20We%20Touch-Longer%20Fuse-Dan%20Hill.mp3",
+    "cover": "../images/music-covers/dan-hill-longer-fuse-sometimes-when-we-touch-e3c1e8f8.jpg"
+  },
+  {
+    "id": "deutschland-sucht-den-superstar-united-cry-on-my-shoulder",
+    "type": "song",
+    "title": "Cry on My Shoulder",
+    "artist": "Deutschland Sucht den Superstar",
+    "album": "United",
+    "src": "https://storage.nathanpenny.fun/music/Deutschland%20Sucht%20den%20Superstar/United/Cry%20on%20My%20Shoulder-United-Deutschland%20Sucht%20den%20Superstar.mp3",
+    "cover": "../images/music-covers/deutschland-sucht-den-superstar-united-cry-on-my-shoulder-f0198b34.jpg"
+  },
+  {
+    "id": "dido-no-angel-thank-you",
+    "type": "song",
+    "title": "Thank You",
+    "artist": "Dido",
+    "album": "No Angel",
+    "src": "https://storage.nathanpenny.fun/music/Dido/No%20Angel/Thank%20You-No%20Angel-Dido.mp3",
+    "cover": "../images/music-covers/dido-no-angel-thank-you-61f57eb4.jpg"
+  },
+  {
+    "id": "eagles-hotel-california-hotel-california",
+    "type": "song",
+    "title": "Hotel California",
+    "artist": "Eagles",
+    "album": "Hotel California",
+    "src": "https://storage.nathanpenny.fun/music/Eagles/Hotel%20California/Hotel%20California-Hotel%20California-Eagles.mp3",
+    "cover": "../images/music-covers/eagles-hotel-california-hotel-california-b8cfe5ec.jpg"
+  },
+  {
+    "id": "elton-john-goodbye-yellow-brick-road-candle-in-the-wind",
+    "type": "song",
+    "title": "Candle in the Wind",
+    "artist": "Elton John",
+    "album": "Goodbye Yellow Brick Road",
+    "src": "https://storage.nathanpenny.fun/music/Elton%20John/Goodbye%20Yellow%20Brick%20Road/Candle%20in%20the%20Wind-Goodbye%20Yellow%20Brick%20Road-Elton%20John.mp3",
+    "cover": "../images/music-covers/elton-john-goodbye-yellow-brick-road-candle-in-the-wind-af50495b.jpg"
+  },
+  {
+    "id": "elton-john-the-lion-king-original-soundtrack--can-you-feel-the-love-tonight",
+    "type": "song",
+    "title": "Can You Feel the Love Tonight",
+    "artist": "Elton John",
+    "album": "The Lion King (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Elton%20John/The%20Lion%20King%20%28Original%20Soundtrack%29/Can%20You%20Feel%20the%20Love%20Tonight-The%20Lion%20King%20%28Original%20Soundtrack%29-Elton%20John.mp3",
+    "cover": "../images/music-covers/elton-john-the-lion-king-original-soundtrack--can-you-feel-the-love-tonight-81c09485.jpg"
+  },
+  {
+    "id": "emi-fujita-camomile-down-by-the-salley-gardens",
+    "type": "song",
+    "title": "Down by the Salley Gardens",
+    "artist": "Emi Fujita",
+    "album": "Camomile",
+    "src": "https://storage.nathanpenny.fun/music/Emi%20Fujita/Camomile/Down%20by%20the%20Salley%20Gardens-Camomile-Emi%20Fujita.mp3",
+    "cover": "../images/music-covers/emi-fujita-camomile-down-by-the-salley-gardens-b8580000.jpg"
+  },
+  {
+    "id": "emilia-big-big-world-big-big-world",
+    "type": "song",
+    "title": "Big Big World",
+    "artist": "Emilia",
+    "album": "Big Big World",
+    "src": "https://storage.nathanpenny.fun/music/Emilia/Big%20Big%20World/Big%20Big%20World-Big%20Big%20World-Emilia.mp3",
+    "cover": "../images/music-covers/emilia-big-big-world-big-big-world-1bf2d7cf.jpg"
+  },
+  {
+    "id": "enya-a-day-without-rain-only-time",
+    "type": "song",
+    "title": "Only Time",
+    "artist": "Enya",
+    "album": "A Day Without Rain",
+    "src": "https://storage.nathanpenny.fun/music/Enya/A%20Day%20Without%20Rain/Only%20Time-A%20Day%20Without%20Rain-Enya.mp3",
+    "cover": "../images/music-covers/enya-a-day-without-rain-only-time-37262860.jpg"
+  },
+  {
+    "id": "eric-clapton-phenomenon-original-soundtrack--change-the-world",
+    "type": "song",
+    "title": "Change the World",
+    "artist": "Eric Clapton",
+    "album": "Phenomenon (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Eric%20Clapton/Phenomenon%20%28Original%20Soundtrack%29/Change%20the%20World-Phenomenon%20%28Original%20Soundtrack%29-Eric%20Clapton.mp3",
+    "cover": "../images/music-covers/eric-clapton-phenomenon-original-soundtrack--change-the-world-0f892120.jpg"
+  },
+  {
+    "id": "eric-clapton-unplugged-tears-in-heaven",
+    "type": "song",
+    "title": "Tears in Heaven",
+    "artist": "Eric Clapton",
+    "album": "Unplugged",
+    "src": "https://storage.nathanpenny.fun/music/Eric%20Clapton/Unplugged/Tears%20in%20Heaven-Unplugged-Eric%20Clapton.mp3",
+    "cover": "../images/music-covers/eric-clapton-unplugged-tears-in-heaven-b14d6ca7.jpg"
+  },
+  {
+    "id": "faith-hill-pearl-harbor-original-soundtrack--there-you-ll-be",
+    "type": "song",
+    "title": "There You'll Be",
+    "artist": "Faith Hill",
+    "album": "Pearl Harbor (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Faith%20Hill/Pearl%20Harbor%20%28Original%20Soundtrack%29/There%20You%27ll%20Be-Pearl%20Harbor%20%28Original%20Soundtrack%29-Faith%20Hill.mp3",
+    "cover": "../images/music-covers/faith-hill-pearl-harbor-original-soundtrack--there-you-ll-be-15cd59ec.jpg"
+  },
+  {
+    "id": "fool-s-garden-dish-of-the-day-lemon-tree",
+    "type": "song",
+    "title": "Lemon Tree",
+    "artist": "Fool's Garden",
+    "album": "Dish of the Day",
+    "src": "https://storage.nathanpenny.fun/music/Fool%27s%20Garden/Dish%20of%20the%20Day/Lemon%20Tree-Dish%20of%20the%20Day-Fool%27s%20Garden.mp3",
+    "cover": "../images/music-covers/fool-s-garden-dish-of-the-day-lemon-tree-0823fca9.jpg"
+  },
+  {
+    "id": "glenn-frey-no-fun-aloud-the-one-you-love",
+    "type": "song",
+    "title": "The One You Love",
+    "artist": "Glenn Frey",
+    "album": "No Fun Aloud",
+    "src": "https://storage.nathanpenny.fun/music/Glenn%20Frey/No%20Fun%20Aloud/The%20One%20You%20Love-No%20Fun%20Aloud-Glenn%20Frey.mp3",
+    "cover": "../images/music-covers/glenn-frey-no-fun-aloud-the-one-you-love-ce2f6419.jpg"
+  },
+  {
+    "id": "glenn-medeiros-glenn-medeiros-nothing-s-gonna-change-my-love-for-you",
+    "type": "song",
+    "title": "Nothing's Gonna Change My Love for You",
+    "artist": "Glenn Medeiros",
+    "album": "Glenn Medeiros",
+    "src": "https://storage.nathanpenny.fun/music/Glenn%20Medeiros/Glenn%20Medeiros/Nothing%27s%20Gonna%20Change%20My%20Love%20for%20You-Glenn%20Medeiros-Glenn%20Medeiros.mp3",
+    "cover": "../images/music-covers/glenn-medeiros-glenn-medeiros-nothing-s-gonna-change-my-love-for-you-c7578cb6.jpg"
+  },
+  {
+    "id": "graham-bond-unknown-album-it-s-not-goodbye",
+    "type": "song",
+    "title": "It's Not Goodbye",
+    "artist": "Graham Bond",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Graham%20Bond/Unknown%20Album/It%27s%20Not%20Goodbye-Unknown%20Album-Graham%20Bond.mp3",
+    "cover": "../images/music-covers/graham-bond-unknown-album-it-s-not-goodbye-fb72f9ca.jpg"
+  },
+  {
+    "id": "hayley-westenra-pure-never-say-goodbye",
+    "type": "song",
+    "title": "Never Say Goodbye",
+    "artist": "Hayley Westenra",
+    "album": "Pure",
+    "src": "https://storage.nathanpenny.fun/music/Hayley%20Westenra/Pure/Never%20Say%20Goodbye-Pure-Hayley%20Westenra.mp3",
+    "cover": "../images/music-covers/hayley-westenra-pure-never-say-goodbye-690bc697.jpg"
+  },
+  {
+    "id": "heavy-unknown-album-you-are-the-love-of-my-life",
+    "type": "song",
+    "title": "You Are the Love of My Life",
+    "artist": "HEAVy",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/HEAVy/Unknown%20Album/You%20Are%20the%20Love%20of%20My%20Life-Unknown%20Album-HEAVy.mp3",
+    "cover": "../images/music-covers/heavy-unknown-album-you-are-the-love-of-my-life-f1f3e418.jpg"
+  },
+  {
+    "id": "jasmin-paan-unknown-album-here-to-stay",
+    "type": "song",
+    "title": "Here to Stay",
+    "artist": "Jasmin Paan",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Jasmin%20Paan/Unknown%20Album/Here%20to%20Stay-Unknown%20Album-Jasmin%20Paan.mp3",
+    "cover": "../images/music-covers/jasmin-paan-unknown-album-here-to-stay-51ebd378.jpg"
+  },
+  {
+    "id": "jason-donovan-between-the-lines-rhythm-of-the-rain",
+    "type": "song",
+    "title": "Rhythm of the Rain",
+    "artist": "Jason Donovan",
+    "album": "Between the Lines",
+    "src": "https://storage.nathanpenny.fun/music/Jason%20Donovan/Between%20the%20Lines/Rhythm%20of%20the%20Rain-Between%20the%20Lines-Jason%20Donovan.mp3",
+    "cover": "../images/music-covers/jason-donovan-between-the-lines-rhythm-of-the-rain-19df1df5.jpg"
+  },
+  {
+    "id": "jessica-simpson-irresistible-when-you-told-me-you-loved-me",
+    "type": "song",
+    "title": "When You Told Me You Loved Me",
+    "artist": "Jessica Simpson",
+    "album": "Irresistible",
+    "src": "https://storage.nathanpenny.fun/music/Jessica%20Simpson/Irresistible/When%20You%20Told%20Me%20You%20Loved%20Me-Irresistible-Jessica%20Simpson.mp3",
+    "cover": "../images/music-covers/jessica-simpson-irresistible-when-you-told-me-you-loved-me-d2d9de9d.jpg"
+  },
+  {
+    "id": "john-denver-poems-prayers-promises-take-me-home-country-roads",
+    "type": "song",
+    "title": "Take Me Home, Country Roads",
+    "artist": "John Denver",
+    "album": "Poems, Prayers & Promises",
+    "src": "https://storage.nathanpenny.fun/music/John%20Denver/Poems%2C%20Prayers%20%26%20Promises/Take%20Me%20Home%2C%20Country%20Roads-Poems%2C%20Prayers%20%26%20Promises-John%20Denver.mp3",
+    "cover": "../images/music-covers/john-denver-poems-prayers-promises-take-me-home-country-roads-fa7da218.jpg"
+  },
+  {
+    "id": "joni-mitchell-unknown-album-hana",
+    "type": "song",
+    "title": "Hana",
+    "artist": "Joni Mitchell",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Joni%20Mitchell/Unknown%20Album/Hana-Unknown%20Album-Joni%20Mitchell.mp3",
+    "cover": "../images/music-covers/joni-mitchell-unknown-album-hana-64f270ed.jpg"
+  },
+  {
+    "id": "joy-enriquez-anna-and-the-king-original-soundtrack--how-can-i-not-love-you",
+    "type": "song",
+    "title": "How Can I Not Love You",
+    "artist": "Joy Enriquez",
+    "album": "Anna and the King (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Joy%20Enriquez/Anna%20and%20the%20King%20%28Original%20Soundtrack%29/How%20Can%20I%20Not%20Love%20You-Anna%20and%20the%20King%20%28Original%20Soundtrack%29-Joy%20Enriquez.mp3",
+    "cover": "../images/music-covers/joy-enriquez-anna-and-the-king-original-soundtrack--how-can-i-not-love-you-467ca6a9.jpg"
+  },
+  {
+    "id": "joy-enriquez-joy-enriquez-losing-the-love",
+    "type": "song",
+    "title": "Losing the Love",
+    "artist": "Joy Enriquez",
+    "album": "Joy Enriquez",
+    "src": "https://storage.nathanpenny.fun/music/Joy%20Enriquez/Joy%20Enriquez/Losing%20the%20Love-Joy%20Enriquez-Joy%20Enriquez.mp3",
+    "cover": "../images/music-covers/joy-enriquez-joy-enriquez-losing-the-love-f8018505.jpg"
+  },
+  {
+    "id": "julio-iglesias-momentos-la-paloma",
+    "type": "song",
+    "title": "La Paloma",
+    "artist": "Julio Iglesias",
+    "album": "Momentos",
+    "src": "https://storage.nathanpenny.fun/music/Julio%20Iglesias/Momentos/La%20Paloma-Momentos-Julio%20Iglesias.mp3",
+    "cover": "../images/music-covers/julio-iglesias-momentos-la-paloma-d328c1d7.jpg"
+  },
+  {
+    "id": "jus-allah-unknown-album-betrayal",
+    "type": "song",
+    "title": "Betrayal",
+    "artist": "Jus Allah",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Jus%20Allah/Unknown%20Album/Betrayal-Unknown%20Album-Jus%20Allah.mp3",
+    "cover": null
+  },
+  {
+    "id": "justin-bieber-daniel-caesar-giveon-justice-peaches",
+    "type": "song",
+    "title": "Peaches",
+    "artist": "Justin Bieber, Daniel Caesar & Giveon",
+    "album": "Justice",
+    "src": "https://storage.nathanpenny.fun/music/Justin%20Bieber%2C%20Daniel%20Caesar%20%26%20Giveon/Justice/Peaches-Justice-Justin%20Bieber%2C%20Daniel%20Caesar%20%26%20Giveon.flac",
+    "cover": "../images/music-covers/justin-bieber-daniel-caesar-giveon-justice-peaches-d408fbed.jpg"
+  },
+  {
+    "id": "kelly-clarkson-breakaway-because-of-you",
+    "type": "song",
+    "title": "Because of You",
+    "artist": "Kelly Clarkson",
+    "album": "Breakaway",
+    "src": "https://storage.nathanpenny.fun/music/Kelly%20Clarkson/Breakaway/Because%20of%20You-Breakaway-Kelly%20Clarkson.mp3",
+    "cover": "../images/music-covers/kelly-clarkson-breakaway-because-of-you-33d7c62a.jpg"
+  },
+  {
+    "id": "kenny-g-aaron-neville-breathless-even-if-my-heart-would-break",
+    "type": "song",
+    "title": "Even If My Heart Would Break",
+    "artist": "Kenny G & Aaron Neville",
+    "album": "Breathless",
+    "src": "https://storage.nathanpenny.fun/music/Kenny%20G%20%26%20Aaron%20Neville/Breathless/Even%20If%20My%20Heart%20Would%20Break-Breathless-Kenny%20G%20%26%20Aaron%20Neville.mp3",
+    "cover": "../images/music-covers/kenny-g-aaron-neville-breathless-even-if-my-heart-would-break-4e25934f.jpg"
+  },
+  {
+    "id": "lady-antebellum-need-you-now-need-you-now",
+    "type": "song",
+    "title": "Need You Now",
+    "artist": "Lady Antebellum",
+    "album": "Need You Now",
+    "src": "https://storage.nathanpenny.fun/music/Lady%20Antebellum/Need%20You%20Now/Need%20You%20Now-Need%20You%20Now-Lady%20Antebellum.mp3",
+    "cover": "../images/music-covers/lady-antebellum-need-you-now-need-you-now-a458783d.jpg"
+  },
+  {
+    "id": "lauren-christy-color-of-night-original-soundtrack--the-color-of-night",
+    "type": "song",
+    "title": "The Color of Night",
+    "artist": "Lauren Christy",
+    "album": "Color of Night (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Lauren%20Christy/Color%20of%20Night%20%28Original%20Soundtrack%29/The%20Color%20of%20Night-Color%20of%20Night%20%28Original%20Soundtrack%29-Lauren%20Christy.mp3",
+    "cover": "../images/music-covers/lauren-christy-color-of-night-original-soundtrack--the-color-of-night-164b2936.jpg"
+  },
+  {
+    "id": "lauren-daigle-look-up-child-you-say",
+    "type": "song",
+    "title": "You Say",
+    "artist": "Lauren Daigle",
+    "album": "Look Up Child",
+    "src": "https://storage.nathanpenny.fun/music/Lauren%20Daigle/Look%20Up%20Child/You%20Say-Look%20Up%20Child-Lauren%20Daigle.m4a",
+    "cover": "../images/music-covers/lauren-daigle-look-up-child-you-say-14db448d.jpg"
+  },
+  {
+    "id": "leo-sayer-living-in-a-fantasy-more-than-i-can-say",
+    "type": "song",
+    "title": "More Than I Can Say",
+    "artist": "Leo Sayer",
+    "album": "Living in a Fantasy",
+    "src": "https://storage.nathanpenny.fun/music/Leo%20Sayer/Living%20in%20a%20Fantasy/More%20Than%20I%20Can%20Say-Living%20in%20a%20Fantasy-Leo%20Sayer.mp3",
+    "cover": "../images/music-covers/leo-sayer-living-in-a-fantasy-more-than-i-can-say-9a0211c6.jpg"
+  },
+  {
+    "id": "leo-sayer-unknown-album-auld-lang-syne",
+    "type": "song",
+    "title": "Auld Lang Syne",
+    "artist": "Leo Sayer",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Leo%20Sayer/Unknown%20Album/Auld%20Lang%20Syne-Unknown%20Album-Leo%20Sayer.mp3",
+    "cover": "../images/music-covers/leo-sayer-unknown-album-auld-lang-syne-7f554741.jpg"
+  },
+  {
+    "id": "linda-ronstadt-aaron-neville-cry-like-a-rainstorm-howl-like-the-wind-don-t-know-much",
+    "type": "song",
+    "title": "Don't Know Much",
+    "artist": "Linda Ronstadt & Aaron Neville",
+    "album": "Cry Like a Rainstorm, Howl Like the Wind",
+    "src": "https://storage.nathanpenny.fun/music/Linda%20Ronstadt%20%26%20Aaron%20Neville/Cry%20Like%20a%20Rainstorm%2C%20Howl%20Like%20the%20Wind/Don%27t%20Know%20Much-Cry%20Like%20a%20Rainstorm%2C%20Howl%20Like%20the%20Wind-Linda%20Ronstadt%20%26%20Aaron%20Neville.mp3",
+    "cover": "../images/music-covers/linda-ronstadt-aaron-neville-cry-like-a-rainstorm-howl-like-the-wind-don-t-know-much-fef625e8.jpg"
+  },
+  {
+    "id": "lionel-richie-white-nights-original-soundtrack--say-you-say-me",
+    "type": "song",
+    "title": "Say You, Say Me",
+    "artist": "Lionel Richie",
+    "album": "White Nights (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Lionel%20Richie/White%20Nights%20%28Original%20Soundtrack%29/Say%20You%2C%20Say%20Me-White%20Nights%20%28Original%20Soundtrack%29-Lionel%20Richie.mp3",
+    "cover": "../images/music-covers/lionel-richie-white-nights-original-soundtrack--say-you-say-me-daca5ba9.jpg"
+  },
+  {
+    "id": "lionel-richie-diana-ross-endless-love-original-soundtrack--endless-love",
+    "type": "song",
+    "title": "Endless Love",
+    "artist": "Lionel Richie & Diana Ross",
+    "album": "Endless Love (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Lionel%20Richie%20%26%20Diana%20Ross/Endless%20Love%20%28Original%20Soundtrack%29/Endless%20Love-Endless%20Love%20%28Original%20Soundtrack%29-Lionel%20Richie%20%26%20Diana%20Ross.mp3",
+    "cover": "../images/music-covers/lionel-richie-diana-ross-endless-love-original-soundtrack--endless-love-11be2cc1.jpg"
+  },
+  {
+    "id": "luis-fonsi-daddy-yankee-justin-bieber-despacito-remix-single--despacito",
+    "type": "song",
+    "title": "Despacito",
+    "artist": "Luis Fonsi, Daddy Yankee & Justin Bieber",
+    "album": "Despacito (Remix) (Single)",
+    "src": "https://storage.nathanpenny.fun/music/Luis%20Fonsi%2C%20Daddy%20Yankee%20%26%20Justin%20Bieber/Despacito%20%28Remix%29%20%28Single%29/Despacito-Despacito%20%28Remix%29%20%28Single%29-Luis%20Fonsi%2C%20Daddy%20Yankee%20%26%20Justin%20Bieber.flac",
+    "cover": "../images/music-covers/luis-fonsi-daddy-yankee-justin-bieber-despacito-remix-single--despacito-d256e8f7.jpg"
+  },
+  {
+    "id": "m2m-shades-of-purple-pretty-boy",
+    "type": "song",
+    "title": "Pretty Boy",
+    "artist": "M2M",
+    "album": "Shades of Purple",
+    "src": "https://storage.nathanpenny.fun/music/M2M/Shades%20of%20Purple/Pretty%20Boy-Shades%20of%20Purple-M2M.mp3",
+    "cover": "../images/music-covers/m2m-shades-of-purple-pretty-boy-65d0dc50.jpg"
+  },
+  {
+    "id": "madonna-bedtime-stories-take-a-bow",
+    "type": "song",
+    "title": "Take a Bow",
+    "artist": "Madonna",
+    "album": "Bedtime Stories",
+    "src": "https://storage.nathanpenny.fun/music/Madonna/Bedtime%20Stories/Take%20a%20Bow-Bedtime%20Stories-Madonna.mp3",
+    "cover": "../images/music-covers/madonna-bedtime-stories-take-a-bow-522c8e5c.jpg"
+  },
+  {
+    "id": "madonna-evita-original-soundtrack--don-t-cry-for-me-argentina",
+    "type": "song",
+    "title": "Don't Cry for Me Argentina",
+    "artist": "Madonna",
+    "album": "Evita (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Madonna/Evita%20%28Original%20Soundtrack%29/Don%27t%20Cry%20for%20Me%20Argentina-Evita%20%28Original%20Soundtrack%29-Madonna.mp3",
+    "cover": "../images/music-covers/madonna-evita-original-soundtrack--don-t-cry-for-me-argentina-46934774.jpg"
+  },
+  {
+    "id": "marc-anthony-unknown-album-how-could-i",
+    "type": "song",
+    "title": "How Could I",
+    "artist": "Marc Anthony",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Marc%20Anthony/Unknown%20Album/How%20Could%20I-Unknown%20Album-Marc%20Anthony.mp3",
+    "cover": "../images/music-covers/marc-anthony-unknown-album-how-could-i-bb3ab179.jpg"
+  },
+  {
+    "id": "marc-terenzi-awesome-love-to-be-loved-by-you",
+    "type": "song",
+    "title": "Love to Be Loved by You",
+    "artist": "Marc Terenzi",
+    "album": "Awesome",
+    "src": "https://storage.nathanpenny.fun/music/Marc%20Terenzi/Awesome/Love%20to%20Be%20Loved%20by%20You-Awesome-Marc%20Terenzi.mp3",
+    "cover": "../images/music-covers/marc-terenzi-awesome-love-to-be-loved-by-you-b7f35fa5.jpg"
+  },
+  {
+    "id": "mariah-carey-music-box-hero",
+    "type": "song",
+    "title": "Hero",
+    "artist": "Mariah Carey",
+    "album": "Music Box",
+    "src": "https://storage.nathanpenny.fun/music/Mariah%20Carey/Music%20Box/Hero-Music%20Box-Mariah%20Carey.mp3",
+    "cover": "../images/music-covers/mariah-carey-music-box-hero-9791fff9.jpg"
+  },
+  {
+    "id": "mariah-carey-music-box-without-you",
+    "type": "song",
+    "title": "Without You",
+    "artist": "Mariah Carey",
+    "album": "Music Box",
+    "src": "https://storage.nathanpenny.fun/music/Mariah%20Carey/Music%20Box/Without%20You-Music%20Box-Mariah%20Carey.mp3",
+    "cover": "../images/music-covers/mariah-carey-music-box-without-you-7662d89e.jpg"
+  },
+  {
+    "id": "mariah-carey-rainbow-i-still-believe",
+    "type": "song",
+    "title": "I Still Believe",
+    "artist": "Mariah Carey",
+    "album": "Rainbow",
+    "src": "https://storage.nathanpenny.fun/music/Mariah%20Carey/Rainbow/I%20Still%20Believe-Rainbow-Mariah%20Carey.mp3",
+    "cover": "../images/music-covers/mariah-carey-rainbow-i-still-believe-6573ac67.jpg"
+  },
+  {
+    "id": "mariah-carey-boyz-ii-men-daydream-one-sweet-day",
+    "type": "song",
+    "title": "One Sweet Day",
+    "artist": "Mariah Carey & Boyz II Men",
+    "album": "Daydream",
+    "src": "https://storage.nathanpenny.fun/music/Mariah%20Carey%20%26%20Boyz%20II%20Men/Daydream/One%20Sweet%20Day-Daydream-Mariah%20Carey%20%26%20Boyz%20II%20Men.mp3",
+    "cover": "../images/music-covers/mariah-carey-boyz-ii-men-daydream-one-sweet-day-ea8cdad5.jpg"
+  },
+  {
+    "id": "matthew-lien-bleeding-wolves-bressanone",
+    "type": "song",
+    "title": "Bressanone",
+    "artist": "Matthew Lien",
+    "album": "Bleeding Wolves",
+    "src": "https://storage.nathanpenny.fun/music/Matthew%20Lien/Bleeding%20Wolves/Bressanone-Bleeding%20Wolves-Matthew%20Lien.mp3",
+    "cover": "../images/music-covers/matthew-lien-bleeding-wolves-bressanone-1b15d7e9.jpg"
+  },
+  {
+    "id": "michael-bolton-time-love-tenderness-said-i-loved-you-but-i-lied",
+    "type": "song",
+    "title": "Said I Loved You… But I Lied",
+    "artist": "Michael Bolton",
+    "album": "Time, Love & Tenderness",
+    "src": "https://storage.nathanpenny.fun/music/Michael%20Bolton/Time%2C%20Love%20%26%20Tenderness/Said%20I%20Loved%20You%E2%80%A6%20But%20I%20Lied-Time%2C%20Love%20%26%20Tenderness-Michael%20Bolton.mp3",
+    "cover": "../images/music-covers/michael-bolton-time-love-tenderness-said-i-loved-you-but-i-lied-b006c9b4.jpg"
+  },
+  {
+    "id": "michael-bolton-time-love-tenderness-when-a-man-loves-a-woman",
+    "type": "song",
+    "title": "When a Man Loves a Woman",
+    "artist": "Michael Bolton",
+    "album": "Time, Love & Tenderness",
+    "src": "https://storage.nathanpenny.fun/music/Michael%20Bolton/Time%2C%20Love%20%26%20Tenderness/When%20a%20Man%20Loves%20a%20Woman-Time%2C%20Love%20%26%20Tenderness-Michael%20Bolton.mp3",
+    "cover": "../images/music-covers/michael-bolton-time-love-tenderness-when-a-man-loves-a-woman-5c6222d6.jpg"
+  },
+  {
+    "id": "michael-jackson-history-past-present-and-future-book-i-you-are-not-alone",
+    "type": "song",
+    "title": "You Are Not Alone",
+    "artist": "Michael Jackson",
+    "album": "HIStory： Past, Present and Future, Book I",
+    "src": "https://storage.nathanpenny.fun/music/Michael%20Jackson/HIStory%EF%BC%9A%20Past%2C%20Present%20and%20Future%2C%20Book%20I/You%20Are%20Not%20Alone-HIStory%EF%BC%9A%20Past%2C%20Present%20and%20Future%2C%20Book%20I-Michael%20Jackson.mp3",
+    "cover": "../images/music-covers/michael-jackson-history-past-present-and-future-book-i-you-are-not-alone-8ca2a82a.jpg"
+  },
+  {
+    "id": "michael-learns-to-rock-played-on-pepper-that-s-why-you-go-away",
+    "type": "song",
+    "title": "That's Why (You Go Away)",
+    "artist": "Michael Learns to Rock",
+    "album": "Played on Pepper",
+    "src": "https://storage.nathanpenny.fun/music/Michael%20Learns%20to%20Rock/Played%20on%20Pepper/That%27s%20Why%20%28You%20Go%20Away%29-Played%20on%20Pepper-Michael%20Learns%20to%20Rock.mp3",
+    "cover": "../images/music-covers/michael-learns-to-rock-played-on-pepper-that-s-why-you-go-away-b9193d89.jpg"
+  },
+  {
+    "id": "paul-young-the-secret-of-association-everytime-you-go-away",
+    "type": "song",
+    "title": "Everytime You Go Away",
+    "artist": "Paul Young",
+    "album": "The Secret of Association",
+    "src": "https://storage.nathanpenny.fun/music/Paul%20Young/The%20Secret%20of%20Association/Everytime%20You%20Go%20Away-The%20Secret%20of%20Association-Paul%20Young.mp3",
+    "cover": "../images/music-covers/paul-young-the-secret-of-association-everytime-you-go-away-445771bf.jpg"
+  },
+  {
+    "id": "phil-collins-against-all-odds-original-soundtrack--against-all-odds-take-a-look-at-me-now",
+    "type": "song",
+    "title": "Against All Odds (Take a Look at Me Now)",
+    "artist": "Phil Collins",
+    "album": "Against All Odds (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Phil%20Collins/Against%20All%20Odds%20%28Original%20Soundtrack%29/Against%20All%20Odds%20%28Take%20a%20Look%20at%20Me%20Now%29-Against%20All%20Odds%20%28Original%20Soundtrack%29-Phil%20Collins.mp3",
+    "cover": "../images/music-covers/phil-collins-against-all-odds-original-soundtrack--against-all-odds-take-a-look-at-me-now-1b1ab9de.jpg"
+  },
+  {
+    "id": "phil-collins-but-seriously-another-day-in-paradise",
+    "type": "song",
+    "title": "Another Day in Paradise",
+    "artist": "Phil Collins",
+    "album": "But Seriously",
+    "src": "https://storage.nathanpenny.fun/music/Phil%20Collins/But%20Seriously/Another%20Day%20in%20Paradise-%E2%80%A6But%20Seriously-Phil%20Collins.mp3",
+    "cover": "../images/music-covers/phil-collins-but-seriously-another-day-in-paradise-bdb2ad9f.jpg"
+  },
+  {
+    "id": "professor-green-growing-up-in-public-in-the-shadow-of-the-sun",
+    "type": "song",
+    "title": "In the Shadow of the Sun",
+    "artist": "Professor Green",
+    "album": "Growing Up in Public",
+    "src": "https://storage.nathanpenny.fun/music/Professor%20Green/Growing%20Up%20in%20Public/In%20the%20Shadow%20of%20the%20Sun-Growing%20Up%20in%20Public-Professor%20Green.mp3",
+    "cover": "../images/music-covers/professor-green-growing-up-in-public-in-the-shadow-of-the-sun-ecf9654c.jpg"
+  },
+  {
+    "id": "r.-kelly-space-jam-original-soundtrack--i-believe-i-can-fly",
+    "type": "song",
+    "title": "I Believe I Can Fly",
+    "artist": "R. Kelly",
+    "album": "Space Jam (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/R.%20Kelly/Space%20Jam%20%28Original%20Soundtrack%29/I%20Believe%20I%20Can%20Fly-Space%20Jam%20%28Original%20Soundtrack%29-R.%20Kelly.mp3",
+    "cover": "../images/music-covers/r.-kelly-space-jam-original-soundtrack--i-believe-i-can-fly-99527b8f.jpg"
+  },
+  {
+    "id": "randy-vanwarmer-warmer-just-when-i-needed-you-most",
+    "type": "song",
+    "title": "Just When I Needed You Most",
+    "artist": "Randy VanWarmer",
+    "album": "Warmer",
+    "src": "https://storage.nathanpenny.fun/music/Randy%20VanWarmer/Warmer/Just%20When%20I%20Needed%20You%20Most-Warmer-Randy%20VanWarmer.mp3",
+    "cover": "../images/music-covers/randy-vanwarmer-warmer-just-when-i-needed-you-most-2187689c.jpg"
+  },
+  {
+    "id": "richard-marx-repeat-offender-right-here-waiting",
+    "type": "song",
+    "title": "Right Here Waiting",
+    "artist": "Richard Marx",
+    "album": "Repeat Offender",
+    "src": "https://storage.nathanpenny.fun/music/Richard%20Marx/Repeat%20Offender/Right%20Here%20Waiting-Repeat%20Offender-Richard%20Marx.mp3",
+    "cover": "../images/music-covers/richard-marx-repeat-offender-right-here-waiting-8b8a9aa9.jpg"
+  },
+  {
+    "id": "robbie-williams-sing-when-you-re-winning-better-man",
+    "type": "song",
+    "title": "Better Man",
+    "artist": "Robbie Williams",
+    "album": "Sing When You're Winning",
+    "src": "https://storage.nathanpenny.fun/music/Robbie%20Williams/Sing%20When%20You%27re%20Winning/Better%20Man-Sing%20When%20You%27re%20Winning-Robbie%20Williams.mp3",
+    "cover": "../images/music-covers/robbie-williams-sing-when-you-re-winning-better-man-81e8c642.jpg"
+  },
+  {
+    "id": "rod-stewart-atlantic-crossing-sailing",
+    "type": "song",
+    "title": "Sailing",
+    "artist": "Rod Stewart",
+    "album": "Atlantic Crossing",
+    "src": "https://storage.nathanpenny.fun/music/Rod%20Stewart/Atlantic%20Crossing/Sailing-Atlantic%20Crossing-Rod%20Stewart.mp3",
+    "cover": "../images/music-covers/rod-stewart-atlantic-crossing-sailing-ebf7cea9.jpg"
+  },
+  {
+    "id": "ronan-keating-destination-we-ve-got-tonight",
+    "type": "song",
+    "title": "We've Got Tonight",
+    "artist": "Ronan Keating",
+    "album": "Destination",
+    "src": "https://storage.nathanpenny.fun/music/Ronan%20Keating/Destination/We%27ve%20Got%20Tonight-Destination-Ronan%20Keating.mp3",
+    "cover": "../images/music-covers/ronan-keating-destination-we-ve-got-tonight-2c085819.jpg"
+  },
+  {
+    "id": "ronan-keating-ronan-when-you-say-nothing-at-all",
+    "type": "song",
+    "title": "When You Say Nothing at All",
+    "artist": "Ronan Keating",
+    "album": "Ronan",
+    "src": "https://storage.nathanpenny.fun/music/Ronan%20Keating/Ronan/When%20You%20Say%20Nothing%20at%20All-Ronan-Ronan%20Keating.mp3",
+    "cover": "../images/music-covers/ronan-keating-ronan-when-you-say-nothing-at-all-e4f62ce5.jpg"
+  },
+  {
+    "id": "sade-diamond-life-smooth-operator",
+    "type": "song",
+    "title": "Smooth Operator",
+    "artist": "Sade",
+    "album": "Diamond Life",
+    "src": "https://storage.nathanpenny.fun/music/Sade/Diamond%20Life/Smooth%20Operator-Diamond%20Life-Sade.mp3",
+    "cover": "../images/music-covers/sade-diamond-life-smooth-operator-d02298e3.jpg"
+  },
+  {
+    "id": "sarah-brightman-the-songs-that-got-away-scarborough-fair",
+    "type": "song",
+    "title": "Scarborough Fair",
+    "artist": "Sarah Brightman",
+    "album": "The Songs That Got Away",
+    "src": "https://storage.nathanpenny.fun/music/Sarah%20Brightman/The%20Songs%20That%20Got%20Away/Scarborough%20Fair-The%20Songs%20That%20Got%20Away-Sarah%20Brightman.mp3",
+    "cover": "../images/music-covers/sarah-brightman-the-songs-that-got-away-scarborough-fair-863ce4b1.jpg"
+  },
+  {
+    "id": "sarah-brightman-timeless-time-to-say-goodbye",
+    "type": "song",
+    "title": "Time to Say Goodbye",
+    "artist": "Sarah Brightman",
+    "album": "Timeless",
+    "src": "https://storage.nathanpenny.fun/music/Sarah%20Brightman/Timeless/Time%20to%20Say%20Goodbye-Timeless-Sarah%20Brightman.mp3",
+    "cover": "../images/music-covers/sarah-brightman-timeless-time-to-say-goodbye-8016915c.jpg"
+  },
+  {
+    "id": "sarah-mclachlan-surfacing-angel",
+    "type": "song",
+    "title": "Angel",
+    "artist": "Sarah McLachlan",
+    "album": "Surfacing",
+    "src": "https://storage.nathanpenny.fun/music/Sarah%20McLachlan/Surfacing/Angel-Surfacing-Sarah%20McLachlan.mp3",
+    "cover": "../images/music-covers/sarah-mclachlan-surfacing-angel-c636a851.jpg"
+  },
+  {
+    "id": "sasha-alex-sloan-self-portrait-dancing-with-your-ghost",
+    "type": "song",
+    "title": "Dancing with Your Ghost",
+    "artist": "Sasha Alex Sloan",
+    "album": "Self Portrait",
+    "src": "https://storage.nathanpenny.fun/music/Sasha%20Alex%20Sloan/Self%20Portrait/Dancing%20with%20Your%20Ghost-Self%20Portrait-Sasha%20Alex%20Sloan.mp3",
+    "cover": "../images/music-covers/sasha-alex-sloan-self-portrait-dancing-with-your-ghost-1aed9679.jpg"
+  },
+  {
+    "id": "savage-garden-affirmation-i-knew-i-loved-you",
+    "type": "song",
+    "title": "I Knew I Loved You",
+    "artist": "Savage Garden",
+    "album": "Affirmation",
+    "src": "https://storage.nathanpenny.fun/music/Savage%20Garden/Affirmation/I%20Knew%20I%20Loved%20You-Affirmation-Savage%20Garden.mp3",
+    "cover": "../images/music-covers/savage-garden-affirmation-i-knew-i-loved-you-9e0314a7.jpg"
+  },
+  {
+    "id": "savage-garden-savage-garden-truly-madly-deeply",
+    "type": "song",
+    "title": "Truly Madly Deeply",
+    "artist": "Savage Garden",
+    "album": "Savage Garden",
+    "src": "https://storage.nathanpenny.fun/music/Savage%20Garden/Savage%20Garden/Truly%20Madly%20Deeply-Savage%20Garden-Savage%20Garden.mp3",
+    "cover": "../images/music-covers/savage-garden-savage-garden-truly-madly-deeply-504c0d61.jpg"
+  },
+  {
+    "id": "seal-seal-ii--kiss-from-a-rose",
+    "type": "song",
+    "title": "Kiss from a Rose",
+    "artist": "Seal",
+    "album": "Seal (II)",
+    "src": "https://storage.nathanpenny.fun/music/Seal/Seal%20%28II%29/Kiss%20from%20a%20Rose-Seal%20%28II%29-Seal.mp3",
+    "cover": "../images/music-covers/seal-seal-ii--kiss-from-a-rose-6636eb0b.jpg"
+  },
+  {
+    "id": "shakin-stevens-let-s-boogie-because-i-love-you",
+    "type": "song",
+    "title": "Because I Love You",
+    "artist": "Shakin' Stevens",
+    "album": "Let's Boogie",
+    "src": "https://storage.nathanpenny.fun/music/Shakin%27%20Stevens/Let%27s%20Boogie/Because%20I%20Love%20You-Let%27s%20Boogie-Shakin%27%20Stevens.mp3",
+    "cover": "../images/music-covers/shakin-stevens-let-s-boogie-because-i-love-you-3402d5d7.jpg"
+  },
+  {
+    "id": "shania-twain-come-on-over-you-re-still-the-one",
+    "type": "song",
+    "title": "You're Still the One",
+    "artist": "Shania Twain",
+    "album": "Come On Over",
+    "src": "https://storage.nathanpenny.fun/music/Shania%20Twain/Come%20On%20Over/You%27re%20Still%20the%20One-Come%20On%20Over-Shania%20Twain.mp3",
+    "cover": "../images/music-covers/shania-twain-come-on-over-you-re-still-the-one-342683c9.jpg"
+  },
+  {
+    "id": "simon-garfunkel-parsley-sage-rosemary-and-thyme-scarborough-fair-canticle",
+    "type": "song",
+    "title": "Scarborough Fair ／ Canticle",
+    "artist": "Simon & Garfunkel",
+    "album": "Parsley, Sage, Rosemary and Thyme",
+    "src": "https://storage.nathanpenny.fun/music/Simon%20%26%20Garfunkel/Parsley%2C%20Sage%2C%20Rosemary%20and%20Thyme/Scarborough%20Fair%20%EF%BC%8F%20Canticle-Parsley%2C%20Sage%2C%20Rosemary%20and%20Thyme-Simon%20%26%20Garfunkel.mp3",
+    "cover": "../images/music-covers/simon-garfunkel-parsley-sage-rosemary-and-thyme-scarborough-fair-canticle-37e96347.jpg"
+  },
+  {
+    "id": "simon-garfunkel-wednesday-morning-3-a.m-the-sound-of-silence-wednesday-morning-3-a.m.",
+    "type": "song",
+    "title": "The Sound of Silence-Wednesday Morning, 3 A.M.",
+    "artist": "Simon & Garfunkel",
+    "album": "Wednesday Morning, 3 A.M",
+    "src": "https://storage.nathanpenny.fun/music/Simon%20%26%20Garfunkel/Wednesday%20Morning%2C%203%20A.M/The%20Sound%20of%20Silence-Wednesday%20Morning%2C%203%20A.M.-Simon%20%26%20Garfunkel.mp3",
+    "cover": "../images/music-covers/simon-garfunkel-wednesday-morning-3-a.m-the-sound-of-silence-wednesday-morning-3-a.m.-0aadb176.jpg"
+  },
+  {
+    "id": "slander-dylan-matthew-love-is-gone-acoustic-single--love-is-gone-acoustic",
+    "type": "song",
+    "title": "Love Is Gone (Acoustic)",
+    "artist": "SLANDER & Dylan Matthew",
+    "album": "Love Is Gone (Acoustic) (Single)",
+    "src": "https://storage.nathanpenny.fun/music/SLANDER%20%26%20Dylan%20Matthew/Love%20Is%20Gone%20%28Acoustic%29%20%28Single%29/Love%20Is%20Gone%20%28Acoustic%29-Love%20Is%20Gone%20%28Acoustic%29%20%28Single%29-SLANDER%20%26%20Dylan%20Matthew.flac",
+    "cover": "../images/music-covers/slander-dylan-matthew-love-is-gone-acoustic-single--love-is-gone-acoustic-24a6093d.jpg"
+  },
+  {
+    "id": "spagna-unknown-album-con-il-tuo-nome",
+    "type": "song",
+    "title": "Con il tuo nome",
+    "artist": "Spagna",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Spagna/Unknown%20Album/Con%20il%20tuo%20nome-Unknown%20Album-Spagna.mp3",
+    "cover": "../images/music-covers/spagna-unknown-album-con-il-tuo-nome-0439ad60.jpg"
+  },
+  {
+    "id": "stevie-wonder-the-woman-in-red-original-soundtrack--i-just-called-to-say-i-love-you",
+    "type": "song",
+    "title": "I Just Called to Say I Love You",
+    "artist": "Stevie Wonder",
+    "album": "The Woman in Red (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Stevie%20Wonder/The%20Woman%20in%20Red%20%28Original%20Soundtrack%29/I%20Just%20Called%20to%20Say%20I%20Love%20You-The%20Woman%20in%20Red%20%28Original%20Soundtrack%29-Stevie%20Wonder.mp3",
+    "cover": "../images/music-covers/stevie-wonder-the-woman-in-red-original-soundtrack--i-just-called-to-say-i-love-you-b40a36f4.jpg"
+  },
+  {
+    "id": "stewart-mac-unknown-album-i-love-you",
+    "type": "song",
+    "title": "I Love You",
+    "artist": "Stewart Mac",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Stewart%20Mac/Unknown%20Album/I%20Love%20You-Unknown%20Album-Stewart%20Mac.mp3",
+    "cover": "../images/music-covers/stewart-mac-unknown-album-i-love-you-78b98613.jpg"
+  },
+  {
+    "id": "tang-hongfei-tian-yuan-unknown-album-every-breath-you-take",
+    "type": "song",
+    "title": "Every Breath You Take",
+    "artist": "Tang Hongfei & Tian Yuan",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Tang%20Hongfei%20%26%20Tian%20Yuan/Unknown%20Album/Every%20Breath%20You%20Take-Unknown%20Album-Tang%20Hongfei%20%26%20Tian%20Yuan.mp3",
+    "cover": null
+  },
+  {
+    "id": "taylor-swift-fearless-love-story",
+    "type": "song",
+    "title": "Love Story",
+    "artist": "Taylor Swift",
+    "album": "Fearless",
+    "src": "https://storage.nathanpenny.fun/music/Taylor%20Swift/Fearless/Love%20Story-Fearless-Taylor%20Swift.mp3",
+    "cover": "../images/music-covers/taylor-swift-fearless-love-story-55711795.jpg"
+  },
+  {
+    "id": "the-bangles-everything-eternal-flame",
+    "type": "song",
+    "title": "Eternal Flame",
+    "artist": "The Bangles",
+    "album": "Everything",
+    "src": "https://storage.nathanpenny.fun/music/The%20Bangles/Everything/Eternal%20Flame-Everything-The%20Bangles.mp3",
+    "cover": "../images/music-covers/the-bangles-everything-eternal-flame-ee430eb0.jpg"
+  },
+  {
+    "id": "the-carpenters-now-then-yesterday-once-more",
+    "type": "song",
+    "title": "Yesterday Once More",
+    "artist": "The Carpenters",
+    "album": "Now & Then",
+    "src": "https://storage.nathanpenny.fun/music/The%20Carpenters/Now%20%26%20Then/Yesterday%20Once%20More-Now%20%26%20Then-The%20Carpenters.mp3",
+    "cover": "../images/music-covers/the-carpenters-now-then-yesterday-once-more-55b45218.jpg"
+  },
+  {
+    "id": "the-cascades-unknown-album-1963-single--rhythm-of-the-rain",
+    "type": "song",
+    "title": "Rhythm of the Rain",
+    "artist": "The Cascades",
+    "album": "Unknown Album (1963 Single)",
+    "src": "https://storage.nathanpenny.fun/music/The%20Cascades/Unknown%20Album%20%281963%20Single%29/Rhythm%20of%20the%20Rain-Unknown%20Album%20%281963%20Single%29-The%20Cascades.mp3",
+    "cover": "../images/music-covers/the-cascades-unknown-album-1963-single--rhythm-of-the-rain-7634a5c4.jpg"
+  },
+  {
+    "id": "the-cranberries-bury-the-hatchet-dying-in-the-sun",
+    "type": "song",
+    "title": "Dying in the Sun",
+    "artist": "The Cranberries",
+    "album": "Bury the Hatchet",
+    "src": "https://storage.nathanpenny.fun/music/The%20Cranberries/Bury%20the%20Hatchet/Dying%20in%20the%20Sun-Bury%20the%20Hatchet-The%20Cranberries.mp3",
+    "cover": "../images/music-covers/the-cranberries-bury-the-hatchet-dying-in-the-sun-2ab96707.jpg"
+  },
+  {
+    "id": "the-platters-unknown-album-only-you-and-you-alone",
+    "type": "song",
+    "title": "Only You (And You Alone)",
+    "artist": "The Platters",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/The%20Platters/Unknown%20Album/Only%20You%20%28And%20You%20Alone%29-Unknown%20Album-The%20Platters.mp3",
+    "cover": "../images/music-covers/the-platters-unknown-album-only-you-and-you-alone-b1a72297.jpg"
+  },
+  {
+    "id": "the-police-synchronicity-every-breath-you-take",
+    "type": "song",
+    "title": "Every Breath You Take",
+    "artist": "The Police",
+    "album": "Synchronicity",
+    "src": "https://storage.nathanpenny.fun/music/The%20Police/Synchronicity/Every%20Breath%20You%20Take-Synchronicity-The%20Police.mp3",
+    "cover": "../images/music-covers/the-police-synchronicity-every-breath-you-take-d27085ae.jpg"
+  },
+  {
+    "id": "the-righteous-brothers-back-to-back-unchained-melody",
+    "type": "song",
+    "title": "Unchained Melody",
+    "artist": "The Righteous Brothers",
+    "album": "Back to Back",
+    "src": "https://storage.nathanpenny.fun/music/The%20Righteous%20Brothers/Back%20to%20Back/Unchained%20Melody-Back%20to%20Back-The%20Righteous%20Brothers.mp3",
+    "cover": "../images/music-covers/the-righteous-brothers-back-to-back-unchained-melody-4c8cafce.jpg"
+  },
+  {
+    "id": "toni-braxton-secrets-how-could-an-angel-break-my-heart",
+    "type": "song",
+    "title": "How Could an Angel Break My Heart",
+    "artist": "Toni Braxton",
+    "album": "Secrets",
+    "src": "https://storage.nathanpenny.fun/music/Toni%20Braxton/Secrets/How%20Could%20an%20Angel%20Break%20My%20Heart-Secrets-Toni%20Braxton.mp3",
+    "cover": "../images/music-covers/toni-braxton-secrets-how-could-an-angel-break-my-heart-e75ac827.jpg"
+  },
+  {
+    "id": "toni-braxton-secrets-un-break-my-heart",
+    "type": "song",
+    "title": "Un-Break My Heart",
+    "artist": "Toni Braxton",
+    "album": "Secrets",
+    "src": "https://storage.nathanpenny.fun/music/Toni%20Braxton/Secrets/Un-Break%20My%20Heart-Secrets-Toni%20Braxton.mp3",
+    "cover": "../images/music-covers/toni-braxton-secrets-un-break-my-heart-d19c21a4.jpg"
+  },
+  {
+    "id": "tracy-chapman-crossroads-baby-can-i-hold-you",
+    "type": "song",
+    "title": "Baby Can I Hold You",
+    "artist": "Tracy Chapman",
+    "album": "Crossroads",
+    "src": "https://storage.nathanpenny.fun/music/Tracy%20Chapman/Crossroads/Baby%20Can%20I%20Hold%20You-Crossroads-Tracy%20Chapman.mp3",
+    "cover": "../images/music-covers/tracy-chapman-crossroads-baby-can-i-hold-you-f81ef98e.jpg"
+  },
+  {
+    "id": "trademark-only-love-only-love",
+    "type": "song",
+    "title": "Only Love",
+    "artist": "Trademark",
+    "album": "Only Love",
+    "src": "https://storage.nathanpenny.fun/music/Trademark/Only%20Love/Only%20Love-Only%20Love-Trademark.mp3",
+    "cover": "../images/music-covers/trademark-only-love-only-love-c0fa7546.jpg"
+  },
+  {
+    "id": "trademark-unknown-album-miss-you-finally",
+    "type": "song",
+    "title": "Miss You Finally",
+    "artist": "Trademark",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Trademark/Unknown%20Album/Miss%20You%20Finally-Unknown%20Album-Trademark.mp3",
+    "cover": "../images/music-covers/trademark-unknown-album-miss-you-finally-b0e09e0d.jpg"
+  },
+  {
+    "id": "trisha-yearwood-con-air-original-soundtrack--how-do-i-live",
+    "type": "song",
+    "title": "How Do I Live",
+    "artist": "Trisha Yearwood",
+    "album": "Con Air (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Trisha%20Yearwood/Con%20Air%20%28Original%20Soundtrack%29/How%20Do%20I%20Live-Con%20Air%20%28Original%20Soundtrack%29-Trisha%20Yearwood.mp3",
+    "cover": "../images/music-covers/trisha-yearwood-con-air-original-soundtrack--how-do-i-live-3d690f17.jpg"
+  },
+  {
+    "id": "unknown-artist-female-cover--unknown-album-hotel-california",
+    "type": "song",
+    "title": "Hotel California",
+    "artist": "Unknown Artist (Female Cover)",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Unknown%20Artist%20%28Female%20Cover%29/Unknown%20Album/Hotel%20California-Unknown%20Album-Unknown%20Artist%20%28Female%20Cover%29.mp3",
+    "cover": null
+  },
+  {
+    "id": "usa-for-africa-unknown-album-charity-single--we-are-the-world",
+    "type": "song",
+    "title": "We Are the World",
+    "artist": "USA for Africa",
+    "album": "Unknown Album (Charity Single)",
+    "src": "https://storage.nathanpenny.fun/music/USA%20for%20Africa/Unknown%20Album%20%28Charity%20Single%29/We%20Are%20the%20World-Unknown%20Album%20%28Charity%20Single%29-USA%20for%20Africa.mp3",
+    "cover": "../images/music-covers/usa-for-africa-unknown-album-charity-single--we-are-the-world-ffc5df5e.jpg"
+  },
+  {
+    "id": "vanessa-williams-pocahontas-original-soundtrack--colors-of-the-wind",
+    "type": "song",
+    "title": "Colors of the Wind",
+    "artist": "Vanessa Williams",
+    "album": "Pocahontas (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Vanessa%20Williams/Pocahontas%20%28Original%20Soundtrack%29/Colors%20of%20the%20Wind-Pocahontas%20%28Original%20Soundtrack%29-Vanessa%20Williams.mp3",
+    "cover": "../images/music-covers/vanessa-williams-pocahontas-original-soundtrack--colors-of-the-wind-732efd29.jpg"
+  },
+  {
+    "id": "various-artists-unknown-album-sealed-with-a-kiss",
+    "type": "song",
+    "title": "Sealed with a Kiss",
+    "artist": "Various Artists",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Various%20Artists/Unknown%20Album/Sealed%20with%20a%20Kiss-Unknown%20Album-Various%20Artists.mp3",
+    "cover": "../images/music-covers/various-artists-unknown-album-sealed-with-a-kiss-313e9b70.jpg"
+  },
+  {
+    "id": "westlife-coast-to-coast-my-love",
+    "type": "song",
+    "title": "My Love",
+    "artist": "Westlife",
+    "album": "Coast to Coast",
+    "src": "https://storage.nathanpenny.fun/music/Westlife/Coast%20to%20Coast/My%20Love-Coast%20to%20Coast-Westlife.mp3",
+    "cover": "../images/music-covers/westlife-coast-to-coast-my-love-ea887d30.jpg"
+  },
+  {
+    "id": "westlife-coast-to-coast-soledad",
+    "type": "song",
+    "title": "Soledad",
+    "artist": "Westlife",
+    "album": "Coast to Coast",
+    "src": "https://storage.nathanpenny.fun/music/Westlife/Coast%20to%20Coast/Soledad-Coast%20to%20Coast-Westlife.mp3",
+    "cover": "../images/music-covers/westlife-coast-to-coast-soledad-da7b1678.jpg"
+  },
+  {
+    "id": "wet-wet-wet-picture-this-love-is-all-around",
+    "type": "song",
+    "title": "Love Is All Around",
+    "artist": "Wet Wet Wet",
+    "album": "Picture This",
+    "src": "https://storage.nathanpenny.fun/music/Wet%20Wet%20Wet/Picture%20This/Love%20Is%20All%20Around-Picture%20This-Wet%20Wet%20Wet.mp3",
+    "cover": "../images/music-covers/wet-wet-wet-picture-this-love-is-all-around-07d09b1d.jpg"
+  },
+  {
+    "id": "wham--make-it-big-careless-whisper",
+    "type": "song",
+    "title": "Careless Whisper",
+    "artist": "Wham!",
+    "album": "Make It Big",
+    "src": "https://storage.nathanpenny.fun/music/Wham%21/Make%20It%20Big/Careless%20Whisper-Make%20It%20Big-Wham%21.mp3",
+    "cover": "../images/music-covers/wham--make-it-big-careless-whisper-77d0e275.jpg"
+  },
+  {
+    "id": "wham--music-from-the-edge-of-heaven-last-christmas",
+    "type": "song",
+    "title": "Last Christmas",
+    "artist": "Wham!",
+    "album": "Music from the Edge of Heaven",
+    "src": "https://storage.nathanpenny.fun/music/Wham%21/Music%20from%20the%20Edge%20of%20Heaven/Last%20Christmas-Music%20from%20the%20Edge%20of%20Heaven-Wham%21.mp3",
+    "cover": "../images/music-covers/wham--music-from-the-edge-of-heaven-last-christmas-c69ce5f6.jpg"
+  },
+  {
+    "id": "whitney-houston-the-bodyguard-original-soundtrack--i-have-nothing",
+    "type": "song",
+    "title": "I Have Nothing",
+    "artist": "Whitney Houston",
+    "album": "The Bodyguard (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Whitney%20Houston/The%20Bodyguard%20%28Original%20Soundtrack%29/I%20Have%20Nothing-The%20Bodyguard%20%28Original%20Soundtrack%29-Whitney%20Houston.mp3",
+    "cover": "../images/music-covers/whitney-houston-the-bodyguard-original-soundtrack--i-have-nothing-3ca4074f.jpg"
+  },
+  {
+    "id": "whitney-houston-the-bodyguard-original-soundtrack--i-will-always-love-you",
+    "type": "song",
+    "title": "I Will Always Love You",
+    "artist": "Whitney Houston",
+    "album": "The Bodyguard (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Whitney%20Houston/The%20Bodyguard%20%28Original%20Soundtrack%29/I%20Will%20Always%20Love%20You-The%20Bodyguard%20%28Original%20Soundtrack%29-Whitney%20Houston.mp3",
+    "cover": "../images/music-covers/whitney-houston-the-bodyguard-original-soundtrack--i-will-always-love-you-a57972cb.jpg"
+  },
+  {
+    "id": "whitney-houston-whitney-houston-the-greatest-love-of-all",
+    "type": "song",
+    "title": "The Greatest Love of All",
+    "artist": "Whitney Houston",
+    "album": "Whitney Houston",
+    "src": "https://storage.nathanpenny.fun/music/Whitney%20Houston/Whitney%20Houston/The%20Greatest%20Love%20of%20All-Whitney%20Houston-Whitney%20Houston.mp3",
+    "cover": "../images/music-covers/whitney-houston-whitney-houston-the-greatest-love-of-all-c20aa0d7.jpg"
+  },
+  {
+    "id": "whitney-houston-mariah-carey-the-prince-of-egypt-original-soundtrack--when-you-believe",
+    "type": "song",
+    "title": "When You Believe",
+    "artist": "Whitney Houston & Mariah Carey",
+    "album": "The Prince of Egypt (Original Soundtrack)",
+    "src": "https://storage.nathanpenny.fun/music/Whitney%20Houston%20%26%20Mariah%20Carey/The%20Prince%20of%20Egypt%20%28Original%20Soundtrack%29/When%20You%20Believe-The%20Prince%20of%20Egypt%20%28Original%20Soundtrack%29-Whitney%20Houston%20%26%20Mariah%20Carey.mp3",
+    "cover": "../images/music-covers/whitney-houston-mariah-carey-the-prince-of-egypt-original-soundtrack--when-you-believe-e5861b78.jpg"
+  },
+  {
+    "id": "杨宗纬-初-爱-其实都没有",
+    "type": "song",
+    "title": "其实都没有",
+    "artist": "杨宗纬",
+    "album": "初·爱",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%A8%E5%AE%97%E7%BA%AC/%E5%88%9D%C2%B7%E7%88%B1/%E5%85%B6%E5%AE%9E%E9%83%BD%E6%B2%A1%E6%9C%89-%E5%88%9D%C2%B7%E7%88%B1-%E6%9D%A8%E5%AE%97%E7%BA%AC.mp3",
+    "cover": "../images/music-covers/杨宗纬-初-爱-其实都没有-580a115e.jpg"
+  }
+]

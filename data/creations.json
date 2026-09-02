@@ -1,0 +1,21 @@
+[
+  {
+    "id": "wanzai-song",
+    "type": "song",
+    "origin": "favorite",
+    "title": "The WanZai Song",
+    "description": "A song that introduces the character of WanZai. And I love it so I share it here.",
+    "src": "../audio/wanzai-song-128.mp3",
+    "date": "2026-07-04"
+  },
+  {
+    "id": "violet-evergarden-ep1",
+    "type": "video",
+    "origin": "favorite",
+    "title": "Violet Evergarden EP1",
+    "description": "Episode one — a former weapon becomes an Auto Memory Doll, ghostwriting letters she cannot yet understand.",
+    "src": "https://storage.nathanpenny.fun/nathanpenny-fav/videos/%5Bsubbers%5D%20Violet%20Evergarden%20-%2001%20%5BBDRip%201080p%20zh-Hans%5D.mp4",
+    "poster": "../images/blog-img/2026-07-02/Violet-Evergarden.webp",
+    "date": "2026-07-02"
+  }
+]

@@ -12,6 +12,7 @@ There is no build, lint, or test tooling — nothing to install.
 
 - **Preview locally**: serve the repo root with any static file server, e.g. `python -m http.server 8080` (port 8080 is the dev origin allowed by the Worker's CORS list, so the visitor/comment features work locally too).
 - **Regenerate blog post pages**: `python3 tools/gen_post_pages.py` (see Blog content below).
+- **Regenerate the music library catalog**: `python3 tools/gen_music_library.py` (see Creations data below).
 - **Deploy the site**: `git push origin main` — the host (Cloudflare Pages, plus a mirror on GitHub Pages) picks up the pushed files. Images, HTML, CSS, and JSON are pushed as-is.
 - **Deploy the Worker**: `cd workers && npx wrangler deploy` (config in `workers/wrangler.jsonc`, see `workers/README.md`); it is NOT part of the git-deployed static site.
 
@@ -19,12 +20,13 @@ There is no build, lint, or test tooling — nothing to install.
 
 ### Static pages
 
-Six pages share an identical, hand-copied `nav` + `footer` block (there is no templating):
+Seven pages share an identical, hand-copied `nav` + `footer` block (there is no templating):
 
 - `index.html` — home
 - `pages/about.html` — profile and CV download
-- `pages/blog.html` — all blog posts as inline `<article>` blocks
+- `pages/blog.html` — single-column post list: heading, search bar (`#blogSearch`, with clear button + match-count line), then one summary card per post (no sidebar; the sticky-sidebar TOC lives only on the single-post pages)
 - `pages/gallery.html` — image grid + lightbox
+- `pages/creations.html` — featured songs/videos + a searchable music library with a bottom audio mini-player
 - `pages/achievements.html` — the achievements page (publications, projects, etc.; intentionally empty for now — see `docs/achievements.md` for how to fill it in)
 - `pages/contact.html` — social links, comment form
 
@@ -38,13 +40,13 @@ Friendly URLs (`/about`, `/blog`, ...) are mapped to the `pages/` files by `_red
 
 ### Stylesheets
 
-`styles/style.css` is the site's own stylesheet, organized top-to-bottom by page into sections marked with banner comments: `GLOBAL BASICS & RESETS`, `LAYOUT`, `HEADER & NAVIGATION`, `ABOUT PAGE`, `BLOG PAGE`, `GALLERY PAGE`, `CONTACT PAGE`, `COMMENTS`, `FOOTER`, `WIDGETS: PROGRESS BAR, BACK TO TOP, UFO EASTER EGG, TOAST`, `404 PAGE`, `ACHIEVEMENTS PAGE`. All colors are CSS custom properties defined in `:root`; the dark palette lives in TWO sync'd blocks — `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])` (auto) and `:root[data-theme="dark"]` (manual toggle) — keep them in sync when changing colors. Add new styles under the matching section banner rather than at the end of the file.
+`styles/style.css` is the site's own stylesheet, organized top-to-bottom by page into sections marked with banner comments: `GLOBAL BASICS & RESETS`, `LAYOUT`, `HEADER & NAVIGATION`, `ABOUT PAGE`, `BLOG PAGE`, `GALLERY PAGE`, `CREATIONS PAGE`, `CONTACT PAGE`, `COMMENTS`, `FOOTER`, `WIDGETS: PROGRESS BAR, BACK TO TOP, UFO EASTER EGG, TOAST`, `404 PAGE`, `ACHIEVEMENTS PAGE`. All colors are CSS custom properties defined in `:root`; the dark palette lives in TWO sync'd blocks — `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])` (auto) and `:root[data-theme="dark"]` (manual toggle) — keep them in sync when changing colors. Add new styles under the matching section banner rather than at the end of the file.
 
 The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css` (self-hosted Font Awesome 6.5.2, see Other notes).
 
 ### Scripts
 
-`scripts/main.js` is loaded with `defer` on every page. It handles GA4, the home latest-posts cards (rendered from `feed.xml` into `#latestPostsSection`), blog scroll/search, gallery + lightbox, comments, the WeChat QR modal, the theme toggle (light/dark/system, persisted in `localStorage`), blog reading extras (progress bar, TOC scrollspy, reading time, back-to-top), the home starfield (full-page dark-mode canvas: twinkling stars, meteors, the occasional rock that hits the page — `#starField` + `skyBuildStars`/`skyDrawFrame`/`initStarField`, dark-mode only via CSS opacity), scroll reveal (`[data-reveal]`), the UFO easter egg, and service-worker registration. Each page's `<head>` also contains a tiny inline script that applies the saved theme before first paint to avoid a flash — update it in all five pages if the `theme` storage key changes. Key patterns:
+`scripts/main.js` is loaded with `defer` on every page. It handles GA4, the home latest-posts cards (rendered from `feed.xml` into `#latestPostsSection`), blog list search/filtering, gallery + lightbox, creations (featured cards, music library, bottom audio mini-player), comments, the WeChat QR modal, the theme toggle (light/dark/system, persisted in `localStorage`), blog reading extras (progress bar, reading time, back-to-top), the home starfield (full-page dark-mode canvas: twinkling stars, meteors, the occasional rock that hits the page — `#starField` + `skyBuildStars`/`skyDrawFrame`/`initStarField`, dark-mode only via CSS opacity), scroll reveal (`[data-reveal]`), the UFO easter egg, and service-worker registration. Each page's `<head>` also contains a tiny inline script that applies the saved theme before first paint to avoid a flash — update it in all of them (they are hand-copied) if the `theme` storage key changes. Key patterns:
 
 - Everything is initialized in the `DOMContentLoaded` listener at the bottom.
 - Each feature is guarded by `document.getElementById(...)` null-checks, so the one shared script can run on every page without erroring where a feature doesn't exist. Match this pattern for new features.
@@ -53,6 +55,10 @@ The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css` (s
 ### Gallery data
 
 `data/gallery.json` is the source of truth for the gallery page (it is fetched at runtime via `fetch('../data/gallery.json')`). To add an image: drop the file in `images/` (blog images conventionally live under `images/blog-img/<date>/`), then add a JSON entry with `id`, `src`, `title`, `description`, `category`, `date`. Categories are auto-derived from the data to build the filter buttons.
+
+### Creations data
+
+`pages/creations.html` is driven by two JSON files fetched at runtime, and is deliberately independent of the blog (no cross-links). `data/creations.json` (hand-maintained) holds the featured items: `{id, type: song|video, origin: original|favorite, title, description, src, poster, cover, date}` — paths relative to `pages/`; `origin` is recorded but not rendered. `data/music-library.json` is GENERATED by `tools/gen_music_library.py` from the local, gitignored `audio/my-music/` library (`Artist/Album/Title-Album-Artist.ext` layout; cover art is downloaded into `images/music-covers/`). The audio files themselves are NOT in the repo: upload them to the R2 bucket `nathanpenny-fun` behind `storage.nathanpenny.fun` via `tools/upload_music_r2.sh nathanpenny-fun` (keys under `music/`). CI never regenerates the library JSON — run the script locally when the library changes.
 
 ### Blog content
 

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <script>
+      // Apply the saved color theme before first paint to avoid a flash.
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <link rel="apple-touch-icon" href="../images/icon-180.png">
+    <title>Creations | Nathan Penny's personal website</title>
+    <meta name="description" content="Songs and videos Nathan Penny wants to share — originals, favorites, and a full music library.">
+    <meta name="keywords" content="html,css,javascript,music,video,creations">
+    <meta name="author" content="Nathan Penny">
+    <link rel="canonical" href="https://nathanpenny.fun/creations">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Nathan Penny's personal website">
+    <meta property="og:title" content="Creations | Nathan Penny's personal website">
+    <meta property="og:description" content="Songs and videos Nathan Penny wants to share — originals, favorites, and a full music library.">
+    <meta property="og:url" content="https://nathanpenny.fun/creations">
+    <meta property="og:image" content="https://nathanpenny.fun/images/og-image.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <link href="../styles/style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="../fonts/fontawesome/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="../NP-logo.svg">
+    <link rel="alternate" type="application/rss+xml" title="Nathan Penny's blog (RSS)" href="https://nathanpenny.fun/feed.xml">
+    <script src="../scripts/main.js" defer></script>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-container">
+        <a href="../index.html" class="nav-brand" aria-label="Go to homepage">
+          <img class="site-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
+          <div class="logo">Nathan Penny's personal website FOR FUN</div>
+        </a>
+
+        <ul class="nav-list">
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="./about.html">About</a></li>
+          <li><a href="./blog.html">Blog</a></li>
+          <li><a href="./gallery.html">Gallery</a></li>
+          <li><a href="./creations.html">Creations</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+          <li><a href="./contact.html">Contact</a></li>
+        </ul>
+        <button id="themeToggle" class="theme-toggle" type="button">
+          <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+      </div>
+    </nav>
+
+    <main class="container">
+      <section class="hero">
+        <h1>Creations</h1>
+        <p class="hero-subtitle">Songs and videos I want to share — press play.</p>
+      </section>
+
+      <section class="creations-section" aria-label="Creations">
+        <div class="creations-filters" role="group" aria-label="Filter creations by type">
+          <button class="filter-btn active" data-type="all" type="button" aria-pressed="true">All</button>
+          <button class="filter-btn" data-type="song" type="button" aria-pressed="false">Songs</button>
+          <button class="filter-btn" data-type="video" type="button" aria-pressed="false">Videos</button>
+        </div>
+
+        <div class="creation-grid" id="creationsGrid" role="list">
+          <p class="gallery-loading">Loading creations...</p>
+        </div>
+        <p class="gallery-empty" id="creationsEmpty" hidden>No creations match this filter.</p>
+      </section>
+
+      <section class="music-section" aria-label="Music library">
+        <h2 class="section-title">Music Library</h2>
+        <div class="music-controls">
+          <input
+            class="gallery-search"
+            id="musicSearch"
+            type="search"
+            placeholder="Search songs, artists, albums..."
+            aria-label="Search music library"
+          >
+        </div>
+        <div class="music-list" id="musicList">
+          <p class="gallery-loading">Loading music library...</p>
+        </div>
+        <p class="gallery-empty" id="musicEmpty" hidden>No songs match your search.</p>
+      </section>
+    </main>
+
+    <div class="creation-player" id="creationPlayer" hidden role="region" aria-label="Audio player">
+      <span class="creation-player-thumb" id="creationPlayerThumb" aria-hidden="true"></span>
+      <div class="creation-player-info">
+        <span class="creation-player-title" id="creationPlayerTitle"></span>
+        <span class="creation-player-time" id="creationPlayerTime">0:00 / 0:00</span>
+      </div>
+      <div class="creation-player-controls">
+        <button type="button" id="creationPlayerPrev" aria-label="Previous song"><i class="fa-solid fa-backward-step" aria-hidden="true"></i></button>
+        <button type="button" id="creationPlayerPlay" aria-label="Play"><i class="fa-solid fa-play" aria-hidden="true"></i></button>
+        <button type="button" id="creationPlayerNext" aria-label="Next song"><i class="fa-solid fa-forward-step" aria-hidden="true"></i></button>
+      </div>
+      <input type="range" id="creationPlayerSeek" min="0" max="0" value="0" step="0.1" aria-label="Seek">
+    </div>
+
+    <footer>
+      <img class="footer-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
+      <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
+    </footer>
+  </body>
+</html>

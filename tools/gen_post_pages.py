@@ -51,7 +51,7 @@ POSTS_SRC = ROOT / "posts"
 POSTS_OUT = ROOT / "blog"
 
 SITE = "https://nathanpenny.fun"
-STATIC_PATHS = ["/", "/about", "/blog", "/gallery", "/achievements", "/contact"]
+STATIC_PATHS = ["/", "/about", "/blog", "/gallery", "/creations", "/achievements", "/contact"]
 PAGE_TITLE_SUFFIX = " | Nathan Penny's blog"
 
 ARTICLES_START = "<!-- posts:articles:start -->"
@@ -544,6 +544,7 @@ def render_post_page(post, posts, og_image):
           <li><a href="../../pages/about.html">About</a></li>
           <li><a href="../../pages/blog.html">Blog</a></li>
           <li><a href="../../pages/gallery.html">Gallery</a></li>
+          <li><a href="../../pages/creations.html">Creations</a></li>
           <li><a href="../../pages/achievements.html">Achievements</a></li>
           <li><a href="../../pages/contact.html">Contact</a></li>
         </ul>

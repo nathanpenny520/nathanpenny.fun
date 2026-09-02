@@ -356,6 +356,241 @@ function initGallerySearch() {
 }
 
 // ============================================================================
+// CREATIONS (featured songs/videos + music library, with a bottom audio player)
+// ============================================================================
+
+// Song queue shared by featured songs and the library: [featured..., library...],
+// built once at load. Play controls index THIS array (never the DOM), so
+// filtering/searching only toggles visibility and can never desync playback.
+let creationSongs = [];
+let creationAudio = null;
+let currentSongIndex = -1;
+let creationSeeking = false;
+
+function creationFormatTime(seconds) {
+  const total = Math.max(0, Math.floor(seconds || 0));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function creationCoverHtml(song) {
+  if (song.cover) {
+    return `<img src="${escapeHtml(song.cover)}" alt="" loading="lazy" decoding="async">`;
+  }
+  return '<span class="creation-cover-empty"><i class="fa-solid fa-music" aria-hidden="true"></i></span>';
+}
+
+function renderCreations(grid, featured, librarySongs) {
+  const featuredCount = creationSongs.length - librarySongs.length;
+
+  // Deliberately no links back into the blog: the creations section stands
+  // on its own.
+  grid.innerHTML = featured.map((item) => {
+    if (item.type === 'video') {
+      const poster = item.poster ? ` poster="${escapeHtml(item.poster)}"` : '';
+      return (
+        '<article class="creation-item" role="listitem" data-type="video">' +
+        `<video class="creation-video" controls playsinline preload="metadata" src="${escapeHtml(item.src)}"${poster}></video>` +
+        `<div class="creation-body"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div>` +
+        '</article>'
+      );
+    }
+    const songIndex = creationSongs.indexOf(item);
+    return (
+      '<article class="creation-item" role="listitem" data-type="song">' +
+      `<div class="creation-cover">${creationCoverHtml(item)}` +
+      `<button class="creation-play" type="button" data-song-index="${songIndex}" aria-label="Play"><i class="fa-solid fa-play" aria-hidden="true"></i></button>` +
+      '</div>' +
+      `<div class="creation-body"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div>` +
+      '</article>'
+    );
+  }).join('');
+
+  const list = document.getElementById('musicList');
+  if (list) {
+    // Rows are buttons (native keyboard/click semantics); role stays off the
+    // container so the button semantics are preserved.
+    list.removeAttribute('role');
+    list.innerHTML = librarySongs.map((song, i) => (
+      `<button class="music-row" type="button" data-song-index="${featuredCount + i}">` +
+      `<span class="music-row-cover">${creationCoverHtml(song)}</span>` +
+      '<span class="music-row-text">' +
+      `<span class="music-row-title">${escapeHtml(song.title)}</span>` +
+      `<span class="music-row-sub">${escapeHtml(song.artist)} · ${escapeHtml(song.album)}</span>` +
+      '</span>' +
+      '<i class="fa-solid fa-play music-row-icon" aria-hidden="true"></i>' +
+      '</button>'
+    )).join('');
+  }
+}
+
+function filterCreations(type) {
+  document.querySelectorAll('.creation-item').forEach(card => {
+    card.classList.toggle('hidden', type !== 'all' && card.dataset.type !== type);
+  });
+  // The library is all songs: keep it for All/Songs, hide it under Videos.
+  const musicSection = document.querySelector('.music-section');
+  if (musicSection) musicSection.classList.toggle('hidden', type === 'video');
+
+  const empty = document.getElementById('creationsEmpty');
+  if (empty) empty.hidden = document.querySelectorAll('.creation-item:not(.hidden)').length > 0;
+}
+
+function initCreationFilters() {
+  const filters = document.querySelector('.creations-filters');
+  if (!filters) return;
+
+  filters.addEventListener('click', (event) => {
+    const chip = event.target.closest('.filter-btn');
+    if (!chip) return;
+    filters.querySelectorAll('.filter-btn').forEach(btn => {
+      const on = btn === chip;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    filterCreations(chip.dataset.type);
+  });
+}
+
+function initMusicSearch() {
+  const searchInput = document.getElementById('musicSearch');
+  if (!searchInput) return;
+
+  searchInput.addEventListener('input', () => {
+    const query = searchInput.value.toLowerCase().trim();
+    let visible = 0;
+    document.querySelectorAll('.music-row').forEach(row => {
+      const show = row.textContent.toLowerCase().includes(query);
+      row.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    const empty = document.getElementById('musicEmpty');
+    if (empty) empty.hidden = visible > 0;
+  });
+}
+
+function initCreationPlayer() {
+  const player = document.getElementById('creationPlayer');
+  if (!player) return;
+  const seek = document.getElementById('creationPlayerSeek');
+  const timeEl = document.getElementById('creationPlayerTime');
+  const titleEl = document.getElementById('creationPlayerTitle');
+  const thumbEl = document.getElementById('creationPlayerThumb');
+  const playBtn = document.getElementById('creationPlayerPlay');
+
+  const setPlayIcon = () => {
+    if (!creationAudio) return;
+    const playing = !creationAudio.paused;
+    playBtn.innerHTML = `<i class="fa-solid ${playing ? 'fa-pause' : 'fa-play'}" aria-hidden="true"></i>`;
+    playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  };
+
+  const markActiveRow = () => {
+    document.querySelectorAll('.music-row').forEach(row => {
+      row.classList.toggle('active', Number(row.dataset.songIndex) === currentSongIndex);
+    });
+  };
+
+  // One Audio element, created lazily inside the first click gesture — that
+  // gesture unlocks audio on iOS, and every later track reuses the element.
+  const ensureAudio = () => {
+    if (creationAudio) return creationAudio;
+    creationAudio = new Audio();
+    creationAudio.addEventListener('loadedmetadata', () => {
+      seek.max = creationAudio.duration || 0;
+    });
+    creationAudio.addEventListener('timeupdate', () => {
+      if (!creationSeeking) seek.value = creationAudio.currentTime;
+      timeEl.textContent = `${creationFormatTime(creationAudio.currentTime)} / ${creationFormatTime(creationAudio.duration)}`;
+    });
+    creationAudio.addEventListener('ended', () => playSongAt(currentSongIndex + 1)); // wraps
+    creationAudio.addEventListener('play', () => { setPlayIcon(); markActiveRow(); });
+    creationAudio.addEventListener('pause', setPlayIcon);
+    creationAudio.addEventListener('error', setPlayIcon);
+    return creationAudio;
+  };
+
+  const playSongAt = (index) => {
+    if (!creationSongs.length) return;
+    const count = creationSongs.length;
+    currentSongIndex = ((index % count) + count) % count;
+    const song = creationSongs[currentSongIndex];
+    const audio = ensureAudio();
+    audio.src = song.src;
+    titleEl.textContent = song.title;
+    thumbEl.innerHTML = song.cover
+      ? `<img src="${escapeHtml(song.cover)}" alt="">`
+      : '<i class="fa-solid fa-music" aria-hidden="true"></i>';
+    player.hidden = false;
+    document.body.classList.add('creation-player-open');
+    markActiveRow();
+    audio.play().catch(setPlayIcon); // e.g. a failed src must not throw
+  };
+
+  // Card overlay buttons + library rows (delegated; toggles on the current song).
+  document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('.creation-play, .music-row');
+    if (!trigger) return;
+    const index = Number(trigger.dataset.songIndex);
+    if (Number.isNaN(index)) return;
+    if (index === currentSongIndex && creationAudio) {
+      if (creationAudio.paused) creationAudio.play().catch(setPlayIcon);
+      else creationAudio.pause();
+      return;
+    }
+    playSongAt(index);
+  });
+
+  playBtn.addEventListener('click', () => {
+    if (!creationAudio) { playSongAt(0); return; }
+    if (creationAudio.paused) creationAudio.play().catch(setPlayIcon);
+    else creationAudio.pause();
+  });
+  document.getElementById('creationPlayerPrev').addEventListener('click', () => playSongAt(currentSongIndex - 1));
+  document.getElementById('creationPlayerNext').addEventListener('click', () => playSongAt(currentSongIndex + 1));
+
+  // Drag must win over timeupdate while seeking.
+  seek.addEventListener('pointerdown', () => { creationSeeking = true; });
+  window.addEventListener('pointerup', () => { creationSeeking = false; });
+  seek.addEventListener('input', () => {
+    if (creationAudio && creationAudio.duration) creationAudio.currentTime = Number(seek.value);
+  });
+
+  // Inline videos and the audio bar must not play over each other; media
+  // events don't bubble, so listen in the capture phase.
+  document.addEventListener('play', (event) => {
+    if (event.target.tagName === 'VIDEO' && creationAudio && !creationAudio.paused) creationAudio.pause();
+  }, true);
+
+  // bfcache restore may have left audio paused/frozen; re-sync the icon.
+  window.addEventListener('pageshow', setPlayIcon);
+}
+
+async function loadCreations() {
+  const grid = document.getElementById('creationsGrid');
+  if (!grid) return;
+
+  try {
+    const featuredRes = await fetch('../data/creations.json');
+    if (!featuredRes.ok) throw new Error('failed to load creations data');
+    const featured = await featuredRes.json();
+
+    // The library is generated locally (media lives on R2, not in the repo);
+    // a failed library fetch must not take the featured cards down with it.
+    let librarySongs = [];
+    const libraryRes = await fetch('../data/music-library.json');
+    if (libraryRes.ok) librarySongs = await libraryRes.json();
+
+    creationSongs = [...featured.filter(item => item.type === 'song'), ...librarySongs];
+    renderCreations(grid, featured, librarySongs);
+    initCreationFilters();
+    initMusicSearch();
+    initCreationPlayer();
+  } catch (error) {
+    grid.innerHTML = `<p class="gallery-empty">Failed to load creations: ${escapeHtml(error.message)}</p>`;
+  }
+}
+
+// ============================================================================
 // COMMENTS (public discussion area on About page)
 // ============================================================================
 
@@ -1140,6 +1375,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initNavScrollPadding();
   loadGallery();
   initGallerySearch();
+  loadCreations();
   initCommentForm();
   loadComments();
   initQrModal();

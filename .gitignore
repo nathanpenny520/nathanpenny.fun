@@ -15,5 +15,7 @@ Thumbs.db
 # Project specific
 /learning-resource/
 roadmap.md
+# Personal music library (1GB media; catalog lives in data/music-library.json)
+/audio/my-music/
 # Wrangler local cache
 .wrangler/

@@ -1563,6 +1563,356 @@ a.cat-badge:hover {
 
 
 /* ==========================================================================
+   CREATIONS PAGE
+   ========================================================================== */
+
+.creations-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.creation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.creation-item {
+  background: var(--color-surface);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.creation-item:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Hiding (filters/search) instead of re-rendering keeps <video> playback
+   state and the playback queue indexes stable. */
+.creation-item.hidden,
+.music-row.hidden,
+.music-section.hidden {
+  display: none;
+}
+
+.creation-cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--color-surface-alt);
+}
+
+.creation-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.creation-cover-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  color: var(--color-text-muted);
+  background: linear-gradient(135deg, var(--color-divider), var(--color-surface-alt));
+}
+
+.creation-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.creation-play:hover {
+  transform: scale(1.08);
+}
+
+.creation-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+  background: #000;
+}
+
+.creation-body {
+  padding: 14px 16px 16px;
+}
+
+.creation-body h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--color-heading);
+}
+
+.creation-body p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* Music library list */
+.music-section {
+  margin-top: 48px;
+}
+
+.music-controls {
+  margin-bottom: 16px;
+}
+
+.music-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.music-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.music-row:hover {
+  background: var(--color-surface);
+}
+
+.music-row.active {
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+}
+
+.music-row-cover {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-divider);
+  color: var(--color-text-muted);
+  font-size: 16px;
+}
+
+.music-row-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.music-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.music-row-title {
+  font-size: 14px;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-row-sub {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-row-icon {
+  margin-left: auto;
+  color: var(--color-accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.music-row:hover .music-row-icon,
+.music-row.active .music-row-icon {
+  opacity: 1;
+}
+
+/* Bottom audio mini-player */
+:root {
+  --player-h: 72px;
+}
+
+.creation-player {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 24px;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* display:flex on the element beats the UA's [hidden] rule — same lesson as
+   the native dialogs; re-hide explicitly. */
+.creation-player[hidden] {
+  display: none;
+}
+
+.creation-player-thumb {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-divider);
+  color: var(--color-text-muted);
+}
+
+.creation-player-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.creation-player-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.creation-player-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.creation-player-time {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.creation-player-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.creation-player-controls button {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-soft);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.creation-player-controls button:hover {
+  color: var(--color-accent);
+}
+
+#creationPlayerPlay {
+  width: 42px;
+  height: 42px;
+  background: var(--color-accent);
+  color: #fff;
+}
+
+#creationPlayerPlay:hover {
+  color: #fff;
+  filter: brightness(1.08);
+}
+
+#creationPlayerSeek {
+  flex: 1;
+  min-width: 120px;
+  accent-color: var(--color-accent);
+}
+
+/* Reserve space for the bar and lift the fixed bottom widgets above it. */
+body.creation-player-open {
+  padding-bottom: calc(var(--player-h) + 12px);
+}
+
+body.creation-player-open #backToTop {
+  bottom: calc(var(--player-h) + 20px);
+}
+
+body.creation-player-open .toast {
+  bottom: calc(var(--player-h) + 24px);
+}
+
+
+/* --------------------------------------------------------------------------
+   Creations page responsive layout
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  :root {
+    --player-h: 116px;
+  }
+
+  .creation-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .creation-player {
+    flex-wrap: wrap;
+    padding: 10px 16px;
+  }
+
+  .creation-player-info {
+    flex: 1;
+  }
+
+  #creationPlayerSeek {
+    flex-basis: 100%;
+    order: 10;
+  }
+}
+
+
+/* ==========================================================================
    CONTACT PAGE
    ========================================================================== */
 

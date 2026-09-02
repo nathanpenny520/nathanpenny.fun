@@ -4,6 +4,7 @@
 /about         /pages/about         200
 /blog          /pages/blog          200
 /gallery       /pages/gallery       200
+/creations     /pages/creations     200
 /contact       /pages/contact       200
 /achievements  /pages/achievements  200
 /games         /achievements        301
