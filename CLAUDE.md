@@ -11,6 +11,8 @@ A hand-rolled static personal website + blog (`nathanpenny.fun`) with no build s
 There is no build, lint, or test tooling — nothing to install.
 
 - **Preview locally**: serve the repo root with any static file server, e.g. `python -m http.server 8080` (port 8080 is the dev origin allowed by the Worker's CORS list, so the visitor/comment features work locally too).
+- **Upload images for posts**: `https://workers.nathanpenny.fun/admin` (Cloudflare Access email OTP) → drag/paste → copy the markdown snippet → paste into the `.md` (remote URLs automatically get the `blog-img` class in the generator).
+- **Issue an AI API key**: `python3 tools/ai_key.py <name> [monthly_limit]`, then apply the printed SQL via `npx wrangler d1 execute nathanpenny --remote --command "<sql>"`.
 - **Regenerate blog post pages**: `python3 tools/gen_post_pages.py` (see Blog content below).
 - **Regenerate the music library catalog**: `python3 tools/gen_music_library.py` (see Creations data below).
 - **Deploy the site**: `git push origin main` — the host (GitHub Pages and/or the main domain) picks up the pushed files. Images, HTML, CSS, and JSON are pushed as-is.
@@ -68,14 +70,24 @@ Publishing = edit/create the `.md` and push: CI (`.github/workflows/gen-posts.ym
 
 ## Backend (Cloudflare Worker)
 
-`workers/comments.js` is a single Cloudflare Worker module using a D1 binding named `env.DB`. Endpoints:
+`workers/comments.js` (with imported modules `workers/admin_page.js` and `workers/ai_proxy.js`) is a Cloudflare Worker module using a D1 binding `env.DB` and an R2 binding `env.R2` (bucket `nathanpenny-fun`). Endpoints (full details in `workers/README.md`):
 
-| Method | Path       | Purpose                                          |
-|--------|------------|--------------------------------------------------|
-| GET    | `/comments`| List comments, `email` excluded from results     |
-| POST   | `/comments`| Insert a comment `{ name, email, content, cf-turnstile-response }` — capped at 5 attempts/60s per IP via the `comment_rate` D1 table (checked first, see `checkRateLimit()`), then the Turnstile token is verified server-side against Cloudflare siteverify (`TURNSTILE_SECRET` Worker secret; see `workers/README.md`) |
+| Method | Path                           | Protection        | Purpose                                       |
+|--------|--------------------------------|-------------------|-----------------------------------------------|
+| GET    | `/comments`                    | public            | List comments, `email` excluded from results  |
+| POST   | `/comments`                    | public            | Insert a comment — 5 attempts/60s per IP via the `comment_rate` D1 table (checked first, see `checkRateLimit()`), then server-side Turnstile verification (`TURNSTILE_SECRET` secret) |
+| GET    | `/admin`                       | Cloudflare Access | Self-hosted image upload page (drag & drop / paste, copy-URL / copy-markdown, delete) |
+| POST   | `/upload`                      | Cloudflare Access | Multipart images → R2 `img/YYYY/MM/<slug>-<6hex>.<ext>`; extension allowlist + 25MB cap + magic-byte sniff; objects carry `Cache-Control: public, max-age=31536000, immutable` |
+| GET    | `/upload?list=1`               | Cloudflare Access | Recent uploads, newest first                  |
+| DELETE | `/upload?key=img/…`            | Cloudflare Access | Delete one object (`img/` prefix only)        |
+| POST   | `/api/ai/v1/chat/completions`  | Bearer API key    | OpenAI-compatible AI proxy (SSE streaming pass-through) |
+| GET    | `/api/ai/v1/models`            | Bearer API key    | Model catalog filtered by configured provider secrets |
 
-Any other path returns 404. Schema (created manually in D1, see `workers/README.md`): a `comments` table (`id`, `name`, `email`, `content`, `created_at`) and a `comment_rate` table for the per-IP rate limit. The frontend talks to the worker at `https://workers.nathanpenny.fun` (`API_URL` in `main.js`), and to `.../comments` for the comments feature. CORS is restricted to an allowlist: `nathanpenny.fun`, `blog.nathanpenny.fun`, `nathanpenny520.github.io`, `localhost:8080`; other origins get no `Access-Control-Allow-Origin` header at all.
+**Image hosting**: uploads land in the shared R2 bucket and are read via the bucket's public custom domain `storage.nathanpenny.fun` — the Worker is write-only. Slugs strip dots, structurally avoiding the WAF `...` 403 rule (same lesson as `tools/upload_music_r2.sh`). Access = Zero Trust dashboard app on `workers.nathanpenny.fun/admin` + `/upload` (email OTP, team `square-surf-c2a6`); the Worker additionally verifies the `Cf-Access-Jwt-Assertion` JWT (closes the `*.workers.dev` bypass; `ACCESS_TEAM_DOMAIN`/`ACCESS_AUD` vars; fail-closed). Local dev bypass: gitignored `workers/.dev.vars` with `ADMIN_BYPASS=1` — never deploy with it.
+
+**AI proxy**: model prefix routes to the provider's official OpenAI-compat endpoint (`gpt-*`→OpenAI, `claude-*`→Anthropic, `gemini-*`→Google, `grok-*`→xAI; all `Authorization: Bearer`), request body untouched. Keys are `npai_…` generated by `python3 tools/ai_key.py <name> [monthly_limit]` — only the SHA-256 hash is stored in `api_keys`. Monthly request-count breaker lives in `ai_usage` (atomic conditional upsert, 429 when exhausted, fail-open on D1 trouble); per-call metadata (never prompt/response content) goes to `ai_logs` via `ctx.waitUntil`. CORS is `*` for `/api/ai` (bearer auth, no cookies). A provider whose secret is unset returns 503.
+
+Any other path returns 404. Schema: `comments` + `comment_rate` (created manually 2026-07) and `api_keys` + `ai_usage` + `ai_logs` (idempotent `workers/schema.sql` — apply with `npx wrangler d1 execute nathanpenny --remote --file workers/schema.sql`). The frontend talks to the worker at `https://workers.nathanpenny.fun` (`API_URL` in `main.js`), and to `.../comments` for the comments feature. `/comments` CORS is restricted to an allowlist: `nathanpenny.fun`, `blog.nathanpenny.fun`, `nathanpenny520.github.io`, `localhost:8080`; other origins get no `Access-Control-Allow-Origin` header at all (`/api/ai` allows `*`).
 
 ## Other notes
 

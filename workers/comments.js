@@ -1,7 +1,19 @@
-// Cloudflare Worker backend for the comment system.
-// Endpoints:
+// Cloudflare Worker backend: comments, private image uploader, AI proxy.
+// Public:
 //   GET  /comments  list comments (email deliberately excluded)
 //   POST /comments  create a comment (per-IP rate limit + Turnstile)
+//   POST /api/ai/v1/chat/completions  OpenAI-compatible proxy (bearer key)
+//   GET  /api/ai/v1/models            model catalog (bearer key)
+// Cloudflare Access-protected (see verifyAccess below):
+//   GET    /admin          self-hosted image upload page (admin_page.js)
+//   POST   /upload         multipart images -> R2 img/ prefix
+//   GET    /upload?list=1  recent uploads
+//   DELETE /upload?key=…   remove one object (img/ prefix only)
+
+import { ADMIN_PAGE_HTML } from "./admin_page.js";
+import { handleAi } from "./ai_proxy.js";
+
+const JSON_HEADERS = { "Content-Type": "application/json" };
 
 // Turnstile server-side verification for POST /comments.
 const TURNSTILE_ACTION = "comment";
@@ -83,8 +95,228 @@ async function checkRateLimit(env, ip, nowMs) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Image uploader (Cloudflare Access-protected)
+// ---------------------------------------------------------------------------
+
+// Allowed upload types: extension -> MIME. Keys land under img/YYYY/MM/ as an
+// ASCII slug + 6 hex chars, which also makes the WAF `...` path trap (see
+// tools/upload_music_r2.sh) structurally impossible: slugify removes dots.
+const IMAGE_TYPES = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  gif: "image/gif",
+  avif: "image/avif",
+  svg: "image/svg+xml"
+};
+const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+const STORAGE_PUBLIC_ORIGIN = "https://storage.nathanpenny.fun/";
+
+// --- Cloudflare Access JWT verification (defense in depth) -------------------
+// The Access application at the edge already stops unauthenticated browsers;
+// this check additionally rejects any request that never went through it
+// (e.g. via the worker.dev domain). Fail-closed: missing config -> 503.
+
+let accessJwksCache = null; // { jwks, fetchedAt }
+const ACCESS_JWKS_TTL_MS = 24 * 60 * 60 * 1000;
+
+function b64urlToBytes(s) {
+  const b64 = s.replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+async function getAccessJwks(teamDomain) {
+  if (accessJwksCache && Date.now() - accessJwksCache.fetchedAt < ACCESS_JWKS_TTL_MS) {
+    return accessJwksCache.jwks;
+  }
+  const res = await fetch(`https://${teamDomain}/cdn-cgi/access/certs`);
+  if (!res.ok) throw new Error("JWKS fetch failed");
+  const jwks = await res.json();
+  accessJwksCache = { jwks, fetchedAt: Date.now() };
+  return jwks;
+}
+
+// True only with a fresh Access JWT correctly signed for this application.
+// ADMIN_BYPASS exists solely for `wrangler dev` via the gitignored
+// workers/.dev.vars and must NEVER be set on a deployment.
+async function verifyAccess(request, env) {
+  if (env.ADMIN_BYPASS === "1") return true;
+  if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) return false;
+
+  const token = request.headers.get("Cf-Access-Jwt-Assertion");
+  if (!token) return false;
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+
+  try {
+    const header = JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[0])));
+    const jwks = await getAccessJwks(env.ACCESS_TEAM_DOMAIN);
+    const jwk = (jwks.keys || []).find((k) => k.kid === header.kid && k.kty === "RSA");
+    if (!jwk) return false;
+
+    const key = await crypto.subtle.importKey(
+      "jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]
+    );
+    const ok = await crypto.subtle.verify(
+      "RSASSA-PKCS1-v1_5", key, b64urlToBytes(parts[2]),
+      new TextEncoder().encode(parts[0] + "." + parts[1])
+    );
+    if (!ok) return false;
+
+    const claims = JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[1])));
+    if (!claims.exp || Date.now() / 1000 >= claims.exp) return false;
+    // Comma-separated so two Access apps (one per path) can share this var.
+    return String(env.ACCESS_AUD).split(",").includes(claims.aud);
+  } catch (error) {
+    return false;
+  }
+}
+
+function accessDenied() {
+  return new Response(
+    JSON.stringify({ error: "Cloudflare Access verification failed. Sign in via https://workers.nathanpenny.fun/admin." }),
+    { status: 401, headers: JSON_HEADERS }
+  );
+}
+
+// --- Upload handling ---------------------------------------------------------
+
+function slugifyFilename(name) {
+  const base = String(name).replace(/\.[^.]+$/, "");
+  const slug = base
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return slug || "image";
+}
+
+function imageKeyFor(filename, ext) {
+  const now = new Date();
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const rand = [...crypto.getRandomValues(new Uint8Array(3))]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `img/${yyyy}/${mm}/${slugifyFilename(filename)}-${rand}.${ext}`;
+}
+
+// Light magic-byte sniffing so a renamed payload cannot pose as an image
+// (best effort: svg is checked as text, the rest by signature).
+function magicBytesMatch(bytes, ext) {
+  const b = new Uint8Array(bytes);
+  if (ext === "svg") {
+    const head = new TextDecoder().decode(b.subarray(0, 256)).trim().toLowerCase();
+    return head.startsWith("<?xml") || head.startsWith("<svg");
+  }
+  if (ext === "png") return b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47;
+  if (ext === "jpg" || ext === "jpeg") return b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  if (ext === "gif") return b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46; // "GIF"
+  if (ext === "webp") {
+    return b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 // "RIFF"
+      && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50; // "WEBP"
+  }
+  if (ext === "avif") return b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70; // "ftyp"
+  return false;
+}
+
+async function handleUploadPost(request, env) {
+  let form;
+  try {
+    form = await request.formData();
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Expected multipart/form-data" }), { status: 400, headers: JSON_HEADERS });
+  }
+
+  const files = [...form.getAll("files")].filter((f) => typeof f !== "string");
+  if (!files.length) {
+    return new Response(JSON.stringify({ error: "No files under the 'files' field" }), { status: 400, headers: JSON_HEADERS });
+  }
+
+  const uploaded = [];
+  const failed = [];
+  for (const file of files) {
+    try {
+      if (file.size > MAX_IMAGE_BYTES) throw new Error(`${file.name}: larger than 25MB`);
+      const ext = (file.name.split(".").pop() || "").toLowerCase();
+      const contentType = IMAGE_TYPES[ext];
+      if (!contentType) throw new Error(`${file.name}: unsupported type`);
+      const head = await file.slice(0, 256).arrayBuffer();
+      if (!magicBytesMatch(head, ext)) throw new Error(`${file.name}: content does not look like ${ext}`);
+
+      const key = imageKeyFor(file.name, ext);
+      await env.R2.put(key, file, {
+        httpMetadata: {
+          contentType,
+          // Date + random names are never overwritten, so cache forever.
+          cacheControl: "public, max-age=31536000, immutable"
+        }
+      });
+      const url = STORAGE_PUBLIC_ORIGIN + key;
+      uploaded.push({
+        key,
+        url,
+        markdown: `![${file.name.replace(/\.[^.]+$/, "")}](${url})`,
+        size: file.size,
+        contentType
+      });
+    } catch (error) {
+      failed.push(String(error.message || error));
+    }
+  }
+
+  return new Response(
+    JSON.stringify({ uploaded, failed }),
+    { status: uploaded.length ? 200 : 400, headers: JSON_HEADERS }
+  );
+}
+
+async function handleUploadList(env, url) {
+  const options = { prefix: "img/", limit: 100 };
+  const cursor = url.searchParams.get("cursor");
+  if (cursor) options.cursor = cursor;
+  const listing = await env.R2.list(options);
+  // R2 lists lexicographically ascending; date-prefixed keys make the reverse
+  // of that newest-first.
+  const objects = (listing.objects || [])
+    .map((o) => ({
+      key: o.key,
+      url: STORAGE_PUBLIC_ORIGIN + o.key,
+      size: o.size,
+      uploaded: o.uploaded ? o.uploaded.toISOString() : null
+    }))
+    .reverse();
+  return new Response(
+    JSON.stringify({ objects, truncated: !!listing.truncated, cursor: listing.truncated ? listing.cursor : null }),
+    { headers: JSON_HEADERS }
+  );
+}
+
+async function handleUploadDelete(env, url) {
+  const key = url.searchParams.get("key") || "";
+  if (!key.startsWith("img/") || key.includes("..")) {
+    return new Response(JSON.stringify({ error: "Only img/ objects can be deleted" }), { status: 400, headers: JSON_HEADERS });
+  }
+  await env.R2.delete(key);
+  return new Response(JSON.stringify({ success: true }), { headers: JSON_HEADERS });
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    // The AI proxy owns its (open) CORS — including preflights — so it is
+    // dispatched before the generic OPTIONS short-circuit below.
+    if (url.pathname.startsWith("/api/ai/")) {
+      return handleAi(request, env, ctx, url);
+    }
+
     const allowedOrigins = [
       "https://nathanpenny.fun",
       "https://blog.nathanpenny.fun",
@@ -109,9 +341,27 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    const url = new URL(request.url);
-
     try {
+      // --- Cloudflare Access-protected admin surface (image uploader) ---
+      if (url.pathname === "/admin" && request.method === "GET") {
+        if (!(await verifyAccess(request, env))) return accessDenied();
+        return new Response(ADMIN_PAGE_HTML, {
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Cache-Control": "no-store",
+            "X-Robots-Tag": "noindex"
+          }
+        });
+      }
+
+      if (url.pathname === "/upload") {
+        if (!(await verifyAccess(request, env))) return accessDenied();
+        if (request.method === "POST") return handleUploadPost(request, env);
+        if (request.method === "GET") return handleUploadList(env, url);
+        if (request.method === "DELETE") return handleUploadDelete(env, url);
+        return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: JSON_HEADERS });
+      }
+
       if (url.pathname === "/comments") {
         if (request.method === "GET") {
           const { results } = await env.DB.prepare(

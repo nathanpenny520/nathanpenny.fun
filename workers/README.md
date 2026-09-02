@@ -1,51 +1,109 @@
-# Comments Backend
+# Worker Backend: comments + image uploader + AI proxy
 
-Cloudflare Worker behind `https://workers.nathanpenny.fun`. Single purpose:
-the comment feature on the Contact page.
+Cloudflare Worker behind `https://workers.nathanpenny.fun` (custom domain;
+the `*.workers.dev` URL also exists but admin routes reject it — see Access
+below). Three feature groups:
 
 ## Endpoints
 
-| Method | Path        | Purpose                                          |
-|--------|-------------|--------------------------------------------------|
-| GET    | `/comments` | List comments (`email` deliberately excluded)    |
-| POST   | `/comments` | Create a comment                                 |
-| *      | anything else | 404                                            |
+| Method | Path                           | Protection              | Purpose                                        |
+|--------|--------------------------------|-------------------------|------------------------------------------------|
+| GET    | `/comments`                    | public                  | List comments (`email` deliberately excluded)  |
+| POST   | `/comments`                    | public                  | Create a comment (rate limit + Turnstile)      |
+| GET    | `/admin`                       | Cloudflare Access       | Self-hosted image upload page (admin_page.js)  |
+| POST   | `/upload`                      | Cloudflare Access       | Multipart images → R2 `img/` prefix            |
+| GET    | `/upload?list=1[&cursor=…]`    | Cloudflare Access       | Recent uploads (newest first)                  |
+| DELETE | `/upload?key=img/…`            | Cloudflare Access       | Delete one object (`img/` prefix only)         |
+| POST   | `/api/ai/v1/chat/completions`  | Bearer API key          | OpenAI-compatible proxy (see AI proxy below)   |
+| GET    | `/api/ai/v1/models`            | Bearer API key          | Model catalog filtered by configured secrets   |
+| *      | anything else                  | —                       | 404                                            |
 
-`POST /comments` is guarded by two layers, in order:
+## POST /comments guards (unchanged)
 
-1. **Per-IP rate limit** — 5 attempts per 60s window, keyed on
-   `CF-Connecting-IP` and counted in the `comment_rate` D1 table (see
-   `checkRateLimit()` in `comments.js`). Exceeding it returns 429 before any
-   parsing happens. (A Workers rate-limit binding was tried first but is
-   silently a no-op on this account, so the cap lives in D1.)
-2. **Cloudflare Turnstile** — the `cf-turnstile-response` token from the
-   Contact form is verified server-side (see below). Failure returns 403.
+1. **Per-IP rate limit** — 5 attempts per 60s window, counted in the
+   `comment_rate` D1 table (`checkRateLimit()`). Exceeding it returns 429.
+   (A Workers rate-limit binding was tried first but is silently a no-op on
+   this account, so the cap lives in D1.)
+2. **Cloudflare Turnstile** — token verified server-side; failure → 403.
+   See the Turnstile section below for keys/hostnames.
+
+## Image uploader (图床)
+
+- Storage: the shared R2 bucket `nathanpenny-fun` (bound as `env.R2`),
+  prefix `img/YYYY/MM/<slug>-<6hex>.<ext>`. Keys are ASCII-slugged + random,
+  so content never changes per key → objects carry
+  `Cache-Control: public, max-age=31536000, immutable` via R2 httpMetadata.
+- Reading is served by the bucket's public custom domain
+  `storage.nathanpenny.fun` — no Worker involvement on reads.
+- Slugification removes all dots, which structurally avoids the WAF rule
+  that 403s URL paths containing `...` (same lesson as
+  `tools/upload_music_r2.sh`).
+- Upload validation: extension allowlist (png/jpg/jpeg/webp/gif/avif/svg),
+  25MB cap, light magic-byte sniffing.
+- The upload page is a fully self-contained HTML exported by `admin_page.js`
+  (drag & drop + clipboard paste + copy-URL/copy-markdown + delete).
+
+### Cloudflare Access
+
+The dashboard-managed Access application (Zero Trust, team
+`square-surf-c2a6`) covers `workers.nathanpenny.fun/admin` and
+`workers.nathanpenny.fun/upload` with an email-OTP allow policy. It is NOT
+in this repo; changes happen in the Zero Trust dashboard.
+
+Defense in depth: the Worker also verifies the `Cf-Access-Jwt-Assertion`
+JWT (RS256 against the team JWKS, `exp` + `aud` checks, JWKS cached 24h) —
+this closes the `*.workers.dev` bypass, which Access does not cover.
+Fail-closed: if `ACCESS_TEAM_DOMAIN`/`ACCESS_AUD` vars are missing, admin
+routes return 401/503, never open up.
+
+Local development: copy `workers/.dev.vars.example` to `workers/.dev.vars`
+(gitignored) and set `ADMIN_BYPASS=1` so `wrangler dev` can serve the page
+without a real Access JWT. **Never deploy with that var present.**
+
+## AI proxy (私有 AI 中转)
+
+OpenAI-compatible endpoint — point any OpenAI SDK at
+`base_url = https://workers.nathanpenny.fun/api/ai/v1` and use a generated
+key. Model prefix decides the upstream (body passes through untouched):
+
+| Model prefix                  | Upstream                                              |
+|-------------------------------|-------------------------------------------------------|
+| `gpt-*`, `chatgpt-*`, `o1/o3/o4*` | `api.openai.com/v1/chat/completions`              |
+| `claude-*`                    | `api.anthropic.com/v1/chat/completions` (official OpenAI-compat layer) |
+| `gemini-*`                    | `generativelanguage.googleapis.com/v1beta/openai/…`   |
+| `grok-*`                      | `api.x.ai/v1/chat/completions`                        |
+
+Every upstream uses `Authorization: Bearer` (all four compatibility layers
+are built for the OpenAI SDK, which only sends Bearer). A provider whose
+secret is unset returns 503; unknown prefixes return 400 listing them.
+
+- **Auth**: `Authorization: Bearer npai_…`; only the SHA-256 hash is stored
+  in D1. Issue keys with `python3 tools/ai_key.py <name> [monthly_limit]`
+  and run the printed SQL via `npx wrangler d1 execute nathanpenny --remote
+  --command "<sql>"`.
+- **Quota**: per-key monthly request cap (`api_keys.monthly_limit`, UTC
+  months) enforced by an atomic conditional upsert into `ai_usage`
+  (single roundtrip; no `RETURNING` row = over cap → 429). Fails open on
+  D1 trouble, like the comments rate limiter.
+- **Logging**: every chat call appends metadata (key, model, provider,
+  status, stream, token counts, latency) to `ai_logs` via
+  `ctx.waitUntil` — never prompt/response content. Streaming usage is
+  scraped from the SSE tail when the upstream provides it (null otherwise).
+- **Streaming**: SSE bodies are passed straight through (`body.tee()` on a
+  background copy for the usage log); 300s upstream timeout, 10MB body cap.
+- **CORS**: `Access-Control-Allow-Origin: *` — safe because auth is a
+  header key, never cookies.
 
 ## D1 setup
 
-The D1 database `nathanpenny` is bound as `env.DB` (see `wrangler.jsonc`).
-Two tables back the API:
+Database `nathanpenny`, bound as `env.DB` (`wrangler.jsonc`). Tables:
 
-```sql
-CREATE TABLE IF NOT EXISTS comments (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  email TEXT NOT NULL,
-  content TEXT NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+- `comments`, `comment_rate` — comment feature (created manually, 2026-07)
+- `api_keys`, `ai_usage`, `ai_logs` — AI proxy; (re)create idempotently:
 
--- Per-IP rate limit counters for POST /comments (see checkRateLimit()).
-CREATE TABLE IF NOT EXISTS comment_rate (
-  ip TEXT NOT NULL,
-  window_start INTEGER NOT NULL,
-  count INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (ip, window_start)
-);
+```sh
+npx wrangler d1 execute nathanpenny --remote --file workers/schema.sql
 ```
-
-(The legacy `visitors` table and its root `/` endpoints were removed in
-Sep 2026; the table has been dropped.)
 
 ## Deploy
 
@@ -59,9 +117,12 @@ Deploying without the `DB` binding makes every endpoint fail with 500 —
 never remove it from `wrangler.jsonc`. Validate config changes first with
 `npx wrangler deploy --dry-run`.
 
-The custom domain `workers.nathanpenny.fun` and the `TURNSTILE_SECRET` secret
-are managed outside this repo (dashboard / secret store) and survive deploys;
-check the secret with `npx wrangler secret list`.
+Managed outside this repo: the `workers.nathanpenny.fun` custom domain, the
+Access application + policy (Zero Trust dashboard), and the secrets
+(`TURNSTILE_SECRET`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
+`GEMINI_API_KEY`, `XAI_API_KEY` — check with `npx wrangler secret list`).
+Provider keys are set with `npx wrangler secret put <NAME>`; a provider
+without its secret is simply unavailable through the proxy.
 
 ## Turnstile (comment spam protection)
 
@@ -91,9 +152,11 @@ comments cannot be posted until the secret is configured.
 
 ## Notes
 
-- CORS: responses only carry `Access-Control-Allow-Origin` for allowlisted
-  origins (`nathanpenny.fun`, `blog.nathanpenny.fun`,
-  `nathanpenny520.github.io`, `localhost:8080`); other origins get none.
-- The `email` field is stored but never returned by `GET /comments`.
+- CORS: `/comments` only echoes allowlisted origins (`nathanpenny.fun`,
+  `blog.nathanpenny.fun`, `nathanpenny520.github.io`, `localhost:8080`);
+  `/api/ai` allows `*` (bearer-key auth). The email field is stored but never
+  returned by `GET /comments`.
 - The rate limiter fails open on D1 trouble (comments keep working if the
   `comment_rate` table is missing); Turnstile still guards the write path.
+- Local dev quirk: `wrangler d1 execute --local` storage follows the current
+  directory — run it from `workers/` so it shares state with `wrangler dev`.

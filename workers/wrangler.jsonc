@@ -1,8 +1,9 @@
-// Wrangler config for the comments/visitor backend Worker.
+// Wrangler config for the comments/uploader/AI-proxy backend Worker.
 // Deploy from this directory:  npx wrangler deploy
 //
 // WARNING: the D1 binding below is what the Worker's code calls `env.DB`.
-// Deploying without it makes every /comments and / endpoint fail with 500.
+// Deploying without it makes every /comments, /upload and /api/ai endpoint
+// fail with 500.
 {
   "name": "nathanpenny-api",
   "main": "comments.js",
@@ -12,6 +13,19 @@
   // Keep dashboard-managed plain-text vars from being wiped on deploy.
   // (Secrets like TURNSTILE_SECRET are never touched by deploy.)
   "keep_vars": true,
+  "vars": {
+    // Public config for Access JWT verification on /admin + /upload.
+    // ACCESS_AUD is filled from the Access application's AUD tag.
+    "ACCESS_TEAM_DOMAIN": "square-surf-c2a6.cloudflareaccess.com",
+    "ACCESS_AUD": "36ba044e69b4947e6cacfe51b9f0f33a1c492babd563080b313c3513beb040db"
+  },
+  // Image uploader storage (music bucket shared; uploads land under img/).
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "nathanpenny-fun"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",

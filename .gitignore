@@ -19,4 +19,6 @@ roadmap.md
 /audio/my-music/
 # Wrangler local cache
 .wrangler/
+# Wrangler local dev vars (ADMIN_BYPASS / local upstream keys) — never commit
+workers/.dev.vars
 __pycache__/
