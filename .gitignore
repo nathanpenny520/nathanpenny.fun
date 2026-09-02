@@ -19,3 +19,4 @@ roadmap.md
 /audio/my-music/
 # Wrangler local cache
 .wrangler/
+__pycache__/
