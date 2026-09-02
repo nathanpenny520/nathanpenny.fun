@@ -93,6 +93,14 @@ secret is unset returns 503; unknown prefixes return 400 listing them.
   background copy for the usage log); 300s upstream timeout, 10MB body cap.
 - **CORS**: `Access-Control-Allow-Origin: *` — safe because auth is a
   header key, never cookies.
+- **Geo caveat (2026-09, live-tested)**: Workers execute at the PoP nearest
+  the caller, and the subrequest egresses from there. OpenAI rejects
+  requests egressing from mainland-China-adjacent PoPs (HK/MO/CN) with
+  `unsupported_country_region_territory` — so `gpt-*` works only when the
+  caller's entry PoP egresses from a supported region. Google/Gemini and
+  xAI have no such block from these PoPs. Upstream model retirements (e.g.
+  `gemini-2.5-*` 404 for new keys → use `gemini-3.6-flash`) surface
+  verbatim through the proxy.
 
 ## D1 setup
 

@@ -28,7 +28,10 @@ const PROVIDERS = [
     secret: "GEMINI_API_KEY",
     prefixes: ["gemini-", "models/gemini-"],
     endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    models: ["gemini-2.5-pro", "gemini-2.5-flash"]
+    // Cosmetic catalog (any model string passes through). gemini-2.5-* was
+    // retired for new API keys (2026-09, upstream 404); 3.6-flash confirmed
+    // live through the proxy.
+    models: ["gemini-3.6-flash"]
   },
   {
     name: "xai",
