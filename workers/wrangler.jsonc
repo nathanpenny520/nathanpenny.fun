@@ -10,6 +10,10 @@
   "compatibility_date": "2026-07-09",
   "workers_dev": true,
   "preview_urls": false,
+  // Captures console.log (access-verify stage logging) for debugging.
+  "observability": {
+    "enabled": true
+  },
   // Keep dashboard-managed plain-text vars from being wiped on deploy.
   // (Secrets like TURNSTILE_SECRET are never touched by deploy.)
   "keep_vars": true,

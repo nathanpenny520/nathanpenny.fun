@@ -188,8 +188,12 @@ async function verifyAccess(request, env) {
       console.log("access verify: fail (expired)");
       return false;
     }
-    // Comma-separated so two Access apps (one per path) can share this var.
-    const audOk = String(env.ACCESS_AUD).split(",").includes(claims.aud);
+    // Claim aud may be a string OR an array (RFC 7519 — this app's JWTs carry
+    // multiple audiences because it has two destinations); the configured var
+    // is comma-separated so two Access apps can also share it.
+    const configuredAuds = String(env.ACCESS_AUD).split(",");
+    const claimAuds = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+    const audOk = claimAuds.some((a) => configuredAuds.includes(String(a)));
     if (!audOk) {
       // Never log token contents — just the decision inputs' shapes.
       console.log(`access verify: fail (aud mismatch, claim aud type ${typeof claims.aud})`);
