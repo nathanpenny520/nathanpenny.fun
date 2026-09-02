@@ -2,6 +2,7 @@
 title: The WanZai Song
 date: 2026-07-04
 description: A song that introduces the character of WanZai.
+category: misc
 ---
 
 <p>

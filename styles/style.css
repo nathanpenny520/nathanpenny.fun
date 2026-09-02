@@ -1172,6 +1172,92 @@ html {
   background-color: var(--color-surface-alt);
 }
 
+/* Category chips on the blog list + category badges on cards and posts.
+   Only existing theme variables are used, so the two dark blocks need no
+   synced edits here. */
+.blog-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 24px;
+}
+
+.blog-filter-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.blog-filter-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.blog-filter-btn.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.blog-filter-btn .count {
+  font-size: 12px;
+  opacity: 0.75;
+  margin-left: 4px;
+}
+
+.blog-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cat-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--color-divider);
+  color: var(--color-text-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+a.cat-badge:hover {
+  background: var(--color-accent);
+  color: #fff;
+  text-decoration: none;
+}
+
+.tag-chip {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.post-cats {
+  margin: 8px 0 4px;
+}
+
+.related-posts {
+  margin: 24px 0 0;
+}
+
+.related-posts ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.related-posts li {
+  margin: 6px 0;
+}
+
 
 /* --------------------------------------------------------------------------
    Blog page responsive layout

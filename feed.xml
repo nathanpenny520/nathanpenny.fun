@@ -14,6 +14,7 @@
       <guid isPermaLink="false">post-wanzai-song</guid>
       <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
       <description>A song that introduces the character of WanZai.</description>
+      <category>Misc</category>
     </item>
 
     <item>
@@ -22,6 +23,7 @@
       <guid isPermaLink="false">post-solar-system</guid>
       <pubDate>Sat, 04 Jul 2026 00:00:00 +0000</pubDate>
       <description>A quick reference table for the eight planets in our solar system, with rounded values.</description>
+      <category>Tech</category>
     </item>
 
     <item>
@@ -30,6 +32,7 @@
       <guid isPermaLink="false">post-violet-evergarden</guid>
       <pubDate>Thu, 02 Jul 2026 00:00:00 +0000</pubDate>
       <description>Violet Evergarden episode one - a former weapon becomes an Auto Memory Doll, ghostwriting letters she cannot yet understand.</description>
+      <category>Anime</category>
     </item>
 
     <item>
@@ -38,6 +41,7 @@
       <guid isPermaLink="false">post-poem-html</guid>
       <pubDate>Tue, 30 Jun 2026 00:00:00 +0000</pubDate>
       <description>A visual poem about writing HTML.</description>
+      <category>Fun</category>
     </item>
 
     <item>
@@ -46,6 +50,7 @@
       <guid isPermaLink="false">post-fifa-ufo</guid>
       <pubDate>Mon, 29 Jun 2026 00:00:00 +0000</pubDate>
       <description>On board to the galaxy out of our solar system, hoping I can still watch the FIFA world cup on the UFO.</description>
+      <category>Sports</category>
     </item>
   </channel>
 </rss>

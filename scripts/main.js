@@ -1,5 +1,5 @@
-// Filter blog cards by the text entered in the search bar above the list,
-// and keep the feedback line + clear button in sync.
+// Filter blog cards by the active category chip AND the text entered in the
+// search bar above the list, and keep the feedback line + clear button in sync.
 function filterBlogs() {
   const searchInput = document.getElementById('blogSearch');
   if (!searchInput) return;
@@ -8,11 +8,19 @@ function filterBlogs() {
   const blogMain = document.querySelector('.blog-page');
   if (!blogMain) return;
 
+  const activeChip = blogMain.querySelector('.blog-filter-btn.active');
+  const cat = (activeChip && activeChip.dataset.cat) || 'all';
+  // Chip text is "Anime 1" (name + count span); strip the trailing count.
+  const catName = activeChip && cat !== 'all'
+    ? activeChip.textContent.replace(/\s*\d+\s*$/, '').trim()
+    : '';
+
   const blogCards = blogMain.querySelectorAll('.blog-card');
   let visible = 0;
 
   blogCards.forEach(card => {
-    const show = card.textContent.toLowerCase().includes(query);
+    const inCat = cat === 'all' || card.dataset.category === cat;
+    const show = inCat && card.textContent.toLowerCase().includes(query);
     card.style.display = show ? "" : "none";
     if (show) visible++;
   });
@@ -20,19 +28,29 @@ function filterBlogs() {
   const clearButton = document.getElementById('blogSearchClear');
   if (clearButton) clearButton.hidden = query === '';
 
-  // Feedback line: hidden normally, match count (or an empty-state message)
-  // while a search is active.
+  // Feedback line: hidden normally; otherwise a match count (or an
+  // empty-state message) covering the category filter, the search, or both.
   const meta = document.getElementById('blogSearchMeta');
   if (!meta) return;
 
-  if (query === '') {
+  if (query === '' && cat === 'all') {
     meta.hidden = true;
-  } else if (visible === 0) {
-    meta.hidden = false;
-    meta.textContent = `No posts match “${searchInput.value.trim()}”.`;
   } else {
     meta.hidden = false;
-    meta.textContent = `Found ${visible} ${visible === 1 ? 'post' : 'posts'} matching “${searchInput.value.trim()}”.`;
+    const q = searchInput.value.trim();
+    const scope = cat === 'all' ? '' : ` in ${catName}`;
+    const matchClause = query ? ` matching “${q}”` : '';
+    if (visible === 0) {
+      meta.textContent = cat === 'all'
+        ? `No posts match “${q}”.`
+        : `No posts${scope}${matchClause}.`;
+    } else if (query === '') {
+      meta.textContent = `${visible} ${visible === 1 ? 'post' : 'posts'}${scope}.`;
+    } else {
+      meta.textContent = cat === 'all'
+        ? `Found ${visible} ${visible === 1 ? 'post' : 'posts'} matching “${q}”.`
+        : `Found ${visible} ${visible === 1 ? 'post' : 'posts'}${scope}${matchClause}.`;
+    }
   }
 }
 
@@ -51,6 +69,46 @@ function initBlogSearch() {
       searchInput.focus();
     });
   }
+}
+
+// Category chip toolbar on the blog list: single-select filtering combined
+// with the text search, mirrored into the ?cat= query param (replaceState, so
+// a filtered state survives a reload; Back simply leaves the page).
+function initBlogFilters() {
+  const bar = document.querySelector('.blog-filters');
+  if (!bar) return;
+
+  const setActive = (chip) => {
+    bar.querySelectorAll('.blog-filter-btn').forEach(btn => {
+      const on = btn === chip;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    const url = new URL(location.href);
+    const cat = chip ? chip.dataset.cat : 'all';
+    if (!chip || cat === 'all') url.searchParams.delete('cat');
+    else url.searchParams.set('cat', cat);
+    history.replaceState(null, '', url);
+    filterBlogs();
+  };
+
+  bar.addEventListener('click', (event) => {
+    const chip = event.target.closest('.blog-filter-btn');
+    if (chip) setActive(chip);
+  });
+
+  // Deep link: /blog?cat=anime preselects that chip; invalid values fall
+  // through to All without touching the URL.
+  const requested = new URLSearchParams(location.search).get('cat');
+  if (requested) {
+    const match = Array.from(bar.querySelectorAll('.blog-filter-btn'))
+      .find(btn => btn.dataset.cat === requested);
+    if (match) {
+      setActive(match);
+      return;
+    }
+  }
+  filterBlogs();
 }
 
 // Publish the sticky nav's height as a CSS custom property so style.css can
@@ -1078,6 +1136,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
   initLatestPosts();
   initBlogSearch();
+  initBlogFilters();
   initNavScrollPadding();
   loadGallery();
   initGallerySearch();

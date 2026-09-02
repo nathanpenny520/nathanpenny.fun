@@ -2,6 +2,7 @@
 title: The Solar System in a Table
 date: 2026-07-04
 description: A quick reference table for the eight planets in our solar system, with rounded values.
+category: tech
 ---
 
 <p>

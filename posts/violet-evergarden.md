@@ -2,6 +2,7 @@
 title: A fantastic anime show
 date: 2026-07-02
 description: Violet Evergarden episode one - a former weapon becomes an Auto Memory Doll, ghostwriting letters she cannot yet understand.
+category: anime
 ---
 
 <p>

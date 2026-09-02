@@ -4,18 +4,22 @@ everything else. stdlib-only and idempotent.
 
 Authoring a new or edited post:
 
-  1. create/edit posts/<slug>.md — frontmatter (title, date, description)
-     plus a Markdown body (raw HTML blocks pass through untouched, e.g. for
-     video/audio embeds or images with explicit width/height)
+  1. create/edit posts/<slug>.md — frontmatter (title, date, optional
+     description / category / tags) plus a Markdown body (raw HTML blocks
+     pass through untouched, e.g. for video/audio embeds or images with
+     explicit width/height)
   2. run this script from the repo root:  python3 tools/gen_post_pages.py
      (or just push — CI runs it and commits the results)
 
 The script (re)writes:
 
-  - pages/blog.html        the post cards between the posts:articles marker
+  - pages/blog.html        the category filter chips (posts:filters) and the
+                           post cards (posts:articles) between their marker
                            comments; everything else in the file is untouched.
-                           The list shows one summary card per post; full
-                           articles live on the single-post pages.
+                           The list shows the chip toolbar (always every
+                           category, counts baked in at generation time) plus
+                           one summary card per post; full articles live on
+                           the single-post pages.
   - blog/<slug>/index.html one static page per post: full <head> with
                            canonical URL, article og tags and BlogPosting
                            JSON-LD; sidebar with the post list; newer/older
@@ -52,6 +56,23 @@ PAGE_TITLE_SUFFIX = " | Nathan Penny's blog"
 
 ARTICLES_START = "<!-- posts:articles:start -->"
 ARTICLES_END = "<!-- posts:articles:end -->"
+FILTERS_START = "<!-- posts:filters:start -->"
+FILTERS_END = "<!-- posts:filters:end -->"
+
+# Fixed blog taxonomy: frontmatter `category:` slug -> display name. Dict
+# order is the chip order on the blog list; every chip is always rendered,
+# even with zero posts.
+CATEGORIES = {
+    "anime": "Anime",
+    "life": "Life",
+    "tech": "Tech",
+    "fun": "Fun",
+    "fiction": "Fiction",
+    "travel": "Travel",
+    "ai": "AI",
+    "sports": "Sports",
+    "misc": "Misc",
+}
 
 IMG_RE = re.compile(r'<img[^>]+src="\.\./([^"]+)"')
 POSTER_RE = re.compile(r'<video[^>]+poster="\.\./([^"]+)"')
@@ -191,6 +212,10 @@ def parse_post(path):
         date = datetime.date.fromisoformat(meta["date"])
     except (KeyError, ValueError):
         sys.exit(f"{path.name}: frontmatter needs date: YYYY-MM-DD")
+    category = meta.get("category", "misc").strip() or "misc"
+    if category not in CATEGORIES:
+        sys.exit(f"{path.name}: unknown category '{category}' — valid: {', '.join(CATEGORIES)}")
+    tags = [t.strip() for t in meta.get("tags", "").split(",") if t.strip()]
 
     slug = path.stem
     body = render_markdown(m.group(2).strip("\n"))
@@ -199,6 +224,8 @@ def parse_post(path):
         "title": meta["title"],
         "date": date.isoformat(),
         "description": meta.get("description", ""),
+        "category": category,
+        "tags": tags,
         "body": body,
     }
 
@@ -247,18 +274,33 @@ def og_image_of(body):
 # Rendering: blog list, feed, sitemap, single-post pages
 # ---------------------------------------------------------------------------
 
+def category_meta_html(post, badge_href):
+    """Category pill (+ optional tag chips) shared by the list card and the
+    single-post header. The pill links back to the blog list prefiltered.
+    """
+    tags = "".join(
+        '<span class="tag-chip">#{t}</span>'.format(t=html.escape(tag))
+        for tag in post["tags"]
+    )
+    return '<a class="cat-badge" href="{h}">{c}</a>{tags}'.format(
+        h=badge_href, c=CATEGORIES[post["category"]], tags=tags,
+    )
+
+
 def render_list_card(post):
-    """List-page card: thumbnail + title + date + excerpt, linking to the
-    single-post page where the full article lives. The thumbnail is the
-    post's first image/poster (or the default og image).
+    """List-page card: thumbnail + title + category + date + excerpt, linking
+    to the single-post page where the full article lives. The thumbnail is the
+    post's first image/poster (or the default og image). data-category drives
+    the client-side chip filtering in main.js.
     """
     return (
-        '<article id="post-{s}" class="blog-card blog-list-card" data-reveal>\n'
+        '<article id="post-{s}" class="blog-card blog-list-card" data-category="{c}" data-reveal>\n'
         '          <a class="post-card-thumb" href="../blog/{s}/" tabindex="-1" aria-hidden="true">\n'
         '            <img src="{thumb}" alt="" loading="lazy" decoding="async">\n'
         "          </a>\n"
         '          <div class="blog-card-body">\n'
         '            <h3><a class="post-link" href="../blog/{s}/" rel="bookmark">{t}</a></h3>\n'
+        '            <div class="blog-card-meta">{meta}</div>\n'
         '            <div class="blog-date">Time stamp: {d}</div>\n'
         '            <p class="blog-card-excerpt">{x}</p>\n'
         '            <span class="blog-card-more">Read more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>\n'
@@ -267,9 +309,35 @@ def render_list_card(post):
     ).format(
         s=post["slug"],
         t=html.escape(post["title"]),
+        c=post["category"],
+        meta=category_meta_html(post, "blog.html?cat=" + post["category"]),
         d=post["date"],
         x=html.escape(post["description"]),
         thumb="../" + post["og_image"],
+    )
+
+
+def render_filter_bar(posts):
+    """Category chip toolbar for the blog list: an All chip plus one chip per
+    taxonomy category — always all of them, zero counts included. Filtering
+    itself is client-side (main.js); only the counts are baked in here.
+    """
+    counts = {slug: 0 for slug in CATEGORIES}
+    for p in posts:
+        counts[p["category"]] += 1
+    buttons = [
+        '          <button type="button" class="blog-filter-btn active" data-cat="all" aria-pressed="true">'
+        "All <span class=\"count\">{n}</span></button>".format(n=len(posts))
+    ]
+    for slug, display in CATEGORIES.items():
+        buttons.append(
+            '          <button type="button" class="blog-filter-btn" data-cat="{s}" aria-pressed="false">'
+            '{d} <span class="count">{n}</span></button>'.format(s=slug, d=display, n=counts[slug])
+        )
+    return (
+        '<div class="blog-filters" role="group" aria-label="Filter posts by category">\n'
+        + "\n".join(buttons)
+        + "\n          </div>"
     )
 
 
@@ -291,8 +359,9 @@ def update_blog_html(posts):
     source = read(BLOG_HTML)
     cards = "\n\n        ".join(render_list_card(p) for p in posts)
     new_source = inject_region(source, ARTICLES_START, ARTICLES_END, cards)
+    new_source = inject_region(new_source, FILTERS_START, FILTERS_END, render_filter_bar(posts))
     if new_source != source:
-        write(BLOG_HTML, new_source, "(articles regenerated from posts/)")
+        write(BLOG_HTML, new_source, "(filters + articles regenerated from posts/)")
     else:
         print("  pages/blog.html already up to date")
 
@@ -311,12 +380,18 @@ def render_feed(posts):
             '      <guid isPermaLink="false">post-{sl}</guid>\n'
             "      <pubDate>{d}</pubDate>\n"
             "      <description>{desc}</description>\n"
+            "      <category>{cat}</category>\n"
+            "{tagcats}"
             "    </item>".format(
                 t=html.escape(p["title"]),
                 s=SITE,
                 sl=p["slug"],
                 d=email.utils.format_datetime(datetime.datetime.fromisoformat(p["date"]).replace(tzinfo=datetime.timezone.utc)),
                 desc=html.escape(p["description"]),
+                cat=html.escape(CATEGORIES[p["category"]]),
+                tagcats="".join(
+                    "      <category>{t}</category>\n".format(t=html.escape(tag)) for tag in p["tags"]
+                ),
             )
         )
     return (
@@ -364,6 +439,27 @@ def render_post_nav(post, posts):
     return "\n".join(links)
 
 
+def render_related(post, posts):
+    """Up to 3 other posts in the same category; the whole section is omitted
+    when there are none, so empty categories leave no dead UI. Deliberately
+    plain list markup: .blog-card/.blog-date would be picked up by main.js's
+    reading-time feature and grow bogus "x min read" spans.
+    """
+    others = [p for p in posts if p["category"] == post["category"] and p["slug"] != post["slug"]]
+    if not others:
+        return ""
+    items = "\n".join(
+        '            <li><a href="../{s}/">{t}</a></li>'.format(s=p["slug"], t=html.escape(p["title"]))
+        for p in others[:3]
+    )
+    return (
+        '        <section class="related-posts">\n'
+        "          <h3>More in {d}</h3>\n"
+        "          <ul>\n{items}\n          </ul>\n"
+        "        </section>"
+    ).format(d=CATEGORIES[post["category"]], items=items)
+
+
 def render_post_page(post, posts, og_image):
     slug = post["slug"]
     title = post["title"]
@@ -384,12 +480,19 @@ def render_post_page(post, posts, og_image):
         "publisher": {"@type": "Person", "name": "Nathan Penny"},
         "datePublished": date,
         "dateModified": date,
+        "articleSection": CATEGORIES[post["category"]],
+        "keywords": ", ".join([CATEGORIES[post["category"]]] + post["tags"]),
     }
 
     article_head = (
         "          <h3>{t}</h3>\n"
+        '          <div class="post-cats">{meta}</div>\n'
         '          <div class="blog-date">Time stamp: {d}</div>\n'
-    ).format(t=html.escape(title), d=date)
+    ).format(
+        t=html.escape(title),
+        d=date,
+        meta=category_meta_html(post, "../../pages/blog.html?cat=" + post["category"]),
+    )
 
     return """<!DOCTYPE html>
 <html lang="en">
@@ -465,7 +568,7 @@ def render_post_page(post, posts, og_image):
         <article id="post-{slug}" class="blog-card">
 {article_head}{body}
         </article>
-
+{related}
         <nav class="post-nav" aria-label="Adjacent posts">
 {post_nav}
         </nav>
@@ -491,6 +594,7 @@ def render_post_page(post, posts, og_image):
         slug=slug,
         article_head=article_head,
         body=post["page_body"],
+        related=render_related(post, posts),
         post_nav=render_post_nav(post, posts),
     )
 

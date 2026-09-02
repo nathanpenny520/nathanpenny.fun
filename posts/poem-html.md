@@ -2,6 +2,7 @@
 title: Poem of html
 date: 2026-06-30
 description: A visual poem about writing HTML.
+category: fun
 ---
 
 <p>

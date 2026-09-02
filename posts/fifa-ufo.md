@@ -2,6 +2,7 @@
 title: FIFA and UFO
 date: 2026-06-29
 description: On board to the galaxy out of our solar system, hoping I can still watch the FIFA world cup on the UFO.
+category: sports
 ---
 <p>On board to the galaxy out of our solar system, hoping I can still watch the FIFA world cup on the UFO.</p>
 
