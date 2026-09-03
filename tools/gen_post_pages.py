@@ -94,8 +94,9 @@ def write(path, text, note=""):
 # ---------------------------------------------------------------------------
 
 def render_inline(text):
-    """Inline markdown: code spans, images, links, bold, italic. Everything
-    else (including inline HTML like <br> or <strong>) passes through as-is.
+    """Inline markdown: code spans, images, links, autolinks, bold, italic,
+    strikethrough. Everything else (including inline HTML like <br> or
+    <strong>) passes through as-is.
     """
     parts = re.split(r"(`[^`]+`)", text)
     out = []
@@ -110,13 +111,129 @@ def render_inline(text):
             s,
         )
         s = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", r'<a href="\2">\1</a>', s)
+        s = re.sub(r"<(https?://[^>\s]+)>", r'<a href="\1">\1</a>', s)
         s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
         s = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", s)
+        s = re.sub(r"~~([^~]+)~~", r"<del>\1</del>", s)
         out.append(s)
     return "".join(out)
 
 
-BLOCK_START = re.compile(r"^(<|```|#{1,4}\s|>\s?|[-*]\s+|---\s*$)")
+# Block starters recognized by the paragraph loop. "|" is included so a table
+# can interrupt a paragraph; a "|" line that turns out not to be a table is
+# re-consumed as a paragraph (the paragraph branch always consumes >= 1 line).
+BLOCK_START = re.compile(r"^(<|```|#{1,4}\s|>\s?|[-*]\s+|\d{1,9}[.)]\s+|\||---\s*$)")
+
+# One list item: leading indent, marker (-, *, 1., 1)), then the text.
+LIST_ITEM_RE = re.compile(r"^(\s*)([-*]|\d{1,9}[.)])\s+(.*)$")
+TASK_RE = re.compile(r"^\[( |x|X)\]\s+(.*)$")
+TABLE_DELIM_RE = re.compile(r"^:?-{3,}:?$")
+
+
+def list_is_ordered(marker):
+    return marker not in ("-", "*")
+
+
+def render_list(lines, i, indent):
+    """Parse a (possibly nested) ul/ol whose first item starts at column
+    `indent`. Returns (html, next_i). A less-indented line, any non-item line
+    or a blank line ends the list — loose lists (items separated by blank
+    lines) are not supported, same as the old flat renderer. A nested list is
+    appended inside the previous <li>; task items get a disabled checkbox and
+    mark the list with class="task-list".
+    """
+    ordered = list_is_ordered(LIST_ITEM_RE.match(lines[i]).group(2))
+    items = []
+    has_task = False
+    while i < len(lines):
+        m = LIST_ITEM_RE.match(lines[i])
+        if not m or len(m.group(1)) < indent:
+            break
+        if len(m.group(1)) > indent:
+            sub, i = render_list(lines, i, len(m.group(1)))
+            if items:
+                items[-1] += "\n" + sub
+            else:  # first item is deeper than `indent` — hoist it up
+                items.append(sub)
+            continue
+        text = m.group(3).strip()
+        task = TASK_RE.match(text)
+        if task:
+            has_task = True
+            checked = " checked" if task.group(1).lower() == "x" else ""
+            items.append('  <li><input type="checkbox" disabled{}> {}</li>'.format(checked, render_inline(task.group(2))))
+        else:
+            items.append("  <li>" + render_inline(text) + "</li>")
+        i += 1
+    tag = "ol" if ordered else "ul"
+    cls = ' class="task-list"' if has_task else ""
+    return "<{t}{c}>\n{items}\n</{t}>".format(t=tag, c=cls, items="\n".join(items)), i
+
+
+def table_cells(line):
+    """Split a table row into cells, tolerating missing leading/trailing
+    pipes. "|" inside backtick code spans does not split — code spans are
+    tokenized first, mirroring render_inline's ordering.
+    """
+    line = line.strip()
+    if line.startswith("|"):
+        line = line[1:]
+    if line.endswith("|"):
+        line = line[:-1]
+    cells, buf, in_code = [], [], False
+    for ch in line:
+        if ch == "`":
+            in_code = not in_code
+            buf.append(ch)
+        elif ch == "|" and not in_code:
+            cells.append("".join(buf).strip())
+            buf = []
+        else:
+            buf.append(ch)
+    cells.append("".join(buf).strip())
+    return cells
+
+
+def is_delimiter_row(line):
+    cells = table_cells(line)
+    return bool(cells) and all(TABLE_DELIM_RE.match(c) for c in cells)
+
+
+def table_align_attr(cell):
+    left, right = cell.startswith(":"), cell.endswith(":")
+    if left and right:
+        return ' style="text-align:center"'
+    if right:
+        return ' style="text-align:right"'
+    if left:
+        return ' style="text-align:left"'
+    return ""
+
+
+def render_table(lines, i):
+    """Parse a pipe table; lines[i] is the header row, lines[i+1] the ---
+    delimiter row (already checked by the caller). Body rows continue while
+    lines start with "|". Cells are padded/truncated to the header width.
+    """
+    head = table_cells(lines[i])
+    aligns = [table_align_attr(c) for c in table_cells(lines[i + 1])]
+    i += 2
+    rows = []
+    while i < len(lines) and lines[i].strip().startswith("|"):
+        cells = table_cells(lines[i])
+        rows.append((cells + [""] * len(head))[: len(head)])
+        i += 1
+
+    def row_html(tag, cells):
+        cells_html = "".join(
+            "<{t}{a}>{c}</{t}>".format(t=tag, a=aligns[j] if j < len(aligns) else "", c=render_inline(c))
+            for j, c in enumerate(cells)
+        )
+        return "    <tr>" + cells_html + "</tr>"
+
+    return (
+        "<table>\n  <thead>\n{h}\n  </thead>\n  <tbody>\n{b}\n  </tbody>\n</table>"
+    ).format(h=row_html("th", head), b="\n".join(row_html("td", r) for r in rows) if rows else ""), i
 
 
 def render_markdown(text):
@@ -134,13 +251,16 @@ def render_markdown(text):
             continue
 
         if stripped.startswith("```"):
+            m = re.match(r"^```([^\s`]+)", stripped)
+            lang = m.group(1) if m else ""
+            cls = ' class="language-{}"'.format(lang) if re.match(r"^[a-zA-Z0-9_+-]+$", lang) else ""
             code = []
             i += 1
             while i < len(lines) and not lines[i].strip().startswith("```"):
                 code.append(lines[i])
                 i += 1
             i += 1  # closing fence
-            out.append("<pre><code>" + html.escape("\n".join(code)) + "</code></pre>")
+            out.append("<pre><code{}>{}</code></pre>".format(cls, html.escape("\n".join(code))))
             continue
 
         m = re.match(r"^(#{1,4})\s+(.*)$", stripped)
@@ -165,12 +285,14 @@ def render_markdown(text):
             out.append("<blockquote>\n  <p>" + render_inline(" ".join(q.strip() for q in quote)) + "</p>\n</blockquote>")
             continue
 
-        if re.match(r"^[-*]\s+", stripped):
-            items = []
-            while i < len(lines) and re.match(r"^\s*[-*]\s+", lines[i]):
-                items.append(re.sub(r"^\s*[-*]\s+", "", lines[i]).strip())
-                i += 1
-            out.append("<ul>\n" + "\n".join("  <li>" + render_inline(x) + "</li>" for x in items) + "\n</ul>")
+        if re.match(r"^[-*]\s+", stripped) or re.match(r"^\d{1,9}[.)]\s+", stripped):
+            html_list, i = render_list(lines, i, len(lines[i]) - len(lines[i].lstrip()))
+            out.append(html_list)
+            continue
+
+        if stripped.startswith("|") and i + 1 < len(lines) and is_delimiter_row(lines[i + 1]):
+            table_html, i = render_table(lines, i)
+            out.append(table_html)
             continue
 
         if stripped.startswith("<"):
@@ -181,13 +303,17 @@ def render_markdown(text):
             out.append("\n".join(block))
             continue
 
-        # Paragraph: consume until a blank line or another block starts.
+        # Paragraph: consume until a blank line or another block starts. Always
+        # consumes at least one line, so a block starter no branch handled
+        # (e.g. a "|" line that is not a table) can never loop forever.
         block = []
         while i < len(lines) and lines[i].strip() and not BLOCK_START.match(lines[i].strip()):
             block.append(lines[i].strip())
             i += 1
-        if block:
-            out.append("<p>" + render_inline(" ".join(block)) + "</p>")
+        if not block:
+            block.append(lines[i].strip())
+            i += 1
+        out.append("<p>" + render_inline(" ".join(block)) + "</p>")
 
     return "\n".join(out)
 

@@ -14,9 +14,13 @@ the AI proxy.
 | POST   | `/comments`                    | public                  | Create a comment (rate limit + Turnstile)      |
 | POST   | `/api/site-chat`               | public                  | Site avatar chat (per-IP rate limit, internal key) |
 | GET    | `/admin`                       | Cloudflare Access       | Admin page: 图床 + 写作台 + AI playground tabs (admin_page.js + editor_page.js + ai_page.js) |
-| POST   | `/upload`                      | Cloudflare Access       | Multipart images → R2 `img/` prefix            |
-| GET    | `/upload?list=1[&cursor=…]`    | Cloudflare Access       | Recent uploads (newest first)                  |
+| POST   | `/upload`                      | Cloudflare Access       | Multipart images → R2 `img/` prefix (optional `dir` field targets a folder) |
+| GET    | `/upload?list=1[&cursor=…]`    | Cloudflare Access       | Recent uploads (newest first, flat)            |
+| GET    | `/upload?list=1&prefix=img/…/&delimiter=1` | Cloudflare Access | One level of a folder: `{folders[], objects[]}` |
 | DELETE | `/upload?key=img/…`            | Cloudflare Access       | Delete one object (`img/` prefix only)         |
+| POST   | `/upload/folder`               | Cloudflare Access       | Create a folder `{path}` (writes a `.keep` marker object) |
+| DELETE | `/upload/folder?key=img/…/`    | Cloudflare Access       | Delete a folder and everything under it (batched) |
+| POST   | `/upload/move`                 | Cloudflare Access       | Move/rename a file or folder `{from, to}` (get+put+delete per object) |
 | GET    | `/admin/api/posts`             | Cloudflare Access       | List `posts/*.md` from GitHub (editor.js)      |
 | GET    | `/admin/api/post?slug=…`       | Cloudflare Access       | Read one post (decoded UTF-8 + blob sha)       |
 | POST   | `/admin/api/post`              | Cloudflare Access       | Publish (create/update) via GitHub Contents API |
@@ -40,30 +44,55 @@ the AI proxy.
   prefix `img/YYYY/MM/<slug>-<6hex>.<ext>`. Keys are ASCII-slugged + random,
   so content never changes per key → objects carry
   `Cache-Control: public, max-age=31536000, immutable` via R2 httpMetadata.
+  Uploads from the admin file explorer into a chosen folder land there
+  (`dir` form field); root uploads keep the date-based layout.
 - Reading is served by the bucket's public custom domain
   `storage.nathanpenny.fun` — no Worker involvement on reads.
 - Slugification removes all dots, which structurally avoids the WAF rule
   that 403s URL paths containing `...` (same lesson as
-  `tools/upload_music_r2.sh`).
+  `tools/upload_music_r2.sh`). The same rule is enforced on folder names
+  (`normalizeFolderPath`: ASCII slug segments only, no dots, no `..`).
+- "Folders" are R2 key prefixes. Creating one writes a zero-byte `.keep`
+  marker object (listings hide it); deleting one cursor-lists every key
+  under the prefix and batch-deletes 1000 per call. Moving/renaming has no
+  R2-native support in the Workers binding, so `/upload/move` does
+  get + put + delete per object (uploads are ≤25MB, fine).
 - Upload validation: extension allowlist (png/jpg/jpeg/webp/gif/avif/svg),
   25MB cap per file, 10 files per request max, light magic-byte sniffing.
-- The upload page is a fully self-contained HTML exported by `admin_page.js`
-  (drag & drop + clipboard paste + copy-URL/copy-markdown + delete). The
-  写作台 editor tab (editor_page.js) reuses the same `/upload` endpoint to
-  insert image markdown at the cursor.
+- The Images tab (admin_page.js) is a file explorer: breadcrumb navigation,
+  folder cards + lazy thumbnails, sort (date/name/size), new folder,
+  rename/move/delete with confirm, per-file detail dialog (copy URL /
+  copy Markdown / rename / move / delete), and a flat "Recent" view. Drag &
+  drop + clipboard paste upload into the folder being viewed. The 写作台
+  editor tab (editor_page.js) reuses the same `/upload` endpoint to insert
+  image markdown at the cursor.
 
 ## Markdown editor (写作台)
 
-Publishing flow: write in the 写作台 tab → 发布 → the Worker commits
-`posts/<slug>.md` to `main` via the GitHub Contents API → the `gen-posts`
-workflow regenerates the static pages. The repository stays the single source
-of truth; the site itself never changes shape and no database is involved.
+Publishing flow: fill in the metadata form (title / slug / date / category /
+tags / description), write markdown in the body pane → 发布 → the Worker
+composes the canonical frontmatter server-side and commits `posts/<slug>.md`
+to `main` via the GitHub Contents API → the `gen-posts` workflow regenerates
+the static pages. The repository stays the single source of truth; the site
+itself never changes shape and no database is involved.
 
-- `POST /admin/api/post` validates the frontmatter with the same rules as
-  `tools/gen_post_pages.py` (title/date required with a round-trip date check,
-  category in the fixed list, no BOM, 256KB cap) — any miss would make the
-  generator `sys.exit` and the CI run red. Slugs are `^[a-z0-9][a-z0-9-]{0,63}$`
-  (the generator does no filename validation at all).
+- The tab is a two-pane layout: post list (filter box, + New) pinned on the
+  left, metadata form + markdown body + live preview on the right; below
+  ~900px the list collapses into a drawer. The body textarea holds markdown
+  ONLY — the form fields never mix into it, which also makes importing a
+  local `.md` trivial (Import button or drop the file: frontmatter is parsed
+  into the form, the rest goes to the body). The preview pane runs a JS port
+  of the generator's renderer (kept byte-identical on the shared test
+  corpus); the CI-generated page remains the truth.
+- `POST /admin/api/post` accepts `{slug, meta, body}` (the editor form) or a
+  legacy full `content` string. `composePost()` builds the frontmatter with
+  canonical key order (title, date, description, category, tags), forces
+  every value onto one line, omits empty description/tags (matching the
+  generator's fallbacks), then validates with the same rules as
+  `tools/gen_post_pages.py` (title/date required with a round-trip date
+  check, category in the fixed list, no BOM, 256KB cap) — any miss would
+  make the generator `sys.exit` and the CI run red. Slugs are
+  `^[a-z0-9][a-z0-9-]{0,63}$` (the generator does no filename validation).
 - Updates carry the blob `sha` from the last read; a 409 means the file
   changed remotely — reload the post. A successful publish returns the new
   sha so back-to-back edits never conflict.

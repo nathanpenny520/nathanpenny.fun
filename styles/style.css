@@ -66,6 +66,18 @@
   --aurora-teal: rgba(26, 188, 156, 0.3);
   --aurora-violet: rgba(122, 102, 255, 0.2);
   --aurora-blue: rgba(106, 176, 243, 0.28);
+
+  /* Blog code blocks + syntax highlighting (see BLOG PAGE section) */
+  --code-bg: #f2f5f8;
+  --code-text: #34495e;
+  --hljs-comment: #95a5a6;
+  --hljs-keyword: #8e44ad;
+  --hljs-string: #27ae60;
+  --hljs-number: #e67e22;
+  --hljs-title: #2980b9;
+  --hljs-attr: #16a085;
+  --hljs-built-in: #c0392b;
+  --hljs-meta: #7f8c8d;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -122,6 +134,18 @@
     --aurora-teal: rgba(26, 188, 156, 0.26);
     --aurora-violet: rgba(124, 108, 255, 0.24);
     --aurora-blue: rgba(106, 176, 243, 0.2);
+
+    /* Blog code blocks + syntax highlighting (see BLOG PAGE section) */
+    --code-bg: #1a222b;
+    --code-text: #ccd4dc;
+    --hljs-comment: #66727e;
+    --hljs-keyword: #c39bff;
+    --hljs-string: #5fd39a;
+    --hljs-number: #f0a35e;
+    --hljs-title: #6ab0f3;
+    --hljs-attr: #48d1b4;
+    --hljs-built-in: #ff8a80;
+    --hljs-meta: #8a97a4;
   }
 
   /* All-black icons (Douyin, GitHub, TikTok) need an edge to stay visible
@@ -188,6 +212,18 @@
   --aurora-teal: rgba(26, 188, 156, 0.26);
   --aurora-violet: rgba(124, 108, 255, 0.24);
   --aurora-blue: rgba(106, 176, 243, 0.2);
+
+  /* Blog code blocks + syntax highlighting (see BLOG PAGE section) */
+  --code-bg: #1a222b;
+  --code-text: #ccd4dc;
+  --hljs-comment: #66727e;
+  --hljs-keyword: #c39bff;
+  --hljs-string: #5fd39a;
+  --hljs-number: #f0a35e;
+  --hljs-title: #6ab0f3;
+  --hljs-attr: #48d1b4;
+  --hljs-built-in: #ff8a80;
+  --hljs-meta: #8a97a4;
 }
 
 :root[data-theme="dark"] .social-douyin,
@@ -1344,6 +1380,126 @@ html {
   max-height: 350px;
   border-radius: 6px;
   margin: 12px 0;
+}
+
+/* --- Post body: code, quotes, pipe tables, task lists --------------------- */
+
+.blog-card pre {
+  background: var(--code-bg);
+  color: var(--code-text);
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 16px 0;
+  overflow-x: auto;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.blog-card code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--code-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.9em;
+  color: var(--code-text);
+}
+
+.blog-card pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Syntax token colors for the vendored highlight.js — palette follows the
+   site's own accents via the --hljs-* vars, so no third-party theme file. */
+.blog-card pre .hljs-comment,
+.blog-card pre .hljs-quote { color: var(--hljs-comment); font-style: italic; }
+.blog-card pre .hljs-keyword,
+.blog-card pre .hljs-selector-tag,
+.blog-card pre .hljs-doctag { color: var(--hljs-keyword); }
+.blog-card pre .hljs-string,
+.blog-card pre .hljs-regexp,
+.blog-card pre .hljs-addition { color: var(--hljs-string); }
+.blog-card pre .hljs-number,
+.blog-card pre .hljs-literal,
+.blog-card pre .hljs-symbol,
+.blog-card pre .hljs-bullet,
+.blog-card pre .hljs-link { color: var(--hljs-number); }
+.blog-card pre .hljs-title,
+.blog-card pre .hljs-section,
+.blog-card pre .hljs-name { color: var(--hljs-title); }
+.blog-card pre .hljs-attr,
+.blog-card pre .hljs-attribute,
+.blog-card pre .hljs-variable,
+.blog-card pre .hljs-template-variable,
+.blog-card pre .hljs-type,
+.blog-card pre .hljs-title.class_ { color: var(--hljs-attr); }
+.blog-card pre .hljs-built_in { color: var(--hljs-built-in); }
+.blog-card pre .hljs-meta { color: var(--hljs-meta); }
+.blog-card pre .hljs-deletion { color: var(--color-danger); }
+.blog-card pre .hljs-strong { font-weight: 700; }
+.blog-card pre .hljs-emphasis { font-style: italic; }
+
+.blog-card blockquote {
+  margin: 16px 0;
+  padding: 8px 18px;
+  border-left: 4px solid var(--color-accent);
+  background: var(--color-surface-alt);
+  border-radius: 0 8px 8px 0;
+  color: var(--color-text-soft);
+}
+
+.blog-card blockquote p {
+  margin: 4px 0;
+}
+
+/* Markdown pipe tables (raw-HTML tables keep their own .table-wrapper).
+   display:block + overflow-x is the standard sideways-scroll trick so wide
+   tables don't blow out the article column on phones. */
+.blog-card > table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+.blog-card > table th,
+.blog-card > table td {
+  border: 1px solid var(--color-border-light);
+  padding: 8px 12px;
+}
+
+.blog-card > table thead th {
+  background: var(--color-surface-alt);
+}
+
+/* Task lists (- [ ] / - [x]) render disabled checkboxes */
+.blog-card ul.task-list {
+  list-style: none;
+  padding-left: 8px;
+}
+
+.blog-card ul.task-list input[type="checkbox"] {
+  margin-right: 8px;
+  accent-color: var(--color-accent);
+}
+
+.blog-card ul ul,
+.blog-card ul ol,
+.blog-card ol ul,
+.blog-card ol ol {
+  margin: 4px 0;
+}
+
+.blog-card del {
+  color: var(--color-text-muted);
 }
 
 .responsive-video {

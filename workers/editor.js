@@ -104,6 +104,29 @@ function validatePost(content) {
   return null;
 }
 
+// Compose the post document from the editor's structured fields. The editor
+// form carries title/date/description/category/tags as separate inputs, so
+// the markdown body never mixes with frontmatter (local .md files get their
+// frontmatter parsed out client-side before import). Values are forced onto
+// one line each so a stray newline can never break the YAML block; empty
+// description/tags lines are omitted, matching the generator's fallbacks.
+// Key order is canonical: title, date, description, category, tags.
+function composePost(meta, body) {
+  const oneLine = (v) => String(v == null ? "" : v).replace(/[\r\n]+/g, " ").trim();
+  const lines = [
+    "---",
+    "title: " + oneLine(meta.title),
+    "date: " + oneLine(meta.date)
+  ];
+  const description = oneLine(meta.description);
+  if (description) lines.push("description: " + description);
+  lines.push("category: " + (CATEGORIES.includes(meta.category) ? meta.category : "misc"));
+  const tags = oneLine(meta.tags);
+  if (tags) lines.push("tags: " + tags);
+  const bodyText = String(body == null ? "" : body).replace(/^\n+/, "").replace(/\s+$/, "");
+  return lines.join("\n") + "\n---\n\n" + bodyText + (bodyText ? "\n" : "");
+}
+
 function requireToken(env) {
   if (!env.GITHUB_TOKEN) {
     return editorJson(503, { error: "GITHUB_TOKEN not configured — run: npx wrangler secret put GITHUB_TOKEN" });
@@ -170,10 +193,22 @@ async function publishPost(request, env) {
   const slug = typeof body.slug === "string" ? body.slug : "";
   if (!SLUG_RE.test(slug)) return editorJson(400, { error: "Invalid slug (lowercase letters, digits, hyphens only)" });
 
-  const contentError = validatePost(body.content);
+  // Two payload shapes: the admin editor sends structured {meta, body} which
+  // gets a canonical frontmatter block composed here; a raw `content` string
+  // (full document, frontmatter included) is still accepted as-is.
+  let content;
+  if (body.meta && typeof body.meta === "object") {
+    content = composePost(body.meta, body.body);
+  } else if (typeof body.content === "string") {
+    content = body.content;
+  } else {
+    return editorJson(400, { error: "Provide {meta, body} or a full content string" });
+  }
+
+  const contentError = validatePost(content);
   if (contentError) return editorJson(400, { error: contentError });
 
-  if (new TextEncoder().encode(body.content).length > MAX_CONTENT_BYTES) {
+  if (new TextEncoder().encode(content).length > MAX_CONTENT_BYTES) {
     return editorJson(413, { error: "Post exceeds 256KB" });
   }
 
@@ -183,7 +218,7 @@ async function publishPost(request, env) {
   const creating = !body.sha;
   const payload = {
     message: (creating ? "publish: " : "update: ") + slug + " (editor)",
-    content: base64EncodeUtf8(body.content),
+    content: base64EncodeUtf8(content),
     branch: GITHUB_BRANCH
   };
   if (!creating) payload.sha = String(body.sha);

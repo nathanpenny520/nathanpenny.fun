@@ -1619,6 +1619,29 @@ function registerServiceWorker() {
   });
 }
 
+// Syntax highlighting for blog code blocks: the vendored highlight.js bundle
+// (scripts/vendor/, self-hosted like the fonts) is only injected when the page
+// actually contains language-tagged fences, so posts without code never pay
+// for it. Token colors come from the --hljs-* vars in style.css.
+function initCodeHighlight() {
+  const blocks = document.querySelectorAll('.blog-card pre code[class^="language-"]');
+  if (!blocks.length) return;
+  // Only single-post pages (blog/<slug>/) can hold language-tagged fences,
+  // so the two-level-relative path is safe here.
+  const apply = () => {
+    blocks.forEach((el) => {
+      try { window.hljs.highlightElement(el); } catch (e) {
+        // Unknown language class etc. — leave the block unhighlighted.
+      }
+    });
+  };
+  if (window.hljs) { apply(); return; }
+  const script = document.createElement('script');
+  script.src = '../../scripts/vendor/highlight.min.js';
+  script.onload = apply;
+  document.head.appendChild(script);
+}
+
 // Initialize page-specific features once the DOM is ready.
 window.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
@@ -1636,6 +1659,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initReadingProgress();
   initReadingTime();
   initBackToTop();
+  initCodeHighlight();
   initSiteChat();
   initStarField();
   initScrollReveal();

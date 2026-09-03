@@ -6,10 +6,13 @@
 //   POST /api/ai/v1/chat/completions  OpenAI-compatible proxy (bearer key)
 //   GET  /api/ai/v1/models            model catalog (bearer key)
 // Cloudflare Access-protected (see access.js):
-//   GET    /admin               admin page: image uploader + markdown editor
-//   POST   /upload              multipart images -> R2 img/ prefix
-//   GET    /upload?list=1       recent uploads
+//   GET    /admin               admin page: image explorer + markdown editor
+//   POST   /upload              multipart images -> R2 (optional `dir` folder field)
+//   GET    /upload?list=1       uploads; &prefix=img/x/&delimiter=1 = one level
 //   DELETE /upload?key=…        remove one object (img/ prefix only)
+//   POST   /upload/folder       create a folder ({path}); R2 needs a .keep marker
+//   DELETE /upload/folder?key=img/…/  delete a folder and everything under it
+//   POST   /upload/move         move/rename a file or folder ({from, to})
 //   GET    /admin/api/posts     list posts/*.md from GitHub (editor.js)
 //   GET    /admin/api/post?slug=…   read one post (editor.js)
 //   POST   /admin/api/post      publish/create/update a post (GitHub Contents API)
@@ -292,14 +295,51 @@ function slugifyFilename(name) {
   return slug || "image";
 }
 
-function imageKeyFor(filename, ext) {
+function imageKeyFor(filename, ext, dir) {
   const now = new Date();
   const yyyy = now.getUTCFullYear();
   const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
   const rand = [...crypto.getRandomValues(new Uint8Array(3))]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-  return `img/${yyyy}/${mm}/${slugifyFilename(filename)}-${rand}.${ext}`;
+  const base = `${slugifyFilename(filename)}-${rand}.${ext}`;
+  // Uploading from the admin explorer into a chosen folder lands there; the
+  // root keeps the historical img/YYYY/MM/ convention.
+  if (dir && dir !== "img/") return dir + base;
+  return `img/${yyyy}/${mm}/${base}`;
+}
+
+// "Folders" in R2 are key prefixes. Folder segments are strict ASCII slugs —
+// dots are banned outright (the WAF `...` path trap, see
+// tools/upload_music_r2.sh) and slugs keep the public URLs clean and short.
+const FOLDER_SEGMENT_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+
+// Normalize/validate a folder path ("img/foo" or "img/foo/" -> "img/foo/").
+// Returns null when any segment breaks the slug rules or traversal is tried.
+function normalizeFolderPath(raw) {
+  let path = String(raw == null ? "" : raw);
+  if (!path.endsWith("/")) path += "/";
+  if (!path.startsWith("img/") || path.includes("..") || path.includes("\\")) return null;
+  const inner = path.slice(4, -1);
+  if (inner === "") return "img/"; // the bucket root for images
+  const segments = inner.split("/");
+  if (!segments.every((s) => FOLDER_SEGMENT_RE.test(s))) return null;
+  return path;
+}
+
+// Validate a full object key ("img/foo/pic-abc123.webp"). The last segment is
+// the filename; leading dots are reserved (.keep folder markers).
+function validObjectKey(key) {
+  key = String(key == null ? "" : key);
+  if (!key.startsWith("img/") || key.endsWith("/") || key.includes("..") || key.includes("\\")) return false;
+  const parts = key.slice(4).split("/");
+  if (parts.some((p) => p === "")) return false;
+  const name = parts.pop();
+  return parts.every((d) => FOLDER_SEGMENT_RE.test(d)) && /^[a-z0-9][a-z0-9._-]{0,127}$/i.test(name) && !name.startsWith(".");
+}
+
+function uploadJson(status, payload) {
+  return new Response(JSON.stringify(payload), { status, headers: JSON_HEADERS });
 }
 
 // Light magic-byte sniffing so a renamed payload cannot pose as an image
@@ -337,6 +377,16 @@ async function handleUploadPost(request, env) {
     return new Response(JSON.stringify({ error: "Too many files (10 per request maximum)" }), { status: 400, headers: JSON_HEADERS });
   }
 
+  // Optional target folder from the admin explorer; invalid values fail hard.
+  let dir = null;
+  const dirRaw = form.get("dir");
+  if (typeof dirRaw === "string" && dirRaw) {
+    dir = normalizeFolderPath(dirRaw);
+    if (!dir) {
+      return new Response(JSON.stringify({ error: "Invalid upload folder" }), { status: 400, headers: JSON_HEADERS });
+    }
+  }
+
   const uploaded = [];
   const failed = [];
   for (const file of files) {
@@ -348,7 +398,7 @@ async function handleUploadPost(request, env) {
       const head = await file.slice(0, 256).arrayBuffer();
       if (!magicBytesMatch(head, ext)) throw new Error(`${file.name}: content does not look like ${ext}`);
 
-      const key = imageKeyFor(file.name, ext);
+      const key = imageKeyFor(file.name, ext, dir);
       await env.R2.put(key, file, {
         httpMetadata: {
           contentType,
@@ -375,14 +425,23 @@ async function handleUploadPost(request, env) {
   );
 }
 
+// Listing for the admin file explorer. With delimiter=1 this returns one
+// level: folders (R2 delimitedPrefixes) + objects directly under `prefix`.
+// Without it the historical flat "recent uploads" listing is served.
 async function handleUploadList(env, url) {
-  const options = { prefix: "img/", limit: 100 };
+  const prefix = normalizeFolderPath(url.searchParams.get("prefix") || "img/");
+  if (!prefix) return uploadJson(400, { error: "Invalid prefix" });
+
+  const options = { prefix, limit: 100 };
   const cursor = url.searchParams.get("cursor");
   if (cursor) options.cursor = cursor;
+  if (url.searchParams.get("delimiter") === "1") options.delimiter = "/";
   const listing = await env.R2.list(options);
+
   // R2 lists lexicographically ascending; date-prefixed keys make the reverse
-  // of that newest-first.
+  // of that newest-first. Folder markers (.keep) are never shown.
   const objects = (listing.objects || [])
+    .filter((o) => !o.key.endsWith("/.keep"))
     .map((o) => ({
       key: o.key,
       url: STORAGE_PUBLIC_ORIGIN + o.key,
@@ -390,19 +449,130 @@ async function handleUploadList(env, url) {
       uploaded: o.uploaded ? o.uploaded.toISOString() : null
     }))
     .reverse();
-  return new Response(
-    JSON.stringify({ objects, truncated: !!listing.truncated, cursor: listing.truncated ? listing.cursor : null }),
-    { headers: JSON_HEADERS }
-  );
+  const folders = listing.delimitedPrefixes || [];
+  return uploadJson(200, {
+    prefix,
+    folders,
+    objects,
+    truncated: !!listing.truncated,
+    cursor: listing.truncated ? listing.cursor : null
+  });
 }
 
 async function handleUploadDelete(env, url) {
   const key = url.searchParams.get("key") || "";
-  if (!key.startsWith("img/") || key.includes("..")) {
-    return new Response(JSON.stringify({ error: "Only img/ objects can be deleted" }), { status: 400, headers: JSON_HEADERS });
+  if (url.searchParams.get("type") === "folder") {
+    return handleFolderDelete(env, key);
+  }
+  if (!validObjectKey(key)) {
+    return uploadJson(400, { error: "Only img/ objects can be deleted" });
   }
   await env.R2.delete(key);
-  return new Response(JSON.stringify({ success: true }), { headers: JSON_HEADERS });
+  return uploadJson(200, { success: true });
+}
+
+// Create a folder: R2 has no empty directories, so drop a zero-byte .keep
+// marker that the listing filters out.
+async function handleFolderCreate(request, env) {
+  let body = null;
+  try {
+    body = await request.json();
+  } catch (error) { /* fall through to validation */ }
+  const path = normalizeFolderPath(body && body.path);
+  if (!path || path === "img/") {
+    return uploadJson(400, { error: "Invalid folder path (segments: lowercase letters, digits, - or _)" });
+  }
+  await env.R2.put(path + ".keep", "", {
+    httpMetadata: { contentType: "application/x-empty" }
+  });
+  return uploadJson(200, { success: true, path });
+}
+
+// Delete a folder: cursor through every key under the prefix and batch-delete
+// (R2.delete takes up to 1000 keys per call).
+async function handleFolderDelete(env, rawPath) {
+  const path = normalizeFolderPath(rawPath);
+  if (!path || path === "img/") {
+    return uploadJson(400, { error: "Invalid folder path" });
+  }
+  let cursor;
+  let deleted = 0;
+  for (;;) {
+    const options = { prefix: path, limit: 1000 };
+    if (cursor) options.cursor = cursor;
+    const listing = await env.R2.list(options);
+    const keys = (listing.objects || []).map((o) => o.key);
+    if (keys.length) {
+      await env.R2.delete(keys);
+      deleted += keys.length;
+    }
+    if (!listing.truncated) break;
+    cursor = listing.cursor;
+    if (deleted > 50000) return uploadJson(500, { error: "Folder too large to delete in one call" });
+  }
+  return uploadJson(200, { success: true, deleted });
+}
+
+// R2 has no server-side copy/move in the Workers binding, so a move is
+// get + put + delete per object (uploads are capped at 25MB, fine here).
+async function moveOneObject(env, fromKey, toKey) {
+  const obj = await env.R2.get(fromKey);
+  if (!obj) throw new Error("missing object " + fromKey);
+  const bytes = await obj.arrayBuffer();
+  await env.R2.put(toKey, bytes, { httpMetadata: obj.httpMetadata });
+  await env.R2.delete(fromKey);
+}
+
+// Move/rename: {from, to}. A folder move (from ends with "/") re-keys every
+// object under it; a single-object move takes a target folder (filename kept)
+// or a full new key.
+async function handleUploadMove(request, env) {
+  let body = null;
+  try {
+    body = await request.json();
+  } catch (error) { /* fall through to validation */ }
+  const fromRaw = body && body.from;
+  const toRaw = body && body.to;
+  if (!fromRaw || !toRaw) return uploadJson(400, { error: "Missing from/to" });
+
+  if (String(fromRaw).endsWith("/")) {
+    const from = normalizeFolderPath(fromRaw);
+    const to = normalizeFolderPath(toRaw);
+    if (!from || from === "img/") return uploadJson(400, { error: "Invalid source folder" });
+    if (!to || to === "img/") return uploadJson(400, { error: "Invalid destination folder" });
+    if (to.startsWith(from)) return uploadJson(400, { error: "Cannot move a folder into itself" });
+
+    let cursor;
+    let moved = 0;
+    for (;;) {
+      const options = { prefix: from, limit: 1000 };
+      if (cursor) options.cursor = cursor;
+      const listing = await env.R2.list(options);
+      for (const o of listing.objects || []) {
+        await moveOneObject(env, o.key, to + o.key.slice(from.length));
+        moved += 1;
+      }
+      if (!listing.truncated) break;
+      cursor = listing.cursor;
+      if (moved > 50000) return uploadJson(500, { error: "Folder too large to move in one call" });
+    }
+    return uploadJson(200, { success: true, moved, path: to });
+  }
+
+  const from = validObjectKey(fromRaw) ? String(fromRaw) : null;
+  if (!from) return uploadJson(400, { error: "Invalid source key" });
+  let to = null;
+  if (String(toRaw).endsWith("/")) {
+    const folder = normalizeFolderPath(toRaw);
+    if (folder && folder !== "img/") to = folder + from.split("/").pop();
+  } else if (validObjectKey(toRaw)) {
+    to = String(toRaw);
+  }
+  if (!to) return uploadJson(400, { error: "Invalid destination (folder path or full key)" });
+  if (to === from) return uploadJson(400, { error: "Source and destination are the same" });
+
+  await moveOneObject(env, from, to);
+  return uploadJson(200, { success: true, moved: 1, key: to, url: STORAGE_PUBLIC_ORIGIN + to });
 }
 
 // ---------------------------------------------------------------------------
@@ -506,6 +676,19 @@ export default {
         if (request.method === "POST") return handleUploadPost(request, env);
         if (request.method === "GET") return handleUploadList(env, url);
         if (request.method === "DELETE") return handleUploadDelete(env, url);
+        return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: JSON_HEADERS });
+      }
+
+      if (url.pathname === "/upload/folder") {
+        if (!(await verifyAccess(request, env))) return accessDenied();
+        if (request.method === "POST") return handleFolderCreate(request, env);
+        if (request.method === "DELETE") return handleFolderDelete(env, url.searchParams.get("key"));
+        return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: JSON_HEADERS });
+      }
+
+      if (url.pathname === "/upload/move") {
+        if (!(await verifyAccess(request, env))) return accessDenied();
+        if (request.method === "POST") return handleUploadMove(request, env);
         return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: JSON_HEADERS });
       }
 
