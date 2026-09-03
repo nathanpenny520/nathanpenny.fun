@@ -40,6 +40,7 @@ import email.utils
 import html
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -625,6 +626,16 @@ def main():
         out = POSTS_OUT / p["slug"] / "index.html"
         out.parent.mkdir(parents=True, exist_ok=True)
         write(out, render_post_page(p, posts, p["og_image"]))
+
+    # Prune single-post dirs left behind by deleted posts — blog/ is fully
+    # generated, so any dir without a matching post is stale and would stay
+    # live out of sync with the feed and sitemap (e.g. a post deleted via the
+    # web editor).
+    slugs = {p["slug"] for p in posts}
+    for child in POSTS_OUT.iterdir():
+        if child.is_dir() and child.name not in slugs:
+            shutil.rmtree(child)
+            print("pruned stale post dir: " + child.name)
 
     update_blog_html(posts)
     write(SITEMAP, render_sitemap(posts, today))

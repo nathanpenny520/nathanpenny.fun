@@ -1,8 +1,9 @@
-# Worker Backend: comments + image uploader + AI proxy
+# Worker Backend: comments + admin (uploader/写作台) + AI proxy
 
 Cloudflare Worker behind `https://workers.nathanpenny.fun` (custom domain;
 the `*.workers.dev` URL also exists but admin routes reject it — see Access
-below). Three feature groups:
+below). Feature groups: comments, the Access-protected `/admin` page (image
+uploader + markdown editor tabs), and the AI proxy.
 
 ## Endpoints
 
@@ -10,10 +11,14 @@ below). Three feature groups:
 |--------|--------------------------------|-------------------------|------------------------------------------------|
 | GET    | `/comments`                    | public                  | List comments (`email` deliberately excluded)  |
 | POST   | `/comments`                    | public                  | Create a comment (rate limit + Turnstile)      |
-| GET    | `/admin`                       | Cloudflare Access       | Self-hosted image upload page (admin_page.js)  |
+| GET    | `/admin`                       | Cloudflare Access       | Admin page: 图床 + 写作台 tabs (admin_page.js + editor_page.js) |
 | POST   | `/upload`                      | Cloudflare Access       | Multipart images → R2 `img/` prefix            |
 | GET    | `/upload?list=1[&cursor=…]`    | Cloudflare Access       | Recent uploads (newest first)                  |
 | DELETE | `/upload?key=img/…`            | Cloudflare Access       | Delete one object (`img/` prefix only)         |
+| GET    | `/admin/api/posts`             | Cloudflare Access       | List `posts/*.md` from GitHub (editor.js)      |
+| GET    | `/admin/api/post?slug=…`       | Cloudflare Access       | Read one post (decoded UTF-8 + blob sha)       |
+| POST   | `/admin/api/post`              | Cloudflare Access       | Publish (create/update) via GitHub Contents API |
+| DELETE | `/admin/api/post?slug=…&sha=…` | Cloudflare Access       | Delete a post (CI prunes its generated page)   |
 | POST   | `/api/ai/v1/chat/completions`  | Bearer API key          | OpenAI-compatible proxy (see AI proxy below)   |
 | GET    | `/api/ai/v1/models`            | Bearer API key          | Model catalog filtered by configured secrets   |
 | *      | anything else                  | —                       | 404                                            |
@@ -41,7 +46,35 @@ below). Three feature groups:
 - Upload validation: extension allowlist (png/jpg/jpeg/webp/gif/avif/svg),
   25MB cap, light magic-byte sniffing.
 - The upload page is a fully self-contained HTML exported by `admin_page.js`
-  (drag & drop + clipboard paste + copy-URL/copy-markdown + delete).
+  (drag & drop + clipboard paste + copy-URL/copy-markdown + delete). The
+  写作台 editor tab (editor_page.js) reuses the same `/upload` endpoint to
+  insert image markdown at the cursor.
+
+## Markdown editor (写作台)
+
+Publishing flow: write in the 写作台 tab → 发布 → the Worker commits
+`posts/<slug>.md` to `main` via the GitHub Contents API → the `gen-posts`
+workflow regenerates the static pages. The repository stays the single source
+of truth; the site itself never changes shape and no database is involved.
+
+- `POST /admin/api/post` validates the frontmatter with the same rules as
+  `tools/gen_post_pages.py` (title/date required with a round-trip date check,
+  category in the fixed list, no BOM, 256KB cap) — any miss would make the
+  generator `sys.exit` and the CI run red. Slugs are `^[a-z0-9][a-z0-9-]{0,63}$`
+  (the generator does no filename validation at all).
+- Updates carry the blob `sha` from the last read; a 409 means the file
+  changed remotely — reload the post. A successful publish returns the new
+  sha so back-to-back edits never conflict.
+- Deleting a post commits the deletion; CI then prunes the stale
+  `blog/<slug>/` directory (the generator removes dirs without a matching
+  post).
+- Setup: create a GitHub fine-grained PAT scoped to `nathanpenny520/nathanpenny.fun`
+  only, with **Contents: Read and write**, then
+  `npx wrangler secret put GITHUB_TOKEN`. The token never reaches the page or
+  logs — GitHub error messages (capped at 200 chars) are the only upstream
+  text relayed to the client.
+- Editor APIs live under `/admin/api/*` so the edge Access app (path-prefix)
+  covers them and injects the JWT; the Worker re-verifies like everywhere.
 
 ### Cloudflare Access
 
@@ -162,10 +195,11 @@ never remove it from `wrangler.jsonc`. Validate config changes first with
 
 Managed outside this repo: the `workers.nathanpenny.fun` custom domain, the
 Access application + policy (Zero Trust dashboard), and the secrets
-(`TURNSTILE_SECRET`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
+(`TURNSTILE_SECRET`, `GITHUB_TOKEN`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
 `GEMINI_API_KEY`, `XAI_API_KEY` — check with `npx wrangler secret list`).
-Provider keys are set with `npx wrangler secret put <NAME>`; a provider
-without its secret is simply unavailable through the proxy.
+Secrets are set with `npx wrangler secret put <NAME>`; a provider without its
+secret is simply unavailable through the proxy, and the editor fails closed
+with a 503 hint until `GITHUB_TOKEN` exists.
 
 ## Turnstile (comment spam protection)
 

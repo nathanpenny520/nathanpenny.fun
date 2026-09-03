@@ -1,8 +1,9 @@
 # Sample local-dev vars for `npx wrangler dev` (copy to workers/.dev.vars —
 # that file is gitignored and must NEVER be committed or present at deploy).
-# ADMIN_BYPASS=1 skips Cloudflare Access JWT verification on /admin and
-# /upload so the upload page can be tested locally. The deployed Worker must
-# never have this var; Access JWT verification is the only gate there.
+# ADMIN_BYPASS=1 skips Cloudflare Access JWT verification on /admin,
+# /upload and /admin/api/* so the admin page can be tested locally. The
+# deployed Worker must never have this var; Access JWT verification is the
+# only gate there.
 ADMIN_BYPASS=1
 
 # Optional: real upstream keys for local AI-proxy testing. Note the local
@@ -12,3 +13,7 @@ ADMIN_BYPASS=1
 # ANTHROPIC_API_KEY=sk-ant-...
 # GEMINI_API_KEY=...
 # XAI_API_KEY=xai-...
+
+# Optional: GitHub fine-grained PAT (repo nathanpenny520/nathanpenny.fun,
+# Contents: Read and write) for local testing of the 写作台 editor API.
+# GITHUB_TOKEN=github_pat_...

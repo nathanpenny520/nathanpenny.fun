@@ -1,14 +1,18 @@
-// Self-hosted admin upload page served by GET /admin in comments.js.
-// Kept fully self-contained (inline CSS/JS, zero external assets, noindex) so
-// the Worker origin stays dependency-free. The whole file is one template
-// literal, so the page's own script deliberately avoids backticks and ${}.
+// Self-hosted admin page served by GET /admin in comments.js: two tabs —
+// the image uploader and the markdown 写作台 (editor tab comes from
+// editor_page.js, interpolated below). Kept fully self-contained (inline
+// CSS/JS, zero external assets, noindex) so the Worker origin stays
+// dependency-free. This file is one template literal, so the page's own
+// script deliberately avoids backticks and ${}.
+import { EDITOR_TAB_HTML } from "./editor_page.js";
+
 export const ADMIN_PAGE_HTML = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>NP · Image Uploader</title>
+<title>NP · Admin</title>
 <style>
   :root {
     color-scheme: light dark;
@@ -79,7 +83,14 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
 </head>
 <body>
 <main>
-  <h1>🛸 Image Uploader</h1>
+  <h1>🛸 Admin</h1>
+  <p class="hint">图床 + 写作台 · Cloudflare Access 已登录</p>
+  <nav class="tabs" aria-label="Admin sections">
+    <button id="tabBtnUpload" class="tab active" type="button">🖼 图床</button>
+    <button id="tabBtnEditor" class="tab" type="button">✍️ 写作台</button>
+  </nav>
+
+  <section id="tabUpload">
   <p class="hint">Drag &amp; drop, paste (Ctrl/Cmd+V), or click to browse. PNG · JPG · WebP · GIF · AVIF · SVG, up to 25 MB each. Files land under <code>img/YYYY/MM/</code> and are served from storage.nathanpenny.fun.</p>
 
   <div id="dropzone" role="button" tabindex="0" aria-label="Upload images">
@@ -101,8 +112,38 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
     <ul id="recentList"></ul>
     <p class="empty" id="recentEmpty" hidden>Nothing uploaded yet.</p>
   </section>
+  </section>
+  ${EDITOR_TAB_HTML}
 </main>
 <div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var tabUpload = document.getElementById("tabUpload");
+  var tabEditor = document.getElementById("tabEditor");
+  var btnUpload = document.getElementById("tabBtnUpload");
+  var btnEditor = document.getElementById("tabBtnEditor");
+
+  function showTab(which) {
+    var editorActive = which === "editor";
+    tabUpload.hidden = editorActive;
+    tabEditor.hidden = !editorActive;
+    btnUpload.className = "tab" + (editorActive ? "" : " active");
+    btnEditor.className = "tab" + (editorActive ? " active" : "");
+  }
+
+  btnUpload.addEventListener("click", function () { showTab("upload"); });
+  btnEditor.addEventListener("click", function () { showTab("editor"); });
+
+  // The editor tab (editor_page.js) takes over paste/drop of images while it
+  // is the visible tab; the uploader defers to it below.
+  window.npEditorActive = function () { return !tabEditor.hidden; };
+
+  showTab("upload");
+})();
+</script>
 
 <script>
 (function () {
@@ -314,24 +355,28 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
 
   ["dragenter", "dragover"].forEach(function (ev) {
     window.addEventListener(ev, function (e) {
+      if (window.npEditorActive && window.npEditorActive()) return;
       e.preventDefault();
       dropzone.classList.add("drag");
     });
   });
   ["dragleave", "drop"].forEach(function (ev) {
     window.addEventListener(ev, function (e) {
+      if (window.npEditorActive && window.npEditorActive()) return;
       e.preventDefault();
       if (ev === "dragleave" && e.relatedTarget) return;
       dropzone.classList.remove("drag");
     });
   });
   window.addEventListener("drop", function (e) {
+    if (window.npEditorActive && window.npEditorActive()) return;
     if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
       uploadFiles(e.dataTransfer.files);
     }
   });
 
   document.addEventListener("paste", function (e) {
+    if (window.npEditorActive && window.npEditorActive()) return;
     if (!e.clipboardData || !e.clipboardData.files) return;
     if (e.clipboardData.files.length) {
       e.preventDefault();
