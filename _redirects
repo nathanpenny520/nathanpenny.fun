@@ -3,6 +3,7 @@
 # path into a stray 308 to /pages/<name>.
 /about         /pages/about         200
 /blog          /pages/blog          200
+/blog/         /pages/blog          200
 /gallery       /pages/gallery       200
 /creations     /pages/creations     200
 /contact       /pages/contact       200
