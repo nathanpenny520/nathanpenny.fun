@@ -6,7 +6,16 @@
     <description>Nathan Penny's blog about anything fun.</description>
     <language>en</language>
     <atom:link href="https://nathanpenny.fun/feed.xml" rel="self" type="application/rss+xml"/>
-    <lastBuildDate>Sat, 04 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 03 Sep 2026 00:00:00 +0000</lastBuildDate>
+
+    <item>
+      <title>编辑器链路测试</title>
+      <link>https://nathanpenny.fun/blog/zz-editor-test/</link>
+      <guid isPermaLink="false">post-zz-editor-test</guid>
+      <pubDate>Thu, 03 Sep 2026 00:00:00 +0000</pubDate>
+      <description>写作台 E2E 测试文章，稍后删除。</description>
+      <category>Tech</category>
+    </item>
 
     <item>
       <title>The WanZai Song</title>
