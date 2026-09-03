@@ -2566,6 +2566,259 @@ footer p {
 }
 
 /* ==========================================================================
+   WIDGETS: AI AVATAR CHAT
+   Floating avatar launcher + <dialog> chat panel, injected by main.js
+   (initSiteChat). Talks to the Worker's public /api/site-chat — per-IP
+   limited server-side, no key in the browser. Dark mode rides the semantic
+   custom properties, so both dark blocks cover it unchanged.
+   ========================================================================== */
+
+.ai-avatar-btn {
+  position: fixed;
+  bottom: 84px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card-hover);
+  cursor: pointer;
+  overflow: hidden;
+  z-index: 900;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ai-avatar-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* "AI" badge so the button reads as an AI entry point, not just a photo. */
+.ai-avatar-btn::after {
+  content: "AI";
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-surface);
+  animation: ai-badge-pulse 2s ease-in-out 3;
+}
+
+@keyframes ai-badge-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(26, 188, 156, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(26, 188, 156, 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-avatar-btn::after {
+    animation: none;
+  }
+}
+
+.ai-avatar-btn:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* The About-page portrait doubles as a chat trigger (main.js binds it). */
+#aboutAvatar.ai-chat-trigger {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+#aboutAvatar.ai-chat-trigger:hover {
+  transform: scale(1.02);
+}
+
+.ai-chat-dialog {
+  border: 1px solid var(--color-divider);
+  border-radius: 16px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  width: min(420px, calc(100vw - 24px));
+  max-width: calc(100vw - 12px);
+  height: min(600px, 85dvh);
+  padding: 0;
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* UA dialogs default to fit-content and display:inline-block — flex only
+   when open, otherwise :not([open]) display:none would be overridden. */
+.ai-chat-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-chat-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.ai-chat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  border-radius: 16px 16px 0 0;
+}
+
+.ai-chat-head img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.ai-chat-head strong {
+  display: block;
+  font-size: 14.5px;
+}
+
+.ai-chat-head .ai-chat-sub {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.ai-chat-close {
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ai-chat-close:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.ai-chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.ai-chat-msg {
+  display: flex;
+}
+
+.ai-chat-msg.user {
+  justify-content: flex-end;
+}
+
+.ai-chat-bubble {
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+}
+
+.ai-chat-msg.user .ai-chat-bubble {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-chat-msg.assistant .ai-chat-bubble {
+  border-bottom-left-radius: 4px;
+}
+
+.ai-chat-form {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  border-radius: 0 0 16px 16px;
+}
+
+.ai-chat-form input {
+  flex: 1;
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.ai-chat-form input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.ai-chat-form button {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.ai-chat-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.ai-chat-status {
+  margin: 0;
+  padding: 0 14px 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+}
+
+.ai-chat-status:empty {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .ai-avatar-btn {
+    bottom: 84px;
+    right: 16px;
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* ==========================================================================
    404 PAGE
    Served by Cloudflare Pages (HTTP 404) for any URL matching no real asset.
    ========================================================================== */

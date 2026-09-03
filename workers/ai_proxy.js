@@ -2,61 +2,12 @@
 // Auth: bearer keys whose SHA-256 hashes live in the api_keys D1 table
 // (generate with tools/ai_key.py). A monthly request-count quota breaker lives
 // in ai_usage; every chat call appends a metadata-only row to ai_logs — never
-// prompt or response content. Upstreams are the providers' official
-// OpenAI-compatibility endpoints: the request body passes through untouched,
-// only the URL and auth header change (Workers AI gets one model-string
-// rewrite). When the CF_ACCOUNT_ID + AIG_GATEWAY vars are set, provider calls
-// route through the account's AI Gateway (same BYOK headers) for unified
-// logging; see upstreamUrl().
+// prompt or response content. The single upstream is Cloudflare Workers AI via
+// its OpenAI-compatible REST route (free 10,000 Neurons/day, no third-party
+// keys): the request body passes through untouched, only the URL and auth
+// header change, plus one model-string rewrite (cf-* → @cf/*).
 
-// Bearer auth is used for every upstream on purpose: each compatibility layer
-// is built for the OpenAI SDK, which only ever sends `Authorization: Bearer`.
 const PROVIDERS = [
-  {
-    name: "openai",
-    secret: "OPENAI_API_KEY",
-    prefixes: ["gpt-", "chatgpt-", "o1", "o3", "o4"],
-    endpoint: "https://api.openai.com/v1/chat/completions",
-    gatewayPath: "openai/chat/completions",
-    models: ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "o3", "o4-mini"]
-  },
-  {
-    name: "anthropic",
-    secret: "ANTHROPIC_API_KEY",
-    prefixes: ["claude-"],
-    endpoint: "https://api.anthropic.com/v1/chat/completions",
-    gatewayPath: "anthropic/v1/chat/completions",
-    models: ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"]
-  },
-  {
-    name: "google",
-    secret: "GEMINI_API_KEY",
-    prefixes: ["gemini-", "models/gemini-"],
-    endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    gatewayPath: "google-ai-studio/v1beta/openai/chat/completions",
-    // Cosmetic catalog (any model string passes through). gemini-2.5-* was
-    // retired for new API keys (2026-09, upstream 404); 3.6-flash confirmed
-    // live through the proxy.
-    models: ["gemini-3.6-flash"]
-  },
-  {
-    name: "xai",
-    secret: "XAI_API_KEY",
-    prefixes: ["grok-"],
-    endpoint: "https://api.x.ai/v1/chat/completions",
-    gatewayPath: "grok/v1/chat/completions",
-    models: ["grok-4", "grok-4-fast-reasoning", "grok-code-fast-1"]
-  },
-  {
-    name: "deepseek",
-    secret: "DEEPSEEK_API_KEY",
-    prefixes: ["deepseek-"],
-    endpoint: "https://api.deepseek.com/chat/completions",
-    gatewayPath: "deepseek/chat/completions",
-    // Mainland-friendly OpenAI-compatible upstream — the standing workaround
-    // for OpenAI's egress geo-block (unsupported_country_region_territory).
-    models: ["deepseek-chat", "deepseek-reasoner"]
-  },
   {
     // Cloudflare's own Workers AI via its OpenAI-compatible REST route
     // (developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility).
@@ -114,24 +65,17 @@ function providerFor(model) {
   return PROVIDERS.find((p) => p.prefixes.some((pre) => model.startsWith(pre))) || null;
 }
 
-// AI Gateway fronting (developers.cloudflare.com/ai-gateway). When the
-// CF_ACCOUNT_ID + AIG_GATEWAY vars are set, providers that declare a
-// gatewayPath route through the gateway: same BYOK Authorization header,
-// unified request logs in the dashboard (free plan stores 100k logs/account),
-// and the geo-block live test for OpenAI. Unset vars fall back to direct
-// endpoints, so dev and rollback are always one deletion away.
-const AIG_CACHE_TTL = null;    // e.g. 3600 → cf-aig-cache-key + cf-aig-cache-ttl
-const AIG_MAX_ATTEMPTS = null; // e.g. 2 → cf-aig-max-attempts + delay/backoff
-
-function upstreamUrl(provider, env) {
-  if (provider.name === "workers-ai") {
-    return `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/v1/chat/completions`;
-  }
-  if (env.CF_ACCOUNT_ID && env.AIG_GATEWAY && provider.gatewayPath) {
-    return `https://gateway.ai.cloudflare.com/v1/${env.CF_ACCOUNT_ID}/${env.AIG_GATEWAY}/${provider.gatewayPath}`;
-  }
-  return provider.endpoint;
+// Workers AI's OpenAI-compatible endpoint, built per-account (the CF_ACCOUNT_ID
+// var). An AI Gateway fronting was live-tested 2026-09 and removed: it does
+// not bypass OpenAI's geo-block and a single free upstream gains nothing
+// from it.
+function upstreamUrl(env) {
+  return `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/v1/chat/completions`;
 }
+
+// Shared with comments.js — the site avatar chat reuses the quota breaker,
+// the usage logger and the upstream URL builder.
+export { consumeQuota, writeLog, extractUsage, upstreamUrl };
 
 // Single-roundtrip monthly quota breaker: the upsert increments only while the
 // counter sits below the cap, and no RETURNING row means the budget is spent.
@@ -385,30 +329,14 @@ async function handleChatCompletions(request, env, ctx, key) {
   }
 
   const startedAt = Date.now();
-  const upstreamEndpoint = upstreamUrl(provider, env);
-  const upstreamHeaders = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${upstreamKey}`
-  };
-  // Opt-in per-request gateway options; nothing is sent while the AIG_*
-  // constants above are null. Client-supplied cf-aig-* headers are never
-  // forwarded.
-  if (env.CF_ACCOUNT_ID && env.AIG_GATEWAY && provider.gatewayPath) {
-    if (AIG_CACHE_TTL) {
-      upstreamHeaders["cf-aig-cache-key"] = await sha256Hex(JSON.stringify(body));
-      upstreamHeaders["cf-aig-cache-ttl"] = String(AIG_CACHE_TTL);
-    }
-    if (AIG_MAX_ATTEMPTS) {
-      upstreamHeaders["cf-aig-max-attempts"] = String(AIG_MAX_ATTEMPTS);
-      upstreamHeaders["cf-aig-retry-delay"] = "500";
-      upstreamHeaders["cf-aig-backoff"] = "exponential";
-    }
-  }
   let upstream;
   try {
-    upstream = await fetch(upstreamEndpoint, {
+    upstream = await fetch(upstreamUrl(env), {
       method: "POST",
-      headers: upstreamHeaders,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${upstreamKey}`
+      },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
     });

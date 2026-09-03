@@ -6,16 +6,10 @@
 # only gate there.
 ADMIN_BYPASS=1
 
-# Optional: real upstream keys for local AI-proxy testing. Note the local
-# machine's network may not reach all upstreams; production verification
-# happens against the deployed Worker instead.
-# OPENAI_API_KEY=sk-...
-# ANTHROPIC_API_KEY=sk-ant-...
-# GEMINI_API_KEY=...
-# XAI_API_KEY=xai-...
-# DEEPSEEK_API_KEY=sk-...
-# CF_AI_TOKEN=...            (Cloudflare API token, Workers AI scope — also
-#                             needs the CF_ACCOUNT_ID var from wrangler.jsonc)
+# Optional: Cloudflare API token (Workers AI scope) for local testing of the
+# AI proxy's cf-* models. Also needs the CF_ACCOUNT_ID var, which is already
+# in wrangler.jsonc.
+# CF_AI_TOKEN=...
 
 # Optional: GitHub fine-grained PAT (repo nathanpenny520/nathanpenny.fun,
 # Contents: Read and write) for local testing of the 写作台 editor API.

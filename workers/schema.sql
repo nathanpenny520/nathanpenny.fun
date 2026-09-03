@@ -63,3 +63,12 @@ CREATE TABLE IF NOT EXISTS comment_rate (
   count INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (ip, window_start)
 );
+
+-- Same shape as comment_rate, but for the public site avatar chat
+-- (POST /api/site-chat) so comment and chat budgets stay independent.
+CREATE TABLE IF NOT EXISTS chat_rate (
+  ip TEXT NOT NULL,
+  window_start INTEGER NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (ip, window_start)
+);

@@ -3,7 +3,8 @@
 Cloudflare Worker behind `https://workers.nathanpenny.fun` (custom domain;
 the `*.workers.dev` URL also exists but admin routes reject it — see Access
 below). Feature groups: comments, the Access-protected `/admin` page (image
-uploader + markdown editor tabs), and the AI proxy.
+uploader + markdown editor + AI playground tabs), the site avatar chat, and
+the AI proxy.
 
 ## Endpoints
 
@@ -11,7 +12,8 @@ uploader + markdown editor tabs), and the AI proxy.
 |--------|--------------------------------|-------------------------|------------------------------------------------|
 | GET    | `/comments`                    | public                  | List comments (`email` deliberately excluded)  |
 | POST   | `/comments`                    | public                  | Create a comment (rate limit + Turnstile)      |
-| GET    | `/admin`                       | Cloudflare Access       | Admin page: 图床 + 写作台 tabs (admin_page.js + editor_page.js) |
+| POST   | `/api/site-chat`               | public                  | Site avatar chat (per-IP rate limit, internal key) |
+| GET    | `/admin`                       | Cloudflare Access       | Admin page: 图床 + 写作台 + AI playground tabs (admin_page.js + editor_page.js + ai_page.js) |
 | POST   | `/upload`                      | Cloudflare Access       | Multipart images → R2 `img/` prefix            |
 | GET    | `/upload?list=1[&cursor=…]`    | Cloudflare Access       | Recent uploads (newest first)                  |
 | DELETE | `/upload?key=img/…`            | Cloudflare Access       | Delete one object (`img/` prefix only)         |
@@ -20,7 +22,7 @@ uploader + markdown editor tabs), and the AI proxy.
 | POST   | `/admin/api/post`              | Cloudflare Access       | Publish (create/update) via GitHub Contents API |
 | DELETE | `/admin/api/post?slug=…&sha=…` | Cloudflare Access       | Delete a post (CI prunes its generated page)   |
 | POST   | `/api/ai/v1/chat/completions`  | Bearer API key          | OpenAI-compatible proxy (see AI proxy below)   |
-| GET    | `/api/ai/v1/models`            | Bearer API key          | Model catalog filtered by configured secrets   |
+| GET    | `/api/ai/v1/models`            | Bearer API key          | Model catalog (the free Workers AI `cf-*` models) |
 | *      | anything else                  | —                       | 404                                            |
 
 ## POST /comments guards (unchanged)
@@ -97,33 +99,27 @@ without a real Access JWT. **Never deploy with that var present.**
 
 OpenAI-compatible endpoint — point any OpenAI SDK at
 `base_url = https://workers.nathanpenny.fun/api/ai/v1` and use a generated
-key. Model prefix decides the upstream (body passes through untouched):
+key. The single upstream is **Cloudflare Workers AI** (its OpenAI-compatible
+REST route, auth = the `CF_AI_TOKEN` secret, a Cloudflare API token scoped to
+Workers AI; account from the `CF_ACCOUNT_ID` var):
 
-| Model prefix                  | Upstream                                              |
-|-------------------------------|-------------------------------------------------------|
-| `gpt-*`, `chatgpt-*`, `o1/o3/o4*` | `api.openai.com/v1/chat/completions`              |
-| `claude-*`                    | `api.anthropic.com/v1/chat/completions` (official OpenAI-compat layer) |
-| `gemini-*`                    | `generativelanguage.googleapis.com/v1beta/openai/…`   |
-| `grok-*`                      | `api.x.ai/v1/chat/completions`                        |
-| `deepseek-*`                  | `api.deepseek.com/chat/completions`                   |
-| `cf-{author}/{model}`         | Workers AI (OpenAI-compat REST route; sent upstream as `@cf/{author}/{model}`) |
+| Model string              | Upstream                                              |
+|---------------------------|-------------------------------------------------------|
+| `cf-{author}/{model}`     | Workers AI, sent upstream as `@cf/{author}/{model}`   |
 
-Every upstream uses `Authorization: Bearer` (each compatibility layer is
-built for the OpenAI SDK, which only sends Bearer). A provider whose secret
-is unset returns 503; unknown prefixes return 400 listing them.
+The request body passes through untouched (apart from that one model-string
+rewrite). The catalog array in ai_proxy.js is cosmetic — any model string
+passes through; free-tier models only (`kimi-k2.6`, `glm-5.2` and a few
+others require the paid Workers plan). **Free allocation: 10,000
+Neurons/day** (resets 00:00 UTC) ≈ 600 small `llama-3.1-8b-fast` chats or
+~110 `llama-3.3-70b` ones. Unknown prefixes return 400 listing the supported
+ones; the Workers AI secret missing returns 503.
 
-### AI Gateway fronting (optional)
-
-When the `CF_ACCOUNT_ID` + `AIG_GATEWAY` vars are set, every provider that
-declares a `gatewayPath` is called through
-`https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/{gatewayPath}` —
-the provider's own BYOK `Authorization` header is unchanged, and requests
-show up in the dashboard (AI → AI Gateway → Logs; the free plan stores
-100k logs/account). Unset vars fall back to direct endpoints, so rolling
-back is just deleting two vars. Per-request caching/retries exist behind the
-`AIG_CACHE_TTL` / `AIG_MAX_ATTEMPTS` constants in ai_proxy.js (default
-**off** — the known OpenAI failure mode here is a hard geo-block, which
-retries cannot fix and success-after-retry double-bills tokens).
+History: the proxy originally fronted OpenAI/Anthropic/Google/xAI/DeepSeek
+(BYOK), optionally through the account's AI Gateway. Removed 2026-09 after
+the gateway live-test showed it does **not** bypass OpenAI's
+`unsupported_country_region_territory` geo-block, and third-party upstreams
+went unused.
 
 - **Auth**: `Authorization: Bearer npai_…`; only the SHA-256 hash is stored
   in D1. Issue keys with `python3 tools/ai_key.py <name> [monthly_limit]`
@@ -162,7 +158,7 @@ Non-streaming:
 curl https://workers.nathanpenny.fun/api/ai/v1/chat/completions \
   -H "Authorization: Bearer npai_…" \
   -H "Content-Type: application/json" \
-  -d '{"model":"gemini-3.6-flash","messages":[{"role":"user","content":"hi"}]}'
+  -d '{"model":"cf-meta/llama-3.1-8b-instruct-fp8-fast","messages":[{"role":"user","content":"hi"}]}'
 ```
 
 Streaming: add `"stream": true` — SSE chunks pass through verbatim.
@@ -177,20 +173,39 @@ client = OpenAI(
     api_key="npai_…",
 )
 resp = client.chat.completions.create(
-    model="gemini-3.6-flash",
+    model="cf-meta/llama-3.1-8b-instruct-fp8-fast",
     messages=[{"role": "user", "content": "hi"}],
 )
 ```
 
 JavaScript: `new OpenAI({ baseURL: "https://workers.nathanpenny.fun/api/ai/v1", apiKey: "npai_…" })`.
 
-Any model string routes by prefix (`gpt-`/`chatgpt-`/`o1`/`o3`/`o4` → OpenAI,
-`claude-` → Anthropic, `gemini-` → Google, `grok-` → xAI, `deepseek-` →
-DeepSeek, `cf-…` → Workers AI); `GET /api/ai/v1/models` lists a small
-starter catalog (cosmetic — the proxy does not restrict model names).
-Workers AI models are free-tier chat models only (a few big ones like
-`kimi-k2.6`/`glm-5.2` need the paid Workers plan); the account gets
-10,000 Neurons/day free (≈600 small llama-3.1-8b calls, ≈110 for 70b).
+`GET /api/ai/v1/models` lists the starter catalog (cosmetic — the proxy does
+not restrict model names; send any `cf-{author}/{model}` from the
+[Workers AI catalog](https://developers.cloudflare.com/workers-ai/models/)).
+
+## Site avatar chat (站内 AI 分身)
+
+`POST /api/site-chat` powers the floating avatar chat widget on the website
+(main.js `initSiteChat`: a floating avatar button with an "AI" badge on every
+page; the About-page portrait opens the same dialog). Body:
+`{"message": "...", "history": [{"role":"user"|"assistant","content":"..."}]}`
+→ `{"reply": "..."}`. Non-streaming by design (one JSON response, ≤300
+tokens out).
+
+Guards, in order:
+
+1. Per-IP limiter in the `chat_rate` D1 table — 3 messages / 60s window
+   (fail-open on D1 trouble), swept opportunistically + by the daily cron.
+2. Message 1–500 chars, history capped at the last 8 turns / 500 chars each;
+   every history turn is forced to `user`/`assistant` (a client cannot inject
+   a system turn).
+3. Fixed system prompt (Nathan's public site persona; never invents private
+   details). The model is pinned to `@cf/meta/llama-3.1-8b-instruct-fp8-fast`.
+4. Quota + logging ride the internal `api_keys` row **`site-avatar`**
+   (monthly cap, e.g. 2000 req/month; usage visible in `ai_usage`/`ai_logs`).
+   Disable that key and the widget's backend turns the feature off — no
+   redeploy needed. No key ever reaches the browser.
 
 ## D1 setup
 
@@ -198,6 +213,7 @@ Database `nathanpenny`, bound as `env.DB` (`wrangler.jsonc`). Tables:
 
 - `comments`, `comment_rate` — comment feature (created manually 2026-07;
   the DDL now also lives in `workers/schema.sql`, dumped verbatim from prod)
+- `chat_rate` — per-IP limiter for `/api/site-chat`
 - `api_keys`, `ai_usage`, `ai_logs` — AI proxy; (re)create idempotently:
 
 ```sh
@@ -218,14 +234,13 @@ never remove it from `wrangler.jsonc`. Validate config changes first with
 
 Managed outside this repo: the `workers.nathanpenny.fun` custom domain, the
 Access application + policy (Zero Trust dashboard), the secrets
-(`TURNSTILE_SECRET`, `GITHUB_TOKEN`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
-`GEMINI_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `CF_AI_TOKEN` — check
-with `npx wrangler secret list`), the AI Gateway itself (dashboard → AI →
-AI Gateway; the `CF_ACCOUNT_ID`/`AIG_GATEWAY` vars in `wrangler.jsonc` only
-point at it), and the verified email destination address behind the `NOTIFY`
-send_email binding. Secrets are set with `npx wrangler secret put <NAME>`; a
-provider without its secret is simply unavailable through the proxy, and the
-editor fails closed with a 503 hint until `GITHUB_TOKEN` exists.
+(`TURNSTILE_SECRET`, `GITHUB_TOKEN`, `CF_AI_TOKEN` — check with
+`npx wrangler secret list`), the D1 rows for API keys (including the
+internal `site-avatar` one), and the verified email destination address
+behind the `NOTIFY` send_email binding (not configured yet). Secrets are set
+with `npx wrangler secret put <NAME>`; a missing `CF_AI_TOKEN` makes the AI
+proxy and site chat return 503, and the editor fails closed with a 503 hint
+until `GITHUB_TOKEN` exists.
 
 ## Cron: nightly pruning
 

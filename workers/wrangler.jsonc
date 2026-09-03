@@ -27,10 +27,8 @@
     // ACCESS_AUD is filled from the Access application's AUD tag.
     "ACCESS_TEAM_DOMAIN": "square-surf-c2a6.cloudflareaccess.com",
     "ACCESS_AUD": "36ba044e69b4947e6cacfe51b9f0f33a1c492babd563080b313c3513beb040db",
-    // Account ID for the Workers AI OpenAI-compat REST route (cf-* models).
-    // Adding AIG_GATEWAY ("<gateway name>") additionally routes the other
-    // providers through that AI Gateway — only set it once the gateway
-    // exists, and unset it to fall back to direct endpoints.
+    // Account ID for the Workers AI OpenAI-compat REST route (cf-* models,
+    // the proxy's single upstream since 2026-09).
     "CF_ACCOUNT_ID": "aa23021279f1ffd6901d7093879554f3"
   },
   // Image uploader storage (music bucket shared; uploads land under img/).

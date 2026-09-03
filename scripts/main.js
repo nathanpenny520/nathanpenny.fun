@@ -243,6 +243,11 @@ function initMobileMenu() {
 // Cloudflare Worker endpoint that handles comment submissions.
 const API_URL = 'https://workers.nathanpenny.fun';
 
+// Site avatar image for the AI chat launcher. Resolved against this script's
+// own URL at execution time (document.currentScript is null by the time
+// DOMContentLoaded fires), so it is correct at any page depth.
+const AVATAR_URL = new URL('../images/NathanPenny.webp', document.currentScript.src).href;
+
 // Convert special HTML characters to entities so user content cannot inject markup.
 function escapeHtml(text) {
   if (text == null) return '';
@@ -1020,6 +1025,137 @@ function initBackToTop() {
 }
 
 // ============================================================================
+// SITE AI AVATAR CHAT (a floating avatar button on every page + a <dialog>
+// chat panel; the About-page portrait doubles as a trigger). Talks to the
+// Worker's public /api/site-chat — per-IP limited server-side, so no key
+// lives in the browser. The avatar path resolves relative to this script,
+// which works at any page depth (same trick as registerServiceWorker below).
+// ============================================================================
+
+function initSiteChat() {
+  if (document.getElementById('aiAvatarBtn')) return;
+
+  const avatarUrl = AVATAR_URL;
+
+  const launcher = document.createElement('button');
+  launcher.id = 'aiAvatarBtn';
+  launcher.className = 'ai-avatar-btn';
+  launcher.type = 'button';
+  launcher.setAttribute('aria-label', 'Chat with my AI avatar');
+  launcher.title = 'Chat with my AI avatar →';
+  launcher.innerHTML = `<img src="${avatarUrl}" alt="">`;
+  document.body.appendChild(launcher);
+
+  const dialog = document.createElement('dialog');
+  dialog.id = 'aiChatDialog';
+  dialog.className = 'ai-chat-dialog';
+  dialog.setAttribute('aria-label', 'AI avatar chat');
+  dialog.innerHTML = `
+    <div class="ai-chat-head">
+      <img src="${avatarUrl}" alt="">
+      <div>
+        <strong>AI · Nathan's Avatar</strong>
+        <span class="ai-chat-sub">Free model · 3 messages / minute</span>
+      </div>
+      <button type="button" id="aiChatClose" class="ai-chat-close" aria-label="Close chat">×</button>
+    </div>
+    <div class="ai-chat-messages" id="aiChatMessages"></div>
+    <form id="aiChatForm" class="ai-chat-form">
+      <input id="aiChatInput" type="text" maxlength="500" placeholder="Ask me anything…" autocomplete="off">
+      <button type="submit" id="aiChatSend">Send</button>
+    </form>
+    <p class="ai-chat-status" id="aiChatStatus" aria-live="polite"></p>
+  `;
+  document.body.appendChild(dialog);
+
+  const list = dialog.querySelector('#aiChatMessages');
+  const form = dialog.querySelector('#aiChatForm');
+  const input = dialog.querySelector('#aiChatInput');
+  const statusEl = dialog.querySelector('#aiChatStatus');
+  const history = [];
+  let busy = false;
+
+  const scrollDown = () => { list.scrollTop = list.scrollHeight; };
+
+  function addMessage(role, text) {
+    const div = document.createElement('div');
+    div.className = 'ai-chat-msg ' + role;
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-chat-bubble';
+    bubble.textContent = text;
+    div.appendChild(bubble);
+    list.appendChild(div);
+    scrollDown();
+    return bubble;
+  }
+
+  function openChat() {
+    if (typeof dialog.showModal === 'function') {
+      if (!dialog.open) dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+    if (!list.children.length) {
+      addMessage('assistant', "Hi! I'm Nathan's AI avatar 🤖 Ask me about him, this site, or anything else.");
+    }
+    input.focus();
+  }
+
+  launcher.addEventListener('click', openChat);
+
+  const aboutAvatar = document.getElementById('aboutAvatar');
+  if (aboutAvatar) {
+    aboutAvatar.classList.add('ai-chat-trigger');
+    aboutAvatar.addEventListener('click', openChat);
+    aboutAvatar.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openChat();
+      }
+    });
+  }
+
+  dialog.querySelector('#aiChatClose').addEventListener('click', () => dialog.close());
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const message = input.value.trim();
+    if (!message || busy) return;
+    if (message.length > 500) {
+      statusEl.textContent = 'Messages are limited to 500 characters.';
+      return;
+    }
+    statusEl.textContent = '';
+    input.value = '';
+    addMessage('user', message);
+    busy = true;
+    const thinking = addMessage('assistant', '…');
+    scrollDown();
+
+    fetch(`${API_URL}/api/site-chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, history: history.slice(-8) })
+    })
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (ok && data.reply) {
+          thinking.textContent = data.reply;
+          history.push({ role: 'user', content: message }, { role: 'assistant', content: data.reply });
+        } else {
+          thinking.textContent = (data && data.error) || 'The AI is not responding right now — try again later.';
+        }
+      })
+      .catch(() => { thinking.textContent = 'Network hiccup — please try again.'; })
+      .finally(() => {
+        busy = false;
+        scrollDown();
+        input.focus();
+      });
+  });
+}
+
+// ============================================================================
 // STARFIELD (a fixed full-page canvas behind the content: stars, meteors, and
 // the occasional rock that comes down and hits the page. The aurora drift in
 // the hero is pure CSS on top of it.)
@@ -1513,6 +1649,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initReadingProgress();
   initReadingTime();
   initBackToTop();
+  initSiteChat();
   initStarField();
   initScrollReveal();
   initUfoEasterEgg();

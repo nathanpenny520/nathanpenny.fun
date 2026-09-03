@@ -1,10 +1,11 @@
-// Self-hosted admin page served by GET /admin in comments.js: two tabs —
-// the image uploader and the markdown 写作台 (editor tab comes from
-// editor_page.js, interpolated below). Kept fully self-contained (inline
-// CSS/JS, zero external assets, noindex) so the Worker origin stays
-// dependency-free. This file is one template literal, so the page's own
-// script deliberately avoids backticks and ${}.
+// Self-hosted admin page served by GET /admin in comments.js: three tabs —
+// the image uploader, the markdown 写作台 (editor tab from editor_page.js)
+// and the AI playground (ai_page.js) — all interpolated below. Kept fully
+// self-contained (inline CSS/JS, zero external assets, noindex) so the Worker
+// origin stays dependency-free. This file is one template literal, so the
+// page's own script deliberately avoids backticks and ${}.
 import { EDITOR_TAB_HTML } from "./editor_page.js";
+import { AI_TAB_HTML } from "./ai_page.js";
 
 export const ADMIN_PAGE_HTML = `<!doctype html>
 <html lang="en">
@@ -88,6 +89,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   <nav class="tabs" aria-label="Admin sections">
     <button id="tabBtnUpload" class="tab active" type="button">🖼 Images</button>
     <button id="tabBtnEditor" class="tab" type="button">✍️ Editor</button>
+    <button id="tabBtnAi" class="tab" type="button">🤖 AI</button>
   </nav>
 
   <section id="tabUpload">
@@ -114,6 +116,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   </section>
   </section>
   ${EDITOR_TAB_HTML}
+  ${AI_TAB_HTML}
 </main>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -123,19 +126,24 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
 
   var tabUpload = document.getElementById("tabUpload");
   var tabEditor = document.getElementById("tabEditor");
+  var tabAi = document.getElementById("tabAi");
   var btnUpload = document.getElementById("tabBtnUpload");
   var btnEditor = document.getElementById("tabBtnEditor");
+  var btnAi = document.getElementById("tabBtnAi");
 
   function showTab(which) {
     var editorActive = which === "editor";
-    tabUpload.hidden = editorActive;
+    tabUpload.hidden = which !== "upload";
     tabEditor.hidden = !editorActive;
-    btnUpload.className = "tab" + (editorActive ? "" : " active");
+    tabAi.hidden = which !== "ai";
+    btnUpload.className = "tab" + (which === "upload" ? " active" : "");
     btnEditor.className = "tab" + (editorActive ? " active" : "");
+    btnAi.className = "tab" + (which === "ai" ? " active" : "");
   }
 
   btnUpload.addEventListener("click", function () { showTab("upload"); });
   btnEditor.addEventListener("click", function () { showTab("editor"); });
+  btnAi.addEventListener("click", function () { showTab("ai"); });
 
   // The editor tab (editor_page.js) takes over paste/drop of images while it
   // is the visible tab; the uploader defers to it below.

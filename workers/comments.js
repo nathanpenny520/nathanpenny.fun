@@ -2,6 +2,7 @@
 // Public:
 //   GET  /comments  list comments (email deliberately excluded)
 //   POST /comments  create a comment (per-IP rate limit + Turnstile)
+//   POST /api/site-chat  site avatar chat (per-IP rate limit, internal key)
 //   POST /api/ai/v1/chat/completions  OpenAI-compatible proxy (bearer key)
 //   GET  /api/ai/v1/models            model catalog (bearer key)
 // Cloudflare Access-protected (see access.js):
@@ -15,7 +16,7 @@
 //   DELETE /admin/api/post      delete a post (slug + sha query params)
 
 import { ADMIN_PAGE_HTML } from "./admin_page.js";
-import { handleAi } from "./ai_proxy.js";
+import { handleAi, consumeQuota, writeLog, extractUsage, upstreamUrl } from "./ai_proxy.js";
 import { handleEditor } from "./editor.js";
 import { verifyAccess, accessDenied } from "./access.js";
 
@@ -76,14 +77,15 @@ async function verifyTurnstile(env, token) {
 
 // Count this attempt against the caller's current window. Returns false when
 // the window's budget is exhausted. Fail open on D1 trouble: a broken limiter
-// must not take comments down — Turnstile still guards the write path.
-async function checkRateLimit(env, ip, nowMs) {
+// must not take the feature down. Shared by POST /comments (comment_rate)
+// and POST /api/site-chat (chat_rate); `table` is always a literal here.
+async function bumpRateWindow(env, table, ip, nowMs, maxPerWindow, windowSeconds) {
   try {
     const nowSeconds = Math.floor(nowMs / 1000);
-    const windowStart = nowSeconds - (nowSeconds % RATE_WINDOW_SECONDS);
+    const windowStart = nowSeconds - (nowSeconds % windowSeconds);
 
     const row = await env.DB.prepare(
-      `INSERT INTO comment_rate (ip, window_start, count) VALUES (?, ?, 1)
+      `INSERT INTO ${table} (ip, window_start, count) VALUES (?, ?, 1)
        ON CONFLICT (ip, window_start) DO UPDATE SET count = count + 1
        RETURNING count`
     ).bind(ip, windowStart).first();
@@ -91,14 +93,149 @@ async function checkRateLimit(env, ip, nowMs) {
     // Opportunistic sweep of long-expired windows (PK-indexed, cheap).
     if (row && row.count === 1) {
       await env.DB.prepare(
-        "DELETE FROM comment_rate WHERE window_start < ?"
-      ).bind(windowStart - RATE_WINDOW_KEEP * RATE_WINDOW_SECONDS).run();
+        `DELETE FROM ${table} WHERE window_start < ?`
+      ).bind(windowStart - RATE_WINDOW_KEEP * windowSeconds).run();
     }
 
-    return (row ? row.count : 1) <= RATE_MAX_PER_WINDOW;
+    return (row ? row.count : 1) <= maxPerWindow;
   } catch (error) {
     return true;
   }
+}
+
+function checkRateLimit(env, ip, nowMs) {
+  return bumpRateWindow(env, "comment_rate", ip, nowMs, RATE_MAX_PER_WINDOW, RATE_WINDOW_SECONDS);
+}
+
+// ---------------------------------------------------------------------------
+// Site avatar chat (POST /api/site-chat) — a small public endpoint so the
+// website itself can offer an AI chat without exposing any key. It spends the
+// same Workers AI free allocation through an internal api_keys row named
+// 'site-avatar' (monthly cap + on/off switch: disable that key), is bounded
+// per-IP by the chat_rate limiter, and logs every call like the proxy does.
+// ---------------------------------------------------------------------------
+
+const SITE_CHAT_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8-fast";
+const SITE_CHAT_MAX_TOKENS = 300;
+const SITE_CHAT_MAX_MESSAGE_CHARS = 500;
+const SITE_CHAT_MAX_HISTORY = 8;
+const CHAT_RATE_WINDOW_SECONDS = 60;
+const CHAT_RATE_MAX_PER_WINDOW = 3;
+
+const SITE_CHAT_SYSTEM_PROMPT = [
+  "You are the friendly AI avatar of Nathan, owner of the personal site nathanpenny.fun.",
+  "Nathan is a developer who enjoys tech, anime, music and geek culture; the site has his blog (categories: tech/anime/life/fun/fiction/travel/sports/ai/misc), his music in the Creations page, a gallery, and a contact page with a guestbook.",
+  "Rules: reply in the visitor's language (default to Chinese); keep it short and warm (under ~100 characters unless asked for more); a little emoji is fine.",
+  "You speak only for Nathan's public site persona — never invent private details (address, contacts, employer); deflect those politely.",
+  "Small talk is fine; be kind; if you are unsure about something, say so honestly."
+].join(" ");
+
+// The internal api_keys row for site chat, cached briefly per isolate so the
+// endpoint does not add a D1 read per message.
+let siteChatKeyCache = { row: null, at: 0 };
+async function getSiteChatKey(env) {
+  if (Date.now() - siteChatKeyCache.at < 60_000) return siteChatKeyCache.row;
+  try {
+    const row = await env.DB.prepare(
+      "SELECT id, monthly_limit, enabled FROM api_keys WHERE name = 'site-avatar' LIMIT 1"
+    ).first();
+    siteChatKeyCache = { row, at: Date.now() };
+    return row;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function handleSiteChat(request, env, ctx, corsHeaders) {
+  if (request.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
+  }
+  if (!env.CF_AI_TOKEN || !env.CF_ACCOUNT_ID) {
+    return new Response(JSON.stringify({ error: "AI is not configured on this Worker." }), { status: 503, headers: corsHeaders });
+  }
+
+  // Cheap per-IP guard first, like POST /comments.
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  if (!(await bumpRateWindow(env, "chat_rate", ip, Date.now(), CHAT_RATE_MAX_PER_WINDOW, CHAT_RATE_WINDOW_SECONDS))) {
+    return new Response(
+      JSON.stringify({ error: "Chatting a bit too fast — please wait a minute." }),
+      { status: 429, headers: corsHeaders }
+    );
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Request body must be valid JSON." }), { status: 400, headers: corsHeaders });
+  }
+  const message = typeof body.message === "string" ? body.message.trim() : "";
+  if (!message || message.length > SITE_CHAT_MAX_MESSAGE_CHARS) {
+    return new Response(
+      JSON.stringify({ error: `Message must be 1-${SITE_CHAT_MAX_MESSAGE_CHARS} characters.` }),
+      { status: 400, headers: corsHeaders }
+    );
+  }
+  const messages = [{ role: "system", content: SITE_CHAT_SYSTEM_PROMPT }];
+  const history = Array.isArray(body.history) ? body.history.slice(-SITE_CHAT_MAX_HISTORY) : [];
+  for (const turn of history) {
+    if (!turn || typeof turn.content !== "string" || !turn.content.trim()) continue;
+    messages.push({
+      role: turn.role === "assistant" ? "assistant" : "user",
+      content: turn.content.trim().slice(0, SITE_CHAT_MAX_MESSAGE_CHARS)
+    });
+  }
+  messages.push({ role: "user", content: message });
+
+  const key = await getSiteChatKey(env);
+  if (!key || !key.enabled) {
+    return new Response(JSON.stringify({ error: "Site chat is disabled." }), { status: 503, headers: corsHeaders });
+  }
+  const month = new Date().toISOString().slice(0, 7);
+  if (!(await consumeQuota(env, key.id, key.monthly_limit, month))) {
+    return new Response(
+      JSON.stringify({ error: "This month's site AI quota is used up — see you next month!" }),
+      { status: 429, headers: corsHeaders }
+    );
+  }
+
+  const startedAt = Date.now();
+  let upstream;
+  try {
+    upstream = await fetch(upstreamUrl(env), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.CF_AI_TOKEN}` },
+      body: JSON.stringify({
+        model: SITE_CHAT_MODEL,
+        messages,
+        max_tokens: SITE_CHAT_MAX_TOKENS,
+        temperature: 0.6
+      }),
+      signal: AbortSignal.timeout(60_000)
+    });
+  } catch (error) {
+    ctx.waitUntil(writeLog(env, {
+      keyId: key.id, model: SITE_CHAT_MODEL, provider: "workers-ai", status: 502,
+      stream: false, tokensIn: null, tokensOut: null, latencyMs: Date.now() - startedAt
+    }));
+    return new Response(JSON.stringify({ error: "AI upstream unreachable." }), { status: 502, headers: corsHeaders });
+  }
+
+  const responseText = await upstream.text();
+  let reply = null;
+  try {
+    reply = JSON.parse(responseText).choices[0].message.content;
+  } catch (error) { /* non-JSON or empty answer — handled below */ }
+  const usage = extractUsage(responseText);
+  ctx.waitUntil(writeLog(env, {
+    keyId: key.id, model: SITE_CHAT_MODEL, provider: "workers-ai", status: upstream.status,
+    stream: false, tokensIn: usage ? usage.in : null, tokensOut: usage ? usage.out : null,
+    latencyMs: Date.now() - startedAt
+  }));
+  if (!upstream.ok || !reply) {
+    return new Response(JSON.stringify({ error: "The AI did not answer — please try again." }), { status: 502, headers: corsHeaders });
+  }
+  return new Response(JSON.stringify({ reply }), { headers: corsHeaders });
 }
 
 // ---------------------------------------------------------------------------
@@ -301,6 +438,9 @@ async function pruneTables(env) {
   await env.DB.prepare(
     "DELETE FROM comment_rate WHERE window_start < ?"
   ).bind(Math.floor(Date.now() / 1000) - 86400).run();
+  await env.DB.prepare(
+    "DELETE FROM chat_rate WHERE window_start < ?"
+  ).bind(Math.floor(Date.now() / 1000) - 86400).run();
 }
 
 export default {
@@ -338,6 +478,11 @@ export default {
     }
 
     try {
+      // --- Public site avatar chat (no key; per-IP limited; internal key). ---
+      if (url.pathname === "/api/site-chat") {
+        return handleSiteChat(request, env, ctx, corsHeaders);
+      }
+
       // --- Markdown editor API (editor.js). Lives under /admin/ so the edge
       // Access app covers the subpath and injects the JWT like on the page. ---
       if (url.pathname === "/admin/api/posts" || url.pathname === "/admin/api/post") {
