@@ -2567,85 +2567,67 @@ footer p {
 
 /* ==========================================================================
    WIDGETS: AI AVATAR CHAT
-   Floating avatar launcher + <dialog> chat panel, injected by main.js
-   (initSiteChat). Talks to the Worker's public /api/site-chat — per-IP
-   limited server-side, no key in the browser. Dark mode rides the semantic
-   custom properties, so both dark blocks cover it unchanged.
+   The About-page portrait doubles as the AI chat trigger (main.js
+   initSiteChat binds it and injects the <dialog> panel there). Talks to the
+   Worker's public /api/site-chat — per-IP limited server-side, no key in
+   the browser. Dark mode rides the semantic custom properties, so both
+   dark blocks cover it unchanged.
    ========================================================================== */
 
-.ai-avatar-btn {
-  position: fixed;
-  bottom: 84px;
-  right: 24px;
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  border: 2px solid var(--color-surface);
-  border-radius: 50%;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card-hover);
-  cursor: pointer;
-  overflow: hidden;
-  z-index: 900;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ai-avatar-btn img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* "AI" badge so the button reads as an AI entry point, not just a photo. */
-.ai-avatar-btn::after {
-  content: "AI";
-  position: absolute;
-  right: -3px;
-  bottom: -3px;
-  width: 21px;
-  height: 21px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  color: #fff;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--color-surface);
-  animation: ai-badge-pulse 2s ease-in-out 3;
-}
-
-@keyframes ai-badge-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(26, 188, 156, 0);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(26, 188, 156, 0.35);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ai-avatar-btn::after {
-    animation: none;
-  }
-}
-
-.ai-avatar-btn:hover {
-  transform: translateY(-2px) scale(1.04);
-}
-
-/* The About-page portrait doubles as a chat trigger (main.js binds it). */
 #aboutAvatar.ai-chat-trigger {
+  position: relative;
+  display: inline-block;
   cursor: pointer;
   transition: transform 0.2s ease;
 }
 
 #aboutAvatar.ai-chat-trigger:hover {
   transform: scale(1.02);
+}
+
+#aboutAvatar.ai-chat-trigger:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* "AI" badge pinned to the portrait's bottom-right corner so the entry
+   point reads as an AI feature, not just a photo. */
+#aboutAvatar.ai-chat-trigger::after {
+  content: "AI";
+  position: absolute;
+  right: 5%;
+  bottom: 5%;
+  width: 22%;
+  max-width: 56px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: clamp(12px, 2.5cqi, 17px);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--color-surface);
+  box-shadow: var(--shadow-card-hover);
+  animation: ai-badge-pulse 2s ease-in-out 3;
+}
+
+@keyframes ai-badge-pulse {
+  0%,
+  100% {
+    box-shadow: var(--shadow-card-hover);
+  }
+  50% {
+    box-shadow: var(--shadow-card-hover), 0 0 0 8px rgba(26, 188, 156, 0.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #aboutAvatar.ai-chat-trigger::after {
+    animation: none;
+  }
 }
 
 .ai-chat-dialog {

@@ -1025,26 +1025,18 @@ function initBackToTop() {
 }
 
 // ============================================================================
-// SITE AI AVATAR CHAT (a floating avatar button on every page + a <dialog>
-// chat panel; the About-page portrait doubles as a trigger). Talks to the
-// Worker's public /api/site-chat — per-IP limited server-side, so no key
-// lives in the browser. The avatar path resolves relative to this script,
-// which works at any page depth (same trick as registerServiceWorker below).
+// SITE AI AVATAR CHAT (the About-page portrait is the entry point: it gets
+// an "AI" badge and opens a <dialog> chat panel). Talks to the Worker's
+// public /api/site-chat — per-IP limited server-side, so no key lives in
+// the browser. The avatar path resolves relative to this script, which
+// works at any page depth (same trick as registerServiceWorker below).
 // ============================================================================
 
 function initSiteChat() {
-  if (document.getElementById('aiAvatarBtn')) return;
+  const aboutAvatar = document.getElementById('aboutAvatar');
+  if (!aboutAvatar) return; // no portrait on this page — no chat entry
 
   const avatarUrl = AVATAR_URL;
-
-  const launcher = document.createElement('button');
-  launcher.id = 'aiAvatarBtn';
-  launcher.className = 'ai-avatar-btn';
-  launcher.type = 'button';
-  launcher.setAttribute('aria-label', 'Chat with my AI avatar');
-  launcher.title = 'Chat with my AI avatar →';
-  launcher.innerHTML = `<img src="${avatarUrl}" alt="">`;
-  document.body.appendChild(launcher);
 
   const dialog = document.createElement('dialog');
   dialog.id = 'aiChatDialog';
@@ -1101,19 +1093,14 @@ function initSiteChat() {
     input.focus();
   }
 
-  launcher.addEventListener('click', openChat);
-
-  const aboutAvatar = document.getElementById('aboutAvatar');
-  if (aboutAvatar) {
-    aboutAvatar.classList.add('ai-chat-trigger');
-    aboutAvatar.addEventListener('click', openChat);
-    aboutAvatar.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        openChat();
-      }
-    });
-  }
+  aboutAvatar.classList.add('ai-chat-trigger');
+  aboutAvatar.addEventListener('click', openChat);
+  aboutAvatar.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openChat();
+    }
+  });
 
   dialog.querySelector('#aiChatClose').addEventListener('click', () => dialog.close());
 
