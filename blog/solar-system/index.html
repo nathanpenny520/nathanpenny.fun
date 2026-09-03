@@ -12,7 +12,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <link rel="manifest" href="../../manifest.json">
-    <meta name="theme-color" content="#2c3e50">
+    <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#10161c" media="(prefers-color-scheme: dark)">
     <link rel="apple-touch-icon" href="../../images/icon-180.png">
     <title>The Solar System in a Table | Nathan Penny's blog</title>
     <meta name="description" content="A quick reference table for the eight planets in our solar system, with rounded values.">
@@ -63,13 +64,13 @@
       <div class="nav-container">
         <a href="../../index.html" class="nav-brand" aria-label="Go to homepage">
           <img class="site-logo" src="../../NP-logo.svg" alt="Nathan Penny logo">
-          <div class="logo">Nathan Penny's personal website FOR FUN</div>
+          <div class="logo">Nathan Penny's personal website <span class="logo-suffix">FOR FUN</span></div>
         </a>
 
         <ul class="nav-list">
           <li><a href="../../index.html">Home</a></li>
           <li><a href="../../pages/about.html">About</a></li>
-          <li><a href="../../pages/blog.html">Blog</a></li>
+          <li><a href="../../pages/blog.html" aria-current="page">Blog</a></li>
           <li><a href="../../pages/gallery.html">Gallery</a></li>
           <li><a href="../../pages/creations.html">Creations</a></li>
           <li><a href="../../pages/achievements.html">Achievements</a></li>
@@ -77,6 +78,9 @@
         </ul>
         <button id="themeToggle" class="theme-toggle" type="button">
           <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+        <button id="menuToggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+          <i class="fa-solid fa-bars" aria-hidden="true"></i>
         </button>
       </div>
     </nav>

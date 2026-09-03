@@ -123,6 +123,87 @@ function initNavScrollPadding() {
   };
   window.addEventListener('resize', update, { passive: true });
   update();
+
+  // Frosted-nav scrolled state: a hairline border shows once the page moves.
+  // style.css keeps the border slot transparent at rest, so the nav height —
+  // and --nav-height above — never changes.
+  const onScroll = () => {
+    nav.classList.toggle('nav-scrolled', window.scrollY > 4);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
+// Full-screen mobile menu (Apple style). The overlay is a native <dialog>
+// built once from this page's own .nav-list, so its links can never drift
+// from the nav markup; showModal() supplies focus trap, Esc and focus
+// restore, same as the lightbox and QR modal.
+function initMobileMenu() {
+  const nav = document.querySelector('nav');
+  const toggle = document.getElementById('menuToggle');
+  const list = document.querySelector('.nav-list');
+  if (!nav || !toggle || !list) return;
+
+  // From here on, small screens hide the inline links and show the hamburger.
+  document.documentElement.classList.add('menu-ready');
+
+  const menu = document.createElement('dialog');
+  menu.id = 'mobileMenu';
+  menu.className = 'mobile-menu';
+  menu.setAttribute('aria-label', 'Site menu');
+  const menuList = list.cloneNode(true);
+  menuList.className = 'mobile-menu-list';
+  menuList.querySelectorAll('li').forEach((li, i) => li.style.setProperty('--i', i));
+  menu.appendChild(menuList);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'menu-toggle mobile-menu-close';
+  closeBtn.setAttribute('aria-label', 'Close menu');
+  closeBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+  menu.appendChild(closeBtn);
+  document.body.appendChild(menu);
+
+  // The real theme toggle is moved (not cloned) into the menu while open so
+  // its id and click listener stay unique, then returned to its original
+  // spot next to the hamburger on close.
+  const themeToggle = document.getElementById('themeToggle');
+  const themeToggleHome = themeToggle ? themeToggle.nextSibling : null;
+
+  const openMenu = () => {
+    if (themeToggle) menu.appendChild(themeToggle);
+    menu.showModal();
+    document.body.style.overflow = 'hidden';
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.setAttribute('aria-label', 'Close menu');
+    toggle.querySelector('i').className = 'fa-solid fa-xmark';
+  };
+
+  const closeMenu = () => {
+    if (menu.open) menu.close();
+  };
+
+  toggle.addEventListener('click', () => (menu.open ? closeMenu() : openMenu()));
+  closeBtn.addEventListener('click', closeMenu);
+  // Tapping the frosted backdrop or any link dismisses the menu; link
+  // navigation proceeds after close.
+  menu.addEventListener('click', (e) => {
+    if (e.target === menu || e.target.closest('a')) closeMenu();
+  });
+
+  // One restore path for every way the menu closes (X, backdrop, link, Esc).
+  menu.addEventListener('close', () => {
+    document.body.style.overflow = '';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'Open menu');
+    toggle.querySelector('i').className = 'fa-solid fa-bars';
+    if (themeToggle && themeToggle.parentElement === menu) {
+      nav.querySelector('.nav-container').insertBefore(themeToggle, themeToggleHome);
+    }
+  });
+
+  // Rotating the phone / growing past the breakpoint closes the overlay.
+  matchMedia('(min-width: 821px)').addEventListener('change', closeMenu);
 }
 
 // Load Google Analytics 4 tracking script only after the page has fully
@@ -1422,6 +1503,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initBlogSearch();
   initBlogFilters();
   initNavScrollPadding();
+  initMobileMenu();
   loadGallery();
   initGallerySearch();
   loadCreations();
