@@ -44,7 +44,7 @@ uploader + markdown editor tabs), and the AI proxy.
   that 403s URL paths containing `...` (same lesson as
   `tools/upload_music_r2.sh`).
 - Upload validation: extension allowlist (png/jpg/jpeg/webp/gif/avif/svg),
-  25MB cap, light magic-byte sniffing.
+  25MB cap per file, 10 files per request max, light magic-byte sniffing.
 - The upload page is a fully self-contained HTML exported by `admin_page.js`
   (drag & drop + clipboard paste + copy-URL/copy-markdown + delete). The
   写作台 editor tab (editor_page.js) reuses the same `/upload` endpoint to
@@ -105,10 +105,25 @@ key. Model prefix decides the upstream (body passes through untouched):
 | `claude-*`                    | `api.anthropic.com/v1/chat/completions` (official OpenAI-compat layer) |
 | `gemini-*`                    | `generativelanguage.googleapis.com/v1beta/openai/…`   |
 | `grok-*`                      | `api.x.ai/v1/chat/completions`                        |
+| `deepseek-*`                  | `api.deepseek.com/chat/completions`                   |
+| `cf-{author}/{model}`         | Workers AI (OpenAI-compat REST route; sent upstream as `@cf/{author}/{model}`) |
 
-Every upstream uses `Authorization: Bearer` (all four compatibility layers
-are built for the OpenAI SDK, which only sends Bearer). A provider whose
-secret is unset returns 503; unknown prefixes return 400 listing them.
+Every upstream uses `Authorization: Bearer` (each compatibility layer is
+built for the OpenAI SDK, which only sends Bearer). A provider whose secret
+is unset returns 503; unknown prefixes return 400 listing them.
+
+### AI Gateway fronting (optional)
+
+When the `CF_ACCOUNT_ID` + `AIG_GATEWAY` vars are set, every provider that
+declares a `gatewayPath` is called through
+`https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/{gatewayPath}` —
+the provider's own BYOK `Authorization` header is unchanged, and requests
+show up in the dashboard (AI → AI Gateway → Logs; the free plan stores
+100k logs/account). Unset vars fall back to direct endpoints, so rolling
+back is just deleting two vars. Per-request caching/retries exist behind the
+`AIG_CACHE_TTL` / `AIG_MAX_ATTEMPTS` constants in ai_proxy.js (default
+**off** — the known OpenAI failure mode here is a hard geo-block, which
+retries cannot fix and success-after-retry double-bills tokens).
 
 - **Auth**: `Authorization: Bearer npai_…`; only the SHA-256 hash is stored
   in D1. Issue keys with `python3 tools/ai_key.py <name> [monthly_limit]`
@@ -121,7 +136,9 @@ secret is unset returns 503; unknown prefixes return 400 listing them.
 - **Logging**: every chat call appends metadata (key, model, provider,
   status, stream, token counts, latency) to `ai_logs` via
   `ctx.waitUntil` — never prompt/response content. Streaming usage is
-  scraped from the SSE tail when the upstream provides it (null otherwise).
+  scraped from the SSE tail when the upstream provides it (null otherwise),
+  and latency is measured to full stream completion. Token totals also
+  accumulate into `ai_usage.tokens_in/tokens_out` (per key+month).
 - **Streaming**: SSE bodies are passed straight through (`body.tee()` on a
   background copy for the usage log); 300s upstream timeout, 10MB body cap.
 - **CORS**: `Access-Control-Allow-Origin: *` — safe because auth is a
@@ -133,7 +150,9 @@ secret is unset returns 503; unknown prefixes return 400 listing them.
   caller's entry PoP egresses from a supported region. Google/Gemini and
   xAI have no such block from these PoPs. Upstream model retirements (e.g.
   `gemini-2.5-*` 404 for new keys → use `gemini-3.6-flash`) surface
-  verbatim through the proxy.
+  verbatim through the proxy. Workarounds: `deepseek-*` (no geo block from
+  HK PoPs) and the AI Gateway route for `gpt-*` — the gateway live-test
+  result: PENDING (record here after testing).
 
 ### Usage
 
@@ -166,15 +185,19 @@ resp = client.chat.completions.create(
 JavaScript: `new OpenAI({ baseURL: "https://workers.nathanpenny.fun/api/ai/v1", apiKey: "npai_…" })`.
 
 Any model string routes by prefix (`gpt-`/`chatgpt-`/`o1`/`o3`/`o4` → OpenAI,
-`claude-` → Anthropic, `gemini-` → Google, `grok-` → xAI); `GET
-/api/ai/v1/models` lists a small starter catalog (cosmetic — the proxy does
-not restrict model names).
+`claude-` → Anthropic, `gemini-` → Google, `grok-` → xAI, `deepseek-` →
+DeepSeek, `cf-…` → Workers AI); `GET /api/ai/v1/models` lists a small
+starter catalog (cosmetic — the proxy does not restrict model names).
+Workers AI models are free-tier chat models only (a few big ones like
+`kimi-k2.6`/`glm-5.2` need the paid Workers plan); the account gets
+10,000 Neurons/day free (≈600 small llama-3.1-8b calls, ≈110 for 70b).
 
 ## D1 setup
 
 Database `nathanpenny`, bound as `env.DB` (`wrangler.jsonc`). Tables:
 
-- `comments`, `comment_rate` — comment feature (created manually, 2026-07)
+- `comments`, `comment_rate` — comment feature (created manually 2026-07;
+  the DDL now also lives in `workers/schema.sql`, dumped verbatim from prod)
 - `api_keys`, `ai_usage`, `ai_logs` — AI proxy; (re)create idempotently:
 
 ```sh
@@ -194,12 +217,49 @@ never remove it from `wrangler.jsonc`. Validate config changes first with
 `npx wrangler deploy --dry-run`.
 
 Managed outside this repo: the `workers.nathanpenny.fun` custom domain, the
-Access application + policy (Zero Trust dashboard), and the secrets
+Access application + policy (Zero Trust dashboard), the secrets
 (`TURNSTILE_SECRET`, `GITHUB_TOKEN`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
-`GEMINI_API_KEY`, `XAI_API_KEY` — check with `npx wrangler secret list`).
-Secrets are set with `npx wrangler secret put <NAME>`; a provider without its
-secret is simply unavailable through the proxy, and the editor fails closed
-with a 503 hint until `GITHUB_TOKEN` exists.
+`GEMINI_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `CF_AI_TOKEN` — check
+with `npx wrangler secret list`), the AI Gateway itself (dashboard → AI →
+AI Gateway; the `CF_ACCOUNT_ID`/`AIG_GATEWAY` vars in `wrangler.jsonc` only
+point at it), and the verified email destination address behind the `NOTIFY`
+send_email binding. Secrets are set with `npx wrangler secret put <NAME>`; a
+provider without its secret is simply unavailable through the proxy, and the
+editor fails closed with a 503 hint until `GITHUB_TOKEN` exists.
+
+## Cron: nightly pruning
+
+`wrangler.jsonc` registers one daily cron (03:17 UTC) → `scheduled()` in
+comments.js → `pruneTables()`:
+
+- `ai_logs` rows older than 90 days — batched id-subquery deletes (D1 has no
+  `DELETE ... LIMIT`), capped rounds so a large backlog shrinks over days
+  instead of blowing the invocation's CPU budget
+- `ai_usage` months older than 13 months
+- `comment_rate` windows older than a day (backstop for the opportunistic
+  sweep already in `checkRateLimit()`)
+
+D1's free tier enforces daily row-read limits (since 2026-09), so the
+append-only tables must not grow unbounded. Prune failures are logged,
+never thrown. Local test: `npx wrangler dev`, then
+`curl "http://localhost:8787/cdn-cgi/handler/scheduled?format=json"`.
+
+## New-comment email notification
+
+After a comment is successfully inserted, the Worker sends the owner a
+fire-and-forget email via the `NOTIFY` send_email binding
+(`ctx.waitUntil` — a failed send never affects the comment response, and
+rejected comments never reach the send line). The binding's
+`destination_address` in `wrangler.jsonc` pins the single allowed recipient:
+the account's **verified destination address**. Sends to verified
+destination addresses are free on every plan and never count against quotas.
+
+Content is deliberately minimal — commenter name + a 300-char excerpt; no
+commenter email, no IP, no full text. From: `noreply@nathanpenny.fun`,
+which requires the `nathanpenny.fun` sending domain onboarded
+(`npx wrangler email sending enable nathanpenny.fun`, adds SPF/DKIM DNS).
+Prerequisite: verify the owner address under Email → Destination addresses
+first. Without the binding deployed the feature is simply off.
 
 ## Turnstile (comment spam protection)
 

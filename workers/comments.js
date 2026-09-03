@@ -102,6 +102,28 @@ async function checkRateLimit(env, ip, nowMs) {
 }
 
 // ---------------------------------------------------------------------------
+// New-comment owner notification (Email Service). The NOTIFY send_email
+// binding pins the single allowed recipient (destination_address in
+// wrangler.jsonc) — sends to a verified destination address are free on
+// every plan. Privacy: name + 300-char excerpt only, never the commenter's
+// email, IP or the full text.
+// ---------------------------------------------------------------------------
+
+function sendNotifyEmail(env, name, content) {
+  if (!env.NOTIFY) return null; // binding not deployed — feature is off
+  const excerpt = String(content).slice(0, 300);
+  return env.NOTIFY.send({
+    // `to` is omitted on purpose: the binding's destination_address is used.
+    from: { email: "noreply@nathanpenny.fun", name: "nathanpenny.fun" },
+    subject: `New comment from ${String(name).slice(0, 50)}`,
+    text: `New comment on nathanpenny.fun\n\nFrom: ${name}\n\n${excerpt}`
+  }).catch((error) => {
+    // A failed notification must never affect the comment response.
+    console.error("notify email failed:", error && (error.code || error.message));
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Image uploader (Cloudflare Access-protected)
 // ---------------------------------------------------------------------------
 
@@ -174,6 +196,9 @@ async function handleUploadPost(request, env) {
   if (!files.length) {
     return new Response(JSON.stringify({ error: "No files under the 'files' field" }), { status: 400, headers: JSON_HEADERS });
   }
+  if (files.length > 10) {
+    return new Response(JSON.stringify({ error: "Too many files (10 per request maximum)" }), { status: 400, headers: JSON_HEADERS });
+  }
 
   const uploaded = [];
   const failed = [];
@@ -243,6 +268,41 @@ async function handleUploadDelete(env, url) {
   return new Response(JSON.stringify({ success: true }), { headers: JSON_HEADERS });
 }
 
+// ---------------------------------------------------------------------------
+// Cron: nightly pruning so the append-only tables cannot grow without bound
+// (D1 free-tier daily limits are enforced since 2026-09). One daily run
+// covers every table; the loop is capped so a large backlog shrinks over
+// days instead of exhausting the invocation's CPU budget.
+// ---------------------------------------------------------------------------
+
+const PRUNE_BATCH = 400;
+const PRUNE_MAX_ROUNDS = 25;
+
+// D1 has no DELETE ... LIMIT — delete via an id subquery in batches until
+// one comes back short (or the round cap is hit).
+async function pruneInBatches(env, sql) {
+  for (let round = 0; round < PRUNE_MAX_ROUNDS; round++) {
+    const res = await env.DB.prepare(sql).run();
+    if (!res.meta || res.meta.changes < PRUNE_BATCH) return;
+  }
+}
+
+// Long-expired comment_rate windows are also swept opportunistically on every
+// POST (see checkRateLimit); this is the backstop covering all three tables.
+async function pruneTables(env) {
+  // Uses idx_ai_logs_created for the subquery; the outer delete hits the PK.
+  await pruneInBatches(
+    env,
+    "DELETE FROM ai_logs WHERE id IN (SELECT id FROM ai_logs WHERE created_at < datetime('now', '-90 days') LIMIT 400)"
+  );
+  await env.DB.prepare(
+    "DELETE FROM ai_usage WHERE month < strftime('%Y-%m', datetime('now', '-13 months'))"
+  ).run();
+  await env.DB.prepare(
+    "DELETE FROM comment_rate WHERE window_start < ?"
+  ).bind(Math.floor(Date.now() / 1000) - 86400).run();
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -265,7 +325,7 @@ export default {
     // non-browser clients do not care about the header at all.
     const origin = request.headers.get("Origin");
     const corsHeaders = {
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS, DELETE",
       "Access-Control-Allow-Headers": "Content-Type",
       "Content-Type": "application/json"
     };
@@ -355,6 +415,10 @@ export default {
             "INSERT INTO comments (name, email, content) VALUES (?, ?, ?)"
           ).bind(name, email, content).run();
 
+          // Fire-and-forget: never delays or fails the comment response, and
+          // rejected comments (rate limit / Turnstile) never reach this line.
+          ctx.waitUntil(sendNotifyEmail(env, name, content));
+
           return new Response(
             JSON.stringify({ success: true, message: "Comment posted!" }),
             { headers: corsHeaders }
@@ -372,10 +436,24 @@ export default {
         { status: 404, headers: corsHeaders }
       );
     } catch (err) {
+      // Internal details stay server-side (observability captures the log);
+      // mirroring editor.js, which never echoes err.message either.
+      console.error("Unhandled worker error:", err);
       return new Response(
-        JSON.stringify({ error: err.message }),
+        JSON.stringify({ error: "Internal server error" }),
         { status: 500, headers: corsHeaders }
       );
+    }
+  },
+
+  async scheduled(controller, env, ctx) {
+    try {
+      await pruneTables(env);
+      console.log("cron prune done");
+    } catch (error) {
+      // Never throw out of scheduled — a failed prune must not turn into a
+      // daily cron error alert.
+      console.error("cron prune failed:", error);
     }
   }
 };

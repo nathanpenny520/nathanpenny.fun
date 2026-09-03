@@ -8,6 +8,11 @@
   "name": "nathanpenny-api",
   "main": "comments.js",
   "compatibility_date": "2026-07-09",
+  // Nightly prune of ai_logs / ai_usage / comment_rate (pruneTables in
+  // comments.js). 03:17 UTC — off-peak for the APAC audience.
+  "triggers": {
+    "crons": ["17 3 * * *"]
+  },
   "workers_dev": true,
   "preview_urls": false,
   // Captures console.log (access-verify stage logging) for debugging.
@@ -21,7 +26,12 @@
     // Public config for Access JWT verification on /admin + /upload.
     // ACCESS_AUD is filled from the Access application's AUD tag.
     "ACCESS_TEAM_DOMAIN": "square-surf-c2a6.cloudflareaccess.com",
-    "ACCESS_AUD": "36ba044e69b4947e6cacfe51b9f0f33a1c492babd563080b313c3513beb040db"
+    "ACCESS_AUD": "36ba044e69b4947e6cacfe51b9f0f33a1c492babd563080b313c3513beb040db",
+    // Account ID for the Workers AI OpenAI-compat REST route (cf-* models).
+    // Adding AIG_GATEWAY ("<gateway name>") additionally routes the other
+    // providers through that AI Gateway — only set it once the gateway
+    // exists, and unset it to fall back to direct endpoints.
+    "CF_ACCOUNT_ID": "aa23021279f1ffd6901d7093879554f3"
   },
   // Image uploader storage (music bucket shared; uploads land under img/).
   "r2_buckets": [

@@ -2,9 +2,12 @@
 // Auth: bearer keys whose SHA-256 hashes live in the api_keys D1 table
 // (generate with tools/ai_key.py). A monthly request-count quota breaker lives
 // in ai_usage; every chat call appends a metadata-only row to ai_logs — never
-// prompt or response content. Upstreams are the four providers' official
+// prompt or response content. Upstreams are the providers' official
 // OpenAI-compatibility endpoints: the request body passes through untouched,
-// only the URL and auth header change.
+// only the URL and auth header change (Workers AI gets one model-string
+// rewrite). When the CF_ACCOUNT_ID + AIG_GATEWAY vars are set, provider calls
+// route through the account's AI Gateway (same BYOK headers) for unified
+// logging; see upstreamUrl().
 
 // Bearer auth is used for every upstream on purpose: each compatibility layer
 // is built for the OpenAI SDK, which only ever sends `Authorization: Bearer`.
@@ -14,6 +17,7 @@ const PROVIDERS = [
     secret: "OPENAI_API_KEY",
     prefixes: ["gpt-", "chatgpt-", "o1", "o3", "o4"],
     endpoint: "https://api.openai.com/v1/chat/completions",
+    gatewayPath: "openai/chat/completions",
     models: ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "o3", "o4-mini"]
   },
   {
@@ -21,6 +25,7 @@ const PROVIDERS = [
     secret: "ANTHROPIC_API_KEY",
     prefixes: ["claude-"],
     endpoint: "https://api.anthropic.com/v1/chat/completions",
+    gatewayPath: "anthropic/v1/chat/completions",
     models: ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"]
   },
   {
@@ -28,6 +33,7 @@ const PROVIDERS = [
     secret: "GEMINI_API_KEY",
     prefixes: ["gemini-", "models/gemini-"],
     endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    gatewayPath: "google-ai-studio/v1beta/openai/chat/completions",
     // Cosmetic catalog (any model string passes through). gemini-2.5-* was
     // retired for new API keys (2026-09, upstream 404); 3.6-flash confirmed
     // live through the proxy.
@@ -38,7 +44,39 @@ const PROVIDERS = [
     secret: "XAI_API_KEY",
     prefixes: ["grok-"],
     endpoint: "https://api.x.ai/v1/chat/completions",
+    gatewayPath: "grok/v1/chat/completions",
     models: ["grok-4", "grok-4-fast-reasoning", "grok-code-fast-1"]
+  },
+  {
+    name: "deepseek",
+    secret: "DEEPSEEK_API_KEY",
+    prefixes: ["deepseek-"],
+    endpoint: "https://api.deepseek.com/chat/completions",
+    gatewayPath: "deepseek/chat/completions",
+    // Mainland-friendly OpenAI-compatible upstream — the standing workaround
+    // for OpenAI's egress geo-block (unsupported_country_region_territory).
+    models: ["deepseek-chat", "deepseek-reasoner"]
+  },
+  {
+    // Cloudflare's own Workers AI via its OpenAI-compatible REST route
+    // (developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility).
+    // CF_AI_TOKEN is a Cloudflare API token scoped to Workers AI — no
+    // third-party key needed and the free allocation is 10,000 Neurons/day.
+    name: "workers-ai",
+    secret: "CF_AI_TOKEN",
+    prefixes: ["cf-"],
+    endpoint: null, // built per-account in upstreamUrl()
+    // Cosmetic catalog (any model string passes through as cf-… → @cf/…).
+    // Free-tier chat models only — a few big ones (kimi-k2.6, glm-5.2, …)
+    // require the paid Workers plan. Rough Neuron cost per small call:
+    // llama-3.1-8b-fast ≈ 15, llama-3.3-70b ≈ 90 (10k free per day).
+    models: [
+      "cf-meta/llama-3.1-8b-instruct-fp8-fast",
+      "cf-qwen/qwen3-30b-a3b-fp8",
+      "cf-meta/llama-3.3-70b-instruct-fp8-fast",
+      "cf-google/gemma-3-12b-it",
+      "cf-deepseek-ai/deepseek-r1-distill-qwen-32b"
+    ]
   }
 ];
 
@@ -74,6 +112,25 @@ async function sha256Hex(text) {
 
 function providerFor(model) {
   return PROVIDERS.find((p) => p.prefixes.some((pre) => model.startsWith(pre))) || null;
+}
+
+// AI Gateway fronting (developers.cloudflare.com/ai-gateway). When the
+// CF_ACCOUNT_ID + AIG_GATEWAY vars are set, providers that declare a
+// gatewayPath route through the gateway: same BYOK Authorization header,
+// unified request logs in the dashboard (free plan stores 100k logs/account),
+// and the geo-block live test for OpenAI. Unset vars fall back to direct
+// endpoints, so dev and rollback are always one deletion away.
+const AIG_CACHE_TTL = null;    // e.g. 3600 → cf-aig-cache-key + cf-aig-cache-ttl
+const AIG_MAX_ATTEMPTS = null; // e.g. 2 → cf-aig-max-attempts + delay/backoff
+
+function upstreamUrl(provider, env) {
+  if (provider.name === "workers-ai") {
+    return `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/ai/v1/chat/completions`;
+  }
+  if (env.CF_ACCOUNT_ID && env.AIG_GATEWAY && provider.gatewayPath) {
+    return `https://gateway.ai.cloudflare.com/v1/${env.CF_ACCOUNT_ID}/${env.AIG_GATEWAY}/${provider.gatewayPath}`;
+  }
+  return provider.endpoint;
 }
 
 // Single-roundtrip monthly quota breaker: the upsert increments only while the
@@ -143,28 +200,55 @@ function extractUsage(responseText) {
   return null;
 }
 
-// Drain the tee'd stream copy in the background, keeping only a bounded tail
-// (usage, when present, rides in the final chunks). Logs whatever it finds —
-// providers without usage in their SSE simply log nulls.
-function collectStreamUsage(stream, onDone) {
+// Single-reader pump: forward every upstream chunk to the client-side
+// TransformStream while keeping a bounded tail (usage, when present, rides in
+// the final chunks). Client writes are fire-and-forget (a disconnected client
+// must never stall the drain). The log write happens BEFORE writer.close() on
+// purpose: waitUntil work issued after a streamed response has finished never
+// lands in production (the D1 call hangs silently), so the log must be
+// written while the invocation is still actively streaming. The cost is that
+// the client's stream end waits for one D1 write — imperceptible in practice.
+async function pumpStream(env, entry, stream, writable) {
   const decoder = new TextDecoder();
   let tail = "";
-  return (async () => {
-    const reader = stream.getReader();
-    try {
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        tail += decoder.decode(value, { stream: true });
-        if (tail.length > 256 * 1024) tail = tail.slice(-256 * 1024);
-      }
-      tail += decoder.decode();
-    } catch (error) {
-      // Client disconnects / aborted upstreams are normal; log what we have.
+  const reader = stream.getReader();
+  const writer = writable.getWriter();
+  const logUsage = () => {
+    const raw = lastUsageObject(tail);
+    const usage = raw ? tokensFromUsage(raw) : null;
+    return writeLog(env, {
+      keyId: entry.keyId,
+      model: entry.model,
+      provider: entry.provider,
+      status: entry.status,
+      stream: true,
+      tokensIn: usage ? usage.in : null,
+      tokensOut: usage ? usage.out : null,
+      // Measured across the whole drain, so long generations log their full
+      // duration instead of the time-to-first-byte.
+      latencyMs: Date.now() - entry.startedAt
+    });
+  };
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      tail += decoder.decode(value, { stream: true });
+      if (tail.length > 256 * 1024) tail = tail.slice(-256 * 1024);
+      writer.write(value).catch(() => { /* client gone */ });
     }
-    const usage = lastUsageObject(tail);
-    onDone(usage ? tokensFromUsage(usage) : null);
-  })();
+    await logUsage();
+    writer.close().catch(() => { /* client gone */ });
+  } catch (error) {
+    // Upstream aborts are normal (client cancels propagate); log what we have.
+    try {
+      await logUsage();
+    } catch (e) {
+      // writeLog swallows internally; this can only be a synchronous surprise.
+      console.error("pumpStream logUsage failed:", e);
+    }
+    writer.abort(error).catch(() => { /* already closed */ });
+  }
 }
 
 // Log writing happens inside ctx.waitUntil, so a broken logger can never
@@ -185,11 +269,30 @@ function writeLog(env, entry) {
         entry.tokensOut,
         entry.latencyMs
       ).run();
+      // Token totals ride into ai_usage as a separate upsert — the quota
+      // breaker only ever creates rows for capped keys, so unlimited keys
+      // would otherwise never accumulate usage. Recomputing the month here
+      // (instead of threading it through) keeps call sites simple.
+      if (entry.tokensIn !== null || entry.tokensOut !== null) {
+        await env.DB.prepare(
+          `INSERT INTO ai_usage (key_id, month, requests, tokens_in, tokens_out)
+           VALUES (?, ?, 0, ?, ?)
+           ON CONFLICT (key_id, month) DO UPDATE SET
+             tokens_in = ai_usage.tokens_in + excluded.tokens_in,
+             tokens_out = ai_usage.tokens_out + excluded.tokens_out`
+        ).bind(
+          entry.keyId,
+          new Date().toISOString().slice(0, 7),
+          entry.tokensIn ?? 0,
+          entry.tokensOut ?? 0
+        ).run();
+      }
       await env.DB.prepare("UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = ?")
         .bind(entry.keyId)
         .run();
     } catch (error) {
-      // Ignore: logging must not break the response path.
+      // Never break the response path, but leave a trace for observability.
+      console.error("writeLog failed:", error && (error.stack || error.message || error));
     }
   })();
 }
@@ -236,18 +339,15 @@ export async function handleAi(request, env, ctx, url) {
 }
 
 async function handleChatCompletions(request, env, ctx, key) {
-  const contentLength = Number(request.headers.get("Content-Length") || 0);
-  if (contentLength > MAX_BODY_BYTES) {
-    return aiError(413, "Request body too large (10MB limit).", "invalid_request_error");
-  }
-
+  // Byte-exact size check on the raw buffer: UTF-16 string lengths
+  // under-count multi-byte bodies, so never measure the decoded text.
   let body;
   try {
-    const raw = await request.text();
-    if (raw.length > MAX_BODY_BYTES) {
+    const buf = await request.arrayBuffer();
+    if (buf.byteLength > MAX_BODY_BYTES) {
       return aiError(413, "Request body too large (10MB limit).", "invalid_request_error");
     }
-    body = JSON.parse(raw);
+    body = JSON.parse(new TextDecoder().decode(buf));
   } catch (error) {
     return aiError(400, "Request body must be valid JSON.", "invalid_request_error");
   }
@@ -266,6 +366,13 @@ async function handleChatCompletions(request, env, ctx, key) {
   if (!upstreamKey) {
     return aiError(503, `Upstream '${provider.name}' is not configured on this Worker.`, "api_error");
   }
+  if (provider.name === "workers-ai" && !env.CF_ACCOUNT_ID) {
+    return aiError(503, "Workers AI needs the CF_ACCOUNT_ID var on this Worker.", "api_error");
+  }
+
+  // Workers AI's REST route expects "@cf/{author}/{model}"; clients send the
+  // friendlier "cf-{author}/{model}" form that the /models catalog lists.
+  if (provider.name === "workers-ai") body.model = "@cf/" + model.slice(3);
 
   // YYYY-MM in UTC — the same clock the breaker counts against.
   const month = new Date().toISOString().slice(0, 7);
@@ -278,11 +385,30 @@ async function handleChatCompletions(request, env, ctx, key) {
   }
 
   const startedAt = Date.now();
+  const upstreamEndpoint = upstreamUrl(provider, env);
+  const upstreamHeaders = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${upstreamKey}`
+  };
+  // Opt-in per-request gateway options; nothing is sent while the AIG_*
+  // constants above are null. Client-supplied cf-aig-* headers are never
+  // forwarded.
+  if (env.CF_ACCOUNT_ID && env.AIG_GATEWAY && provider.gatewayPath) {
+    if (AIG_CACHE_TTL) {
+      upstreamHeaders["cf-aig-cache-key"] = await sha256Hex(JSON.stringify(body));
+      upstreamHeaders["cf-aig-cache-ttl"] = String(AIG_CACHE_TTL);
+    }
+    if (AIG_MAX_ATTEMPTS) {
+      upstreamHeaders["cf-aig-max-attempts"] = String(AIG_MAX_ATTEMPTS);
+      upstreamHeaders["cf-aig-retry-delay"] = "500";
+      upstreamHeaders["cf-aig-backoff"] = "exponential";
+    }
+  }
   let upstream;
   try {
-    upstream = await fetch(provider.endpoint, {
+    upstream = await fetch(upstreamEndpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${upstreamKey}` },
+      headers: upstreamHeaders,
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
     });
@@ -301,21 +427,20 @@ async function handleChatCompletions(request, env, ctx, key) {
     "Content-Type": upstream.headers.get("Content-Type") || "application/json"
   };
 
-  // Streaming: pass the SSE bytes straight through; drain the tee'd copy in
-  // the background for the usage log.
+  // Streaming: forward the SSE bytes through a TransformStream; the same
+  // pump accumulates the usage tail and writes the log before closing.
   if (body.stream === true && upstream.body) {
-    const [toClient, forLog] = upstream.body.tee();
-    const latencyMs = Date.now() - startedAt;
+    const { readable, writable } = new TransformStream();
     ctx.waitUntil(
-      collectStreamUsage(forLog, (usage) =>
-        writeLog(env, {
-          keyId: key.id, model, provider: provider.name, status: upstream.status,
-          stream: true, tokensIn: usage ? usage.in : null, tokensOut: usage ? usage.out : null,
-          latencyMs
-        })
-      )
+      pumpStream(env, {
+        keyId: key.id,
+        model,
+        provider: provider.name,
+        status: upstream.status,
+        startedAt
+      }, upstream.body, writable)
     );
-    return new Response(toClient, { status: upstream.status, headers });
+    return new Response(readable, { status: upstream.status, headers });
   }
 
   const responseText = await upstream.text();

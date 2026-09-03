@@ -43,3 +43,23 @@ CREATE TABLE IF NOT EXISTS ai_logs (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_ai_logs_created ON ai_logs (created_at);
+
+-- Tables for the comment feature (created manually in prod 2026-07; DDL
+-- dumped verbatim from prod via sqlite_master, wrapped in IF NOT EXISTS so
+-- this file can recreate the whole database from scratch).
+CREATE TABLE IF NOT EXISTS comments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Per-IP sliding-window counters backing POST /comments rate limiting
+-- (window-aligned upsert in comments.js). window_start is epoch seconds.
+CREATE TABLE IF NOT EXISTS comment_rate (
+  ip TEXT NOT NULL,
+  window_start INTEGER NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (ip, window_start)
+);
