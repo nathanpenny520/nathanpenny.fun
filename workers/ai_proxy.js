@@ -25,8 +25,9 @@ const PROVIDERS = [
       "cf-meta/llama-3.1-8b-instruct-fp8-fast",
       "cf-qwen/qwen3-30b-a3b-fp8",
       "cf-meta/llama-3.3-70b-instruct-fp8-fast",
-      "cf-google/gemma-3-12b-it",
       "cf-deepseek-ai/deepseek-r1-distill-qwen-32b"
+      // Verified live on this account 2026-09. @cf/google/gemma-3-12b-it was
+      // dropped: the account is not allowed to access it (upstream 5018).
     ]
   }
 ];
