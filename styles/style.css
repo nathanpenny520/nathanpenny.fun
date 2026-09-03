@@ -212,6 +212,12 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   line-height: 1.7;
+  /* Sticky footer: short pages (e.g. achievements) still pin the footer to
+     the viewport bottom; footer carries margin-top:auto. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
 a {
@@ -236,7 +242,9 @@ ul {
 .container {
   width: 90%;
   max-width: 1100px;
-  margin: 40px auto;
+  /* 60px bottom keeps the pre-footer gap on full pages too (body is a flex
+     column, so sibling margins no longer collapse; footer uses auto top). */
+  margin: 40px auto 60px;
 }
 
 
@@ -244,7 +252,10 @@ ul {
    HEADER & NAVIGATION
    ======================================================================== */
 
-nav {
+/* Scoped to the top navbar only (a direct child of body). A bare `nav`
+   selector would also hit <nav class="blog-toc"> (single-post sidebar) and
+   <nav class="post-nav"> (prev/next links), squashing them to --nav-h. */
+body > nav {
   position: sticky;
   top: 0;
   z-index: 99;
@@ -265,7 +276,7 @@ nav.nav-scrolled {
 
 /* Opaque fallback for browsers without backdrop-filter */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  nav {
+  body > nav {
     background: var(--color-surface);
   }
 }
@@ -428,7 +439,7 @@ html {
   }
 
   /* No-JS fallback: keep the old wrapped link list */
-  html:not(.menu-ready) nav {
+  html:not(.menu-ready) body > nav {
     height: auto;
   }
 
@@ -2377,7 +2388,8 @@ footer {
   padding: 25px;
   background: var(--color-nav-bg);
   color: var(--color-nav-text);
-  margin-top: 60px;
+  /* Sticky footer (see body): absorbs leftover space on short pages. */
+  margin-top: auto;
 }
 
 .footer-logo {

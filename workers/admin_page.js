@@ -84,10 +84,10 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
 <body>
 <main>
   <h1>🛸 Admin</h1>
-  <p class="hint">图床 + 写作台 · Cloudflare Access 已登录</p>
+  <p class="hint">Image hosting + post editor · signed in via Cloudflare Access</p>
   <nav class="tabs" aria-label="Admin sections">
-    <button id="tabBtnUpload" class="tab active" type="button">🖼 图床</button>
-    <button id="tabBtnEditor" class="tab" type="button">✍️ 写作台</button>
+    <button id="tabBtnUpload" class="tab active" type="button">🖼 Images</button>
+    <button id="tabBtnEditor" class="tab" type="button">✍️ Editor</button>
   </nav>
 
   <section id="tabUpload">

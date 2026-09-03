@@ -76,29 +76,29 @@ async function ghMessage(res) {
 // Mirror of the generator's hard rules — every failure here would otherwise
 // make tools/gen_post_pages.py sys.exit and leave a red CI run behind.
 function validatePost(content) {
-  if (typeof content !== "string" || content.length === 0) return "内容为空";
-  if (content.charCodeAt(0) === 0xfeff) return "内容以 BOM 开头 — 生成器要求 frontmatter 从字节 0 开始，请删掉";
-  if (!content.startsWith("---\n")) return "必须以 frontmatter 开头（第一行是 ---）";
+  if (typeof content !== "string" || content.length === 0) return "Content is empty";
+  if (content.charCodeAt(0) === 0xfeff) return "Content starts with a BOM — the generator requires frontmatter at byte 0; remove it";
+  if (!content.startsWith("---\n")) return "Must start with frontmatter (--- on the first line)";
   const end = content.indexOf("\n---\n", 4);
-  if (end === -1) return "frontmatter 未闭合（缺少结尾的 ---）";
+  if (end === -1) return "Unclosed frontmatter (missing closing ---)";
   const fm = content.slice(4, end);
 
   const title = fm.match(/^title:[ \t]*(.+)$/m);
-  if (!title || !title[1].trim()) return "frontmatter 缺少 title";
+  if (!title || !title[1].trim()) return "Frontmatter is missing a title";
 
   const date = fm.match(/^date:[ \t]*(\S+)[ \t]*$/m);
-  if (!date) return "frontmatter 缺少 date（YYYY-MM-DD）";
+  if (!date) return "Frontmatter is missing a date (YYYY-MM-DD)";
   // Round-trip: 2026-02-30 passes any regex but datetime.date.fromisoformat
   // in CI does not, so validate by parsing back.
   const d = date[1];
   const parsed = new Date(d + "T00:00:00Z");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== d) {
-    return "date 不是有效的 YYYY-MM-DD（如 2026-02-30 会让 CI 失败）";
+    return "date is not a valid YYYY-MM-DD (e.g. 2026-02-30 would fail CI)";
   }
 
   const cat = fm.match(/^category:[ \t]*(\S+)[ \t]*$/m);
   if (cat && !CATEGORIES.includes(cat[1])) {
-    return "未知 category \"" + cat[1] + "\" — 可选：" + CATEGORIES.join(" / ");
+    return "Unknown category \"" + cat[1] + "\" — valid: " + CATEGORIES.join(" / ");
   }
 
   return null;
@@ -131,7 +131,7 @@ async function listPosts(env) {
 
 async function readPost(env, url) {
   const slug = url.searchParams.get("slug") || "";
-  if (!SLUG_RE.test(slug)) return editorJson(400, { error: "无效 slug（只允许小写字母、数字、连字符）" });
+  if (!SLUG_RE.test(slug)) return editorJson(400, { error: "Invalid slug (lowercase letters, digits, hyphens only)" });
 
   const noToken = requireToken(env);
   if (noToken) return noToken;
@@ -158,23 +158,23 @@ async function publishPost(request, env) {
   }
 
   const raw = await request.text();
-  if (raw.length > MAX_BODY_CHARS) return editorJson(413, { error: "请求体过大" });
+  if (raw.length > MAX_BODY_CHARS) return editorJson(413, { error: "Request body too large" });
 
   let body;
   try {
     body = JSON.parse(raw);
   } catch (error) {
-    return editorJson(400, { error: "JSON 解析失败" });
+    return editorJson(400, { error: "Invalid JSON" });
   }
 
   const slug = typeof body.slug === "string" ? body.slug : "";
-  if (!SLUG_RE.test(slug)) return editorJson(400, { error: "无效 slug（只允许小写字母、数字、连字符）" });
+  if (!SLUG_RE.test(slug)) return editorJson(400, { error: "Invalid slug (lowercase letters, digits, hyphens only)" });
 
   const contentError = validatePost(body.content);
   if (contentError) return editorJson(400, { error: contentError });
 
   if (new TextEncoder().encode(body.content).length > MAX_CONTENT_BYTES) {
-    return editorJson(413, { error: "文章超过 256KB" });
+    return editorJson(413, { error: "Post exceeds 256KB" });
   }
 
   const noToken = requireToken(env);
@@ -193,7 +193,7 @@ async function publishPost(request, env) {
     body: JSON.stringify(payload)
   });
   if (res.status === 409 || res.status === 422) {
-    return editorJson(409, { error: "远端已更新（sha 不匹配）— 请重新加载该文章后再发布" });
+    return editorJson(409, { error: "Changed on GitHub since you loaded it — reload the post and try again" });
   }
   if (!res.ok) return editorJson(502, { error: await ghMessage(res) });
 
@@ -208,9 +208,9 @@ async function publishPost(request, env) {
 
 async function deletePost(env, url) {
   const slug = url.searchParams.get("slug") || "";
-  if (!SLUG_RE.test(slug)) return editorJson(400, { error: "无效 slug（只允许小写字母、数字、连字符）" });
+  if (!SLUG_RE.test(slug)) return editorJson(400, { error: "Invalid slug (lowercase letters, digits, hyphens only)" });
   const sha = url.searchParams.get("sha") || "";
-  if (!sha) return editorJson(400, { error: "缺少 sha — 请先在编辑器中打开该文章" });
+  if (!sha) return editorJson(400, { error: "Missing sha — open the post in the editor first" });
 
   const noToken = requireToken(env);
   if (noToken) return noToken;
@@ -220,9 +220,9 @@ async function deletePost(env, url) {
     body: JSON.stringify({ message: "delete: " + slug + " (editor)", sha: sha, branch: GITHUB_BRANCH })
   });
   if (res.status === 409 || res.status === 422) {
-    return editorJson(409, { error: "远端已更新（sha 不匹配）— 请刷新列表后重试" });
+    return editorJson(409, { error: "Changed on GitHub — refresh the list and retry" });
   }
-  if (res.status === 404) return editorJson(404, { error: "文章不存在：" + slug });
+  if (res.status === 404) return editorJson(404, { error: "Post not found: " + slug });
   if (!res.ok) return editorJson(502, { error: await ghMessage(res) });
 
   return editorJson(200, { success: true });

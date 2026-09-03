@@ -1,4 +1,4 @@
-// 写作台 tab for the /admin page (interpolated into ADMIN_PAGE_HTML by
+// Editor tab for the /admin page (interpolated into ADMIN_PAGE_HTML by
 // admin_page.js). Self-contained fragment: own <style>, markup and IIFE, so
 // admin_page.js only grows by the import + interpolation. The page's inline
 // script runs inside admin_page's template literal, so — same rule as there —
@@ -25,6 +25,14 @@ export const EDITOR_TAB_HTML = `
   .ed-status.err { color: var(--err); }
   .ed-status a { color: var(--accent); }
   #edListSection ul li { cursor: pointer; }
+  #edHelp { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+  #edHelp summary { cursor: pointer; }
+  #edHelp ul { margin: 8px 0 0; padding-left: 18px; list-style: disc; }
+  #edHelp li { margin-bottom: 4px; }
+  #edHelp code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+    background: var(--row-hover); padding: 1px 4px; border-radius: 4px;
+  }
   #edContent {
     width: 100%; min-height: 60vh; resize: vertical; padding: 14px;
     border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text);
@@ -33,12 +41,12 @@ export const EDITOR_TAB_HTML = `
   #edContent:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 </style>
 <section id="tabEditor" hidden>
-  <p class="hint">写作台：发布 = 把 posts/&lt;slug&gt;.md commit 到 GitHub main，CI 约 1 分钟后自动生成上线。Cmd/Ctrl+S 快速发布；粘贴或拖入图片会直接传图床并插入 markdown。</p>
+  <p class="hint">Publishing commits posts/&lt;slug&gt;.md to GitHub main — CI regenerates the live site in about a minute. Cmd/Ctrl+S to publish. Paste or drop images to upload them and insert markdown.</p>
   <div class="ed-toolbar">
-    <button id="edNewBtn" type="button">新建</button>
-    <button id="edListBtn" type="button" aria-expanded="false">文章列表</button>
-    <input id="edSlug" type="text" placeholder="post-slug（小写字母/数字/连字符）" autocomplete="off" spellcheck="false" aria-label="文章 slug">
-    <select id="edCat" aria-label="分类">
+    <button id="edNewBtn" type="button">New</button>
+    <button id="edListBtn" type="button" aria-expanded="false">Posts</button>
+    <input id="edSlug" type="text" placeholder="post-slug (lowercase, digits, hyphens)" autocomplete="off" spellcheck="false" aria-label="Post slug">
+    <select id="edCat" aria-label="Category">
       <option value="anime">anime</option>
       <option value="life">life</option>
       <option value="tech">tech</option>
@@ -49,21 +57,31 @@ export const EDITOR_TAB_HTML = `
       <option value="sports">sports</option>
       <option value="misc">misc</option>
     </select>
-    <button id="edImgBtn" type="button">上传图片</button>
+    <button id="edImgBtn" type="button">Upload image</button>
     <input id="edImgInput" type="file" hidden accept="image/*">
-    <button id="edPublishBtn" type="button" class="primary">发布</button>
-    <button id="edDeleteBtn" type="button" class="danger" hidden>删除</button>
+    <button id="edPublishBtn" type="button" class="primary">Publish</button>
+    <button id="edDeleteBtn" type="button" class="danger" hidden>Delete</button>
   </div>
   <p id="edStatus" class="ed-status" aria-live="polite"></p>
+  <details id="edHelp">
+    <summary>Markdown syntax supported by the generator</summary>
+    <ul>
+      <li>Headings: <code>#</code> to <code>####</code> (rendered one level deeper; the post title comes from frontmatter)</li>
+      <li>Inline: <code>**bold**</code>, <code>*italic*</code>, <code>\`code\`</code>, <code>[link](url)</code>, <code>![alt](url)</code> (images get the blog-img class automatically)</li>
+      <li>Blocks: <code>- item</code> lists (unordered only), <code>&gt;</code> quotes, <code>---</code> horizontal rule, <code>\`\`\`</code> fenced code</li>
+      <li>Raw HTML blocks pass through verbatim — use them for tables, video/audio embeds, images with explicit width/height</li>
+      <li>Not supported: ordered (<code>1.</code>) lists, pipe tables, strikethrough — use an HTML <code>&lt;table&gt;</code> for tables</li>
+    </ul>
+  </details>
   <section id="edListSection" hidden>
     <div class="recent-head">
-      <h2>文章列表</h2>
+      <h2>Posts</h2>
       <button id="edListRefresh" type="button">↻ Refresh</button>
     </div>
     <ul id="edList"></ul>
-    <p class="empty" id="edListEmpty" hidden>加载失败。</p>
+    <p class="empty" id="edListEmpty" hidden>Load failed.</p>
   </section>
-  <textarea id="edContent" spellcheck="false" placeholder="点「新建」开始写，或在文章列表里打开一篇"></textarea>
+  <textarea id="edContent" spellcheck="false" placeholder="Click New to start, or open a post from the list"></textarea>
 </section>
 <script>
 (function () {
@@ -127,7 +145,7 @@ export const EDITOR_TAB_HTML = `
       return fetch(path, opts).then(function (res) {
         var ct = res.headers.get("content-type") || "";
         if (ct.indexOf("application/json") === -1) {
-          var err = new Error("Access 会话已过期 — 请刷新页面重新登录");
+          var err = new Error("Access session expired — refresh the page to sign in again");
           err.session = true;
           throw err;
         }
@@ -152,19 +170,19 @@ export const EDITOR_TAB_HTML = `
     // Client-side mirror of editor.js validatePost (server re-checks anyway).
     function validateLocal(slug, content) {
       if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(slug)) {
-        return "无效 slug（只允许小写字母、数字、连字符）";
+        return "Invalid slug (lowercase letters, digits, hyphens only)";
       }
-      if (content.charCodeAt(0) === 0xfeff) return "内容以 BOM 开头，请删掉";
-      if (content.slice(0, 4) !== "---\\n") return "必须以 frontmatter 开头（第一行是 ---）";
+      if (content.charCodeAt(0) === 0xfeff) return "Content starts with a BOM — remove it";
+      if (content.slice(0, 4) !== "---\\n") return "Must start with frontmatter (--- on the first line)";
       var meta = frontmatterOf(content);
-      if (!meta) return "frontmatter 未闭合（缺少结尾的 ---）";
-      if (!meta.title) return "frontmatter 缺少 title";
+      if (!meta) return "Unclosed frontmatter (missing closing ---)";
+      if (!meta.title) return "Frontmatter is missing a title";
       var d = new Date(meta.date + "T00:00:00Z");
       if (!meta.date || isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== meta.date) {
-        return "date 不是有效的 YYYY-MM-DD（如 2026-02-30 会让 CI 失败）";
+        return "date is not a valid YYYY-MM-DD (e.g. 2026-02-30 would fail CI)";
       }
       if (("category" in meta) && meta.category && CATEGORIES.indexOf(meta.category) === -1) {
-        return "未知 category \\"" + meta.category + "\\" — 可选：" + CATEGORIES.join(" / ");
+        return "Unknown category \\"" + meta.category + "\\" — options: " + CATEGORIES.join(" / ");
       }
       return null;
     }
@@ -207,7 +225,7 @@ export const EDITOR_TAB_HTML = `
         var posts = r.data.posts || [];
         edList.textContent = "";
         edListEmpty.hidden = posts.length > 0;
-        if (!posts.length) edListEmpty.textContent = "还没有文章。";
+        if (!posts.length) edListEmpty.textContent = "No posts yet.";
         posts.forEach(function (p) {
           var li = document.createElement("li");
           var main = document.createElement("div");
@@ -226,12 +244,12 @@ export const EDITOR_TAB_HTML = `
         });
       }).catch(function (err) {
         edListEmpty.hidden = false;
-        edListEmpty.textContent = err.message || "加载失败";
+        edListEmpty.textContent = err.message || "Load failed";
       });
     }
 
     function openPost(slug) {
-      setStatus("加载 " + escapeHtml(slug) + " …", "");
+      setStatus("Loading " + escapeHtml(slug) + " …", "");
       api("/admin/api/post?slug=" + encodeURIComponent(slug)).then(function (r) {
         if (!r.ok) { setStatus(r.data.error || ("HTTP " + r.status), "err"); return; }
         edSlug.value = r.data.slug;
@@ -243,7 +261,7 @@ export const EDITOR_TAB_HTML = `
         edDeleteBtn.hidden = false;
         var meta = frontmatterOf(r.data.content) || {};
         edCat.value = CATEGORIES.indexOf(meta.category) !== -1 ? meta.category : "misc";
-        setStatus("已加载 " + escapeHtml(slug), "ok");
+        setStatus("Loaded " + escapeHtml(slug), "ok");
       }).catch(function (err) { setStatus(err.message, "err"); });
     }
 
@@ -258,12 +276,12 @@ export const EDITOR_TAB_HTML = `
       edDeleteBtn.hidden = true;
       edCat.value = "misc";
       edContent.value = newTemplate();
-      setStatus("新文章 — 填好 slug 和 title 后发布", "");
+      setStatus("New post — fill in the slug and title, then publish", "");
       var draft = null;
       try { draft = localStorage.getItem(DRAFT_KEY); } catch (e) { /* ignore */ }
       if (draft) {
         edContent.value = draft;
-        setStatus("已恢复上次未发布的草稿", "ok");
+        setStatus("Restored your unpublished draft", "ok");
       }
       edContent.focus();
     });
@@ -302,7 +320,7 @@ export const EDITOR_TAB_HTML = `
       var payload = { slug: slug, content: edContent.value };
       if (edSha) payload.sha = edSha;
       edPublishBtn.disabled = true;
-      setStatus(edSha ? "更新中…" : "发布中…", "");
+      setStatus(edSha ? "Updating…" : "Publishing…", "");
 
       api("/admin/api/post", {
         method: "POST",
@@ -312,7 +330,7 @@ export const EDITOR_TAB_HTML = `
         edPublishBtn.disabled = false;
         if (!r.ok) {
           setStatus(r.data.error || ("HTTP " + r.status), "err");
-          if (r.status === 409) toast("远端已更新，请重新加载该文章");
+          if (r.status === 409) toast("Changed remotely — reload the post");
           return;
         }
         edSha = r.data.sha;
@@ -322,30 +340,30 @@ export const EDITOR_TAB_HTML = `
         edDeleteBtn.hidden = false;
         clearNewDraft();
         var live = "https://nathanpenny.fun/blog/" + encodeURIComponent(slug) + "/";
-        var html = "已" + (r.data.created ? "创建" : "更新") + " " + escapeHtml(slug) +
-          " — CI 约 1 分钟后上线 <a target='_blank' rel='noopener' href='" + live + "'>" + escapeHtml(slug) + "</a>";
+        var html = (r.data.created ? "Created " : "Updated ") + escapeHtml(slug) +
+          " — live in ~1 minute (CI): <a target='_blank' rel='noopener' href='" + live + "'>" + escapeHtml(slug) + "</a>";
         if (r.data.commit_url) {
           html += " · <a target='_blank' rel='noopener' href='" + escapeHtml(r.data.commit_url) + "'>commit</a>";
         }
         setStatus(html, "ok");
-        toast("已发布 — 约 1 分钟后上线");
+        toast("Published — live in ~1 minute");
         loadList();
       }).catch(function (e) {
         edPublishBtn.disabled = false;
-        setStatus(e.message || "网络错误", "err");
+        setStatus(e.message || "Network error", "err");
       });
     }
 
     edDeleteBtn.addEventListener("click", function () {
       if (!editing || !edSha) return;
       var slug = edSlug.value;
-      if (!window.confirm("删除 " + slug + "？CI 会同时移除线上页面与列表项（git 历史可恢复）。")) return;
+      if (!window.confirm("Delete " + slug + "? CI will remove the live page and the list entry (recoverable from git history).")) return;
       api("/admin/api/post?slug=" + encodeURIComponent(slug) + "&sha=" + encodeURIComponent(edSha), {
         method: "DELETE"
       }).then(function (r) {
         if (!r.ok) { setStatus(r.data.error || ("HTTP " + r.status), "err"); return; }
-        toast("已删除");
-        setStatus("已删除 " + escapeHtml(slug), "ok");
+        toast("Deleted");
+        setStatus("Deleted " + escapeHtml(slug), "ok");
         edSha = null;
         editing = false;
         dirty = false;
@@ -363,10 +381,10 @@ export const EDITOR_TAB_HTML = `
       var files = Array.prototype.slice.call(fileList || []);
       files.forEach(function (file) {
         if (file.size > 25 * 1024 * 1024) {
-          setStatus("图片过大（>25MB）：" + escapeHtml(file.name), "err");
+          setStatus("Image too large (>25MB): " + escapeHtml(file.name), "err");
           return;
         }
-        setStatus("上传图片中：" + escapeHtml(file.name), "");
+        setStatus("Uploading image: " + escapeHtml(file.name), "");
         var form = new FormData();
         form.append("files", file, file.name);
         fetch("/upload", { method: "POST", body: form })
@@ -375,16 +393,16 @@ export const EDITOR_TAB_HTML = `
           })
           .then(function (r) {
             if (!r.ok || !r.data.uploaded || !r.data.uploaded.length) {
-              throw new Error((r.data && r.data.error) || "上传失败");
+              throw new Error((r.data && r.data.error) || "Upload failed");
             }
             var item = r.data.uploaded[0];
             var alt = file.name.replace(/\\.[^.]+$/, "");
             insertAtCursor("![" + alt + "](" + item.url + ")\\n\\n");
             markDirty();
-            setStatus("已插入图片 " + escapeHtml(item.url), "ok");
-            toast("图片已插入");
+            setStatus("Inserted image " + escapeHtml(item.url), "ok");
+            toast("Image inserted");
           })
-          .catch(function (e) { setStatus(e.message || "上传失败", "err"); });
+          .catch(function (e) { setStatus(e.message || "Upload failed", "err"); });
       });
     }
 

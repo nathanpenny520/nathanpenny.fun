@@ -77,7 +77,7 @@ Publishing = edit/create the `.md` and push: CI (`.github/workflows/gen-posts.ym
 |--------|--------------------------------|-------------------|-----------------------------------------------|
 | GET    | `/comments`                    | public            | List comments, `email` excluded from results  |
 | POST   | `/comments`                    | public            | Insert a comment — 5 attempts/60s per IP via the `comment_rate` D1 table (checked first, see `checkRateLimit()`), then server-side Turnstile verification (`TURNSTILE_SECRET` secret) |
-| GET    | `/admin`                       | Cloudflare Access | Admin page with two tabs: 图床 (image upload) + 写作台 (markdown editor) |
+| GET    | `/admin`                       | Cloudflare Access | Admin page with two tabs: Images (upload) + Editor (markdown writing desk); UI is English-only |
 | POST   | `/upload`                      | Cloudflare Access | Multipart images → R2 `img/YYYY/MM/<slug>-<6hex>.<ext>`; extension allowlist + 25MB cap + magic-byte sniff; objects carry `Cache-Control: public, max-age=31536000, immutable` |
 | GET    | `/upload?list=1`               | Cloudflare Access | Recent uploads, newest first                  |
 | DELETE | `/upload?key=img/…`            | Cloudflare Access | Delete one object (`img/` prefix only)        |
