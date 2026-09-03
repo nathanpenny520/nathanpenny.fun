@@ -2763,6 +2763,15 @@ footer p {
   outline-offset: 1px;
 }
 
+/* iOS Safari auto-zooms the whole page when an input with font-size < 16px
+   gets focused — and the dialog focuses its input on open. Bump to 16px on
+   touch devices so tapping the avatar doesn't zoom the page. */
+@media (pointer: coarse), (max-width: 640px) {
+  .ai-chat-form input {
+    font-size: 16px;
+  }
+}
+
 .ai-chat-form button {
   font: inherit;
   font-size: 13.5px;
