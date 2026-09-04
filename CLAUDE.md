@@ -23,7 +23,7 @@ There is no build, lint, or test tooling — nothing to install.
 
 ### Static pages
 
-Eight pages share an identical, hand-copied `nav` + `footer` block (there is no templating):
+Eight pages share an identical, hand-copied `nav` block (there is no templating). The **footer** is the exception: every page (plus `404.html` and the generator's post template) carries only an empty `<footer></footer>` shell — the content is rendered by `initFooter()` in `scripts/main.js`, the single source of truth (edit footer content there, not in the pages):
 
 - `index.html` — home
 - `pages/about.html` — profile and CV download
@@ -34,7 +34,7 @@ Eight pages share an identical, hand-copied `nav` + `footer` block (there is no 
 - `pages/contact.html` — social links, comment form
 - `pages/privacy.html` — English-only privacy policy linked from every footer; documents the first-party analytics, the comment data, GA, the deliberate no-cookie-banner stance, and the open-source repo link
 
-Because pages live one level deep, **paths inside `pages/*.html` use `../` prefixes** for CSS, JS, images, and logo; `index.html` uses plain `./`. When adding a new page, copy the nav/footer from an existing page and fix the `../` prefixes.
+Because pages live one level deep, **paths inside `pages/*.html` use `../` prefixes** for CSS, JS, images, and logo; `index.html` uses plain `./`. When adding a new page, copy the nav from an existing page, fix the `../` prefixes, and give it an empty `<footer></footer>` shell.
 
 Friendly URLs (`/about`, `/blog`, ...) are mapped to the `pages/` files by `_redirects`. `404.html` (UFO-themed) is served with HTTP 404 for any URL matching no real asset — it uses root-absolute asset paths because it renders at arbitrary depths.
 
