@@ -161,10 +161,15 @@ export const CONTENT_TAB_HTML = `
   </div>
 
   <dialog id="ctPick">
-    <h2>Pick an uploaded image</h2>
-    <p class="hint">Your 100 most recent uploads. Anything else (e.g. a music/ object) can be pasted into the field directly.</p>
+    <h2>Pick an image</h2>
+    <p class="hint">Your 100 most recent uploads — or upload a new one straight from your computer. Anything else (e.g. a music/ object) can be pasted into the field directly.</p>
     <div id="ctPickGrid" class="ct-pickgrid"></div>
-    <div class="actions"><button id="ctPickClose" type="button">Close</button></div>
+    <div class="actions">
+      <button id="ctPickUpload" type="button" class="primary">Upload from computer…</button>
+      <input id="ctPickFile" type="file" hidden accept="image/*">
+      <span class="ed-spacer"></span>
+      <button id="ctPickClose" type="button">Close</button>
+    </div>
   </dialog>
 </section>
 <script>
@@ -233,6 +238,16 @@ export const CONTENT_TAB_HTML = `
     function slugify(text) {
       var s = String(text || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
       return s || "item";
+    }
+
+    // data/*.json store image paths relative to pages/ ("../images/…"), which
+    // resolve against workers.nathanpenny.fun in this admin page and 404.
+    // Previews rewrite them onto the site origin; saved data stays untouched.
+    function displayUrl(src) {
+      var s = String(src || "");
+      if (/^https?:\\/\\//i.test(s)) return s;
+      var clean = s.replace(/^(\\.\\/|\\.\\.\\/)+/, "");
+      return clean ? "https://nathanpenny.fun/" + clean : "";
     }
 
     function uniqueId(items, base) {
@@ -318,6 +333,41 @@ export const CONTENT_TAB_HTML = `
     document.getElementById("ctPickClose").addEventListener("click", function () { pickDialog.close(); });
     pickDialog.addEventListener("click", function (e) { if (e.target === pickDialog) pickDialog.close(); });
 
+    // Upload straight from the Pick dialog: file -> /upload -> URL filled in.
+    var pickFile = document.getElementById("ctPickFile");
+    document.getElementById("ctPickUpload").addEventListener("click", function () { pickFile.click(); });
+    pickFile.addEventListener("change", function () {
+      var file = pickFile.files[0];
+      pickFile.value = "";
+      if (!file || !pickTarget) return;
+      var btn = document.getElementById("ctPickUpload");
+      btn.disabled = true;
+      btn.textContent = "Uploading…";
+      var form = new FormData();
+      form.append("files", file, file.name);
+      fetch("/upload", { method: "POST", body: form })
+        .then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        })
+        .then(function (r) {
+          btn.disabled = false;
+          btn.textContent = "Upload from computer…";
+          if (!r.ok || !r.data.uploaded || !r.data.uploaded.length) {
+            toast((r.data && (r.data.error || (r.data.failed && r.data.failed.join("; ")))) || "Upload failed");
+            return;
+          }
+          pickTarget.value = r.data.uploaded[0].url;
+          pickTarget.dispatchEvent(new Event("input", { bubbles: false }));
+          pickDialog.close();
+          toast("Uploaded and filled in");
+        })
+        .catch(function () {
+          btn.disabled = false;
+          btn.textContent = "Upload from computer…";
+          toast("Upload failed");
+        });
+    });
+
     // --- gallery editor -----------------------------------------------------
 
     var gal = {
@@ -359,7 +409,7 @@ export const CONTENT_TAB_HTML = `
         main.className = "row-main";
         var thumb = document.createElement("img");
         thumb.className = "ct-thumb";
-        thumb.src = it.src || "";
+        thumb.src = displayUrl(it.src);
         thumb.alt = "";
         thumb.loading = "lazy";
         thumb.hidden = !it.src;
@@ -433,7 +483,7 @@ export const CONTENT_TAB_HTML = `
       gal.cat.value = has ? it.category : "";
       gal.desc.value = has ? it.description : "";
       gal.preview.hidden = !has || !it.src;
-      gal.preview.src = has ? it.src : "";
+      gal.preview.src = displayUrl(has ? it.src : "");
     }
 
     function galReadForm() {
@@ -451,7 +501,7 @@ export const CONTENT_TAB_HTML = `
 
     gal.src.addEventListener("input", function () {
       gal.preview.hidden = !gal.src.value;
-      gal.preview.src = gal.src.value;
+      gal.preview.src = displayUrl(gal.src.value);
     });
     [gal.id, gal.date, gal.src, gal.title, gal.cat, gal.desc].forEach(function (el) {
       el.addEventListener("input", function () { markDirty("gallery"); });

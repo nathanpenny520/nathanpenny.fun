@@ -302,7 +302,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
 <main>
 
   <section id="tabUpload">
-  <p class="hint">Drag &amp; drop, paste (Ctrl/Cmd+V), or use Upload. Files land in the folder you are viewing (the root keeps the <code>img/YYYY/MM/</code> layout) and are served from storage.nathanpenny.fun. PNG · JPG · WebP · GIF · AVIF · SVG, up to 25 MB each.</p>
+  <p class="hint">Drag &amp; drop, paste (Ctrl/Cmd+V), or use Upload. Double-click an empty spot to open the file picker. Files land in the folder you are viewing (the root keeps the <code>img/YYYY/MM/</code> layout) and are served from storage.nathanpenny.fun. PNG · JPG · WebP · GIF · AVIF · SVG, up to 25 MB each.</p>
 
   <div class="fm-bar">
     <nav id="fmCrumbs" class="fm-crumbs" aria-label="Folder path"></nav>
@@ -946,7 +946,9 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
     uploadFiles(fileInput.files);
     fileInput.value = "";
   });
-  grid.addEventListener("click", function (e) {
+  // Double-click (not single click) on an empty grid spot opens the picker —
+  // a single click anywhere right of the cards proved too accident-prone.
+  grid.addEventListener("dblclick", function (e) {
     if (e.target === grid) fileInput.click();
   });
   document.getElementById("fmNewFolder").addEventListener("click", newFolder);
