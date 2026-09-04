@@ -3112,6 +3112,9 @@ footer p {
 .error-code-ufo {
   display: inline-block;
   font-size: 0.8em;
+  width: 1.15em;
+  height: 0.75em;
+  vertical-align: -0.16em;
   animation: error-ufo-bob 2.4s ease-in-out infinite;
 }
 

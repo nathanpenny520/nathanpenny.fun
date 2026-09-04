@@ -2099,12 +2099,36 @@ function registerServiceWorker() {
   });
 }
 
+// 404 page: the saucer in "4🛸4" is the same canvas-drawn saucer the
+// homepage starfield uses (drawSaucer), so the two always match — metal
+// hull, glass dome, blinking rim lights and teal glow. Reduced motion gets
+// a single static frame.
+function initErrorUfo() {
+  const canvas = document.getElementById('errorUfo');
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+
+  const draw = (t) => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawSaucer(ctx, canvas.width / 2, canvas.height / 2, t / 1000, 1.4);
+  };
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    draw(0);
+    return;
+  }
+  const loop = (t) => {
+    draw(t);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
 // Syntax highlighting for blog code blocks: the vendored highlight.js bundle
 // (scripts/vendor/, self-hosted like the fonts) is only injected when the page
 // actually contains language-tagged fences, so posts without code never pay
 // for it. Token colors come from the --hljs-* vars in style.css.
-function initCodeHighlight() {
-  const blocks = document.querySelectorAll('.blog-card pre code[class^="language-"]');
+function initCodeHighlight() {  const blocks = document.querySelectorAll('.blog-card pre code[class^="language-"]');
   if (!blocks.length) return;
   // Only single-post pages (blog/<slug>/) can hold language-tagged fences,
   // so the two-level-relative path is safe here.
@@ -2213,6 +2237,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initBackToTop();
   initCodeHighlight();
   initAchievements();
+  initErrorUfo();
   initSiteChat();
   initStarField();
   initSpotlight();
