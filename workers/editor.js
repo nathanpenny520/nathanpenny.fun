@@ -279,6 +279,119 @@ async function deletePost(env, url) {
   return editorJson(200, { success: true });
 }
 
+// --- Content data files (the admin Content tab) ---------------------------------
+// Whitelisted JSON files in the repo that drive static pages (gallery.json,
+// creations.json). Same Contents-API commit path as posts — but no CI step:
+// the static host serves data/*.json as-is, so a push is live in a minute.
+// Achievements joins this map when its phase-2 editor lands.
+
+const DATA_FILES = {
+  gallery: { path: "data/gallery.json", label: "gallery" },
+  creations: { path: "data/creations.json", label: "creations" }
+};
+
+// Per-file item validation: presence, types, and sane lengths. Unknown extra
+// keys pass through untouched — the files stay hand-editable.
+function validateItems(file, items) {
+  if (!Array.isArray(items)) return file + " must be a JSON array";
+  if (items.length > 500) return file + ": too many entries (500 max)";
+  const str = (v, max) => typeof v === "string" && v.trim().length > 0 && v.length <= max;
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (!it || typeof it !== "object" || Array.isArray(it)) return file + "[" + i + "]: not an object";
+    if (!str(it.id, 80)) return file + "[" + i + "]: missing or overlong id";
+    if (!str(it.title, 200)) return file + "[" + i + "]: missing or overlong title";
+    if (!str(it.src, 600)) return file + "[" + i + "]: missing or overlong src";
+    if (!str(it.date, 10) || !/^\d{4}-\d{2}-\d{2}$/.test(it.date)) return file + "[" + i + "]: date must be YYYY-MM-DD";
+    if (typeof it.description !== "string" || it.description.length > 2000) return file + "[" + i + "]: description too long";
+    if (file === "gallery") {
+      if (!str(it.category, 40)) return file + "[" + i + "]: missing or overlong category";
+    } else if (file === "creations") {
+      if (it.type !== "song" && it.type !== "video") return file + "[" + i + "]: type must be song or video";
+      if (it.origin !== "original" && it.origin !== "favorite") return file + "[" + i + "]: origin must be original or favorite";
+      if (it.type === "video" && it.platform != null && !["file", "bilibili", "youtube"].includes(it.platform)) {
+        return file + "[" + i + "]: platform must be file, bilibili or youtube";
+      }
+      for (const k of ["cover", "poster"]) {
+        if (it[k] != null && (typeof it[k] !== "string" || it[k].length > 600)) return file + "[" + i + "]: " + k + " overlong";
+      }
+    }
+  }
+  return null;
+}
+
+async function readDataFile(env, url) {
+  const file = url.searchParams.get("file") || "";
+  const spec = DATA_FILES[file];
+  if (!spec) return editorJson(400, { error: "Unknown data file (allowed: " + Object.keys(DATA_FILES).join(", ") + ")" });
+
+  const noToken = requireToken(env);
+  if (noToken) return noToken;
+
+  const res = await ghFetch(env, "/" + spec.path + "?ref=" + GITHUB_BRANCH);
+  if (res.status === 404) return editorJson(404, { error: spec.path + " does not exist on GitHub yet" });
+  if (!res.ok) return editorJson(502, { error: await ghMessage(res) });
+
+  const data = await res.json();
+  return editorJson(200, { file, sha: data.sha, content: base64DecodeUtf8(data.content || "") });
+}
+
+async function saveDataFile(request, env) {
+  // CSRF line, mirroring publishPost.
+  const contentType = request.headers.get("Content-Type") || "";
+  if (!contentType.includes("application/json")) {
+    return editorJson(415, { error: "Content-Type must be application/json" });
+  }
+  const raw = await request.text();
+  if (raw.length > MAX_CONTENT_BYTES) return editorJson(413, { error: "Request body too large" });
+
+  let body;
+  try {
+    body = JSON.parse(raw);
+  } catch (error) {
+    return editorJson(400, { error: "Invalid JSON" });
+  }
+
+  const file = typeof body.file === "string" ? body.file : "";
+  const spec = DATA_FILES[file];
+  if (!spec) return editorJson(400, { error: "Unknown data file (allowed: " + Object.keys(DATA_FILES).join(", ") + ")" });
+  if (typeof body.content !== "string" || !body.content.trim()) return editorJson(400, { error: "Missing content" });
+  if (new TextEncoder().encode(body.content).length > MAX_CONTENT_BYTES) {
+    return editorJson(413, { error: spec.path + " exceeds 256KB" });
+  }
+
+  let items;
+  try {
+    items = JSON.parse(body.content);
+  } catch (error) {
+    return editorJson(400, { error: "content is not valid JSON" });
+  }
+  const invalid = validateItems(file, items);
+  if (invalid) return editorJson(400, { error: invalid });
+
+  const noToken = requireToken(env);
+  if (noToken) return noToken;
+
+  const payload = {
+    message: spec.label + ": update via admin",
+    content: base64EncodeUtf8(body.content),
+    branch: GITHUB_BRANCH
+  };
+  if (body.sha) payload.sha = String(body.sha);
+
+  const res = await ghFetch(env, "/" + spec.path, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+  if (res.status === 409 || res.status === 422) {
+    return editorJson(409, { error: "Changed on GitHub since you loaded it — press ↻ to reload and re-apply" });
+  }
+  if (!res.ok) return editorJson(502, { error: await ghMessage(res) });
+
+  const data = await res.json();
+  return editorJson(200, { success: true, sha: data.content && data.content.sha });
+}
+
 export async function handleEditor(request, env, ctx, url) {
   try {
     if (!(await verifyAccess(request, env))) return accessDenied();
@@ -292,6 +405,12 @@ export async function handleEditor(request, env, ctx, url) {
       if (request.method === "GET") return await readPost(env, url);
       if (request.method === "POST") return await publishPost(request, env);
       if (request.method === "DELETE") return await deletePost(env, url);
+      return editorJson(405, { error: "Method not allowed" });
+    }
+
+    if (url.pathname === "/admin/api/data") {
+      if (request.method === "GET") return await readDataFile(env, url);
+      if (request.method === "POST") return await saveDataFile(request, env);
       return editorJson(405, { error: "Method not allowed" });
     }
 

@@ -541,16 +541,48 @@ function markActiveRow() {
   });
 }
 
+// Off-site video embeds: a creations.json video entry with platform
+// "bilibili" or "youtube" carries the normal watch-page URL in src; the
+// player embed URL is derived here. YouTube goes through the official
+// no-cookie domain (privacy-enhanced mode).
+function videoEmbedUrl(item) {
+  const src = String(item.src || '');
+  if (item.platform === 'bilibili') {
+    const m = src.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]{10})/i);
+    if (!m) return '';
+    const p = src.match(/[?&]p=(\d+)/);
+    return 'https://player.bilibili.com/player.html?bvid=' + m[1]
+      + (p ? '&page=' + p[1] : '') + '&autoplay=0&danmaku=0&high_quality=1';
+  }
+  if (item.platform === 'youtube') {
+    const m = src.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    if (!m) return '';
+    return 'https://www.youtube-nocookie.com/embed/' + m[1] + '?rel=0';
+  }
+  return '';
+}
+
 function renderCreations(grid, featured) {
   // Deliberately no links back into the blog: the creations section stands
   // on its own. data-reveal + observeReveals() extend the scroll-in entrance
   // to dynamically rendered content.
   grid.innerHTML = featured.map((item) => {
     if (item.type === 'video') {
-      const poster = item.poster ? ` poster="${escapeHtml(item.poster)}"` : '';
+      const embed = videoEmbedUrl(item);
+      let player;
+      if (embed) {
+        player =
+          '<div class="creation-embed">' +
+          `<iframe src="${escapeHtml(embed)}" title="${escapeHtml(item.title)}" loading="lazy" ` +
+          'allowfullscreen allow="fullscreen; picture-in-picture" referrerpolicy="no-referrer-when-downgrade"></iframe>' +
+          '</div>';
+      } else {
+        const poster = item.poster ? ` poster="${escapeHtml(item.poster)}"` : '';
+        player = `<video class="creation-video" controls playsinline preload="metadata" src="${escapeHtml(item.src)}"${poster}></video>`;
+      }
       return (
         '<article class="creation-item" role="listitem" data-type="video" data-reveal>' +
-        `<video class="creation-video" controls playsinline preload="metadata" src="${escapeHtml(item.src)}"${poster}></video>` +
+        player +
         `<div class="creation-body"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div>` +
         '</article>'
       );

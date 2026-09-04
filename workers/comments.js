@@ -711,9 +711,13 @@ export default {
         return handleAnalyticsApi(request, env, url);
       }
 
-      // --- Markdown editor API (editor.js). Lives under /admin/ so the edge
-      // Access app covers the subpath and injects the JWT like on the page. ---
-      if (url.pathname === "/admin/api/posts" || url.pathname === "/admin/api/post") {
+      // --- Markdown editor + content data API (editor.js). Lives under
+      // /admin/ so the edge Access app covers the subpath and injects the
+      // JWT like on the page. ---
+      if (
+        url.pathname === "/admin/api/posts" || url.pathname === "/admin/api/post" ||
+        url.pathname === "/admin/api/data"
+      ) {
         return handleEditor(request, env, ctx, url);
       }
 

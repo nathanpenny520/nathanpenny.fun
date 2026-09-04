@@ -1,13 +1,15 @@
-// Self-hosted admin page served by GET /admin in comments.js: five tabs —
+// Self-hosted admin page served by GET /admin in comments.js: six tabs —
 // the image uploader, the markdown 写作台 (editor tab from editor_page.js),
-// the AI playground (ai_page.js), the analytics stats tab (stats_page.js)
-// and the comment-moderation tab (comments_tab.js) — all interpolated below.
-// Styling mirrors the site frontend (frosted nav +
+// the content data editors (content_page.js), the AI playground (ai_page.js),
+// the analytics stats tab (stats_page.js) and the comment-moderation tab
+// (comments_tab.js) — all interpolated below. Styling mirrors the site
+// frontend (frosted nav +
 // palette from styles/style.css). Self-contained (inline CSS/JS, noindex);
 // the only cross-origin asset is the site logo, loaded as an <img> from
 // nathanpenny.fun. This file is one template literal, so the page's own
 // script deliberately avoids backticks and ${}.
 import { EDITOR_TAB_HTML } from "./editor_page.js";
+import { CONTENT_TAB_HTML } from "./content_page.js";
 import { AI_TAB_HTML } from "./ai_page.js";
 import { STATS_TAB_HTML } from "./stats_page.js";
 import { COMMENTS_TAB_HTML } from "./comments_tab.js";
@@ -176,8 +178,8 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   *:focus-visible { outline: 2px solid var(--color-accent-strong); outline-offset: 2px; }
   @media (max-width: 820px) {
     :root { --nav-h: 48px; }
-    .nav-container { gap: 16px; }
-    .nav-links { gap: 18px; }
+    .nav-container { gap: 14px; }
+    .nav-links { gap: 13px; }
   }
   /* On tiny phones the four links + two icons need the brand text gone */
   @media (max-width: 520px) {
@@ -279,6 +281,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
     <div class="nav-links">
       <button id="tabBtnUpload" class="nav-link active" type="button">Images</button>
       <button id="tabBtnEditor" class="nav-link" type="button">Editor</button>
+      <button id="tabBtnContent" class="nav-link" type="button">Content</button>
       <button id="tabBtnAi" class="nav-link" type="button">AI</button>
       <button id="tabBtnStats" class="nav-link" type="button">Stats</button>
       <button id="tabBtnComments" class="nav-link" type="button">Comments</button>
@@ -338,6 +341,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   </dialog>
   </section>
   ${EDITOR_TAB_HTML}
+  ${CONTENT_TAB_HTML}
   ${AI_TAB_HTML}
   ${STATS_TAB_HTML}
   ${COMMENTS_TAB_HTML}
@@ -350,33 +354,38 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
 
   var tabUpload = document.getElementById("tabUpload");
   var tabEditor = document.getElementById("tabEditor");
+  var tabContent = document.getElementById("tabContent");
   var tabAi = document.getElementById("tabAi");
   var tabStats = document.getElementById("tabStats");
   var tabComments = document.getElementById("tabComments");
   var btnUpload = document.getElementById("tabBtnUpload");
   var btnEditor = document.getElementById("tabBtnEditor");
+  var btnContent = document.getElementById("tabBtnContent");
   var btnAi = document.getElementById("tabBtnAi");
   var btnStats = document.getElementById("tabBtnStats");
   var btnComments = document.getElementById("tabBtnComments");
 
   function showTab(which) {
-    var editorActive = which === "editor";
+    var editorActive = which === "editor" || which === "content";
     tabUpload.hidden = which !== "upload";
-    tabEditor.hidden = !editorActive;
+    tabEditor.hidden = which !== "editor";
+    tabContent.hidden = which !== "content";
     tabAi.hidden = which !== "ai";
     tabStats.hidden = which !== "stats";
     tabComments.hidden = which !== "comments";
     btnUpload.className = "nav-link" + (which === "upload" ? " active" : "");
-    btnEditor.className = "nav-link" + (editorActive ? " active" : "");
+    btnEditor.className = "nav-link" + (which === "editor" ? " active" : "");
+    btnContent.className = "nav-link" + (which === "content" ? " active" : "");
     btnAi.className = "nav-link" + (which === "ai" ? " active" : "");
     btnStats.className = "nav-link" + (which === "stats" ? " active" : "");
     btnComments.className = "nav-link" + (which === "comments" ? " active" : "");
-    // The editor's two-pane layout needs more width than the other tabs.
+    // The editor and content tabs' two-pane layouts need more width.
     document.querySelector("main").classList.toggle("ed-wide", editorActive);
   }
 
   btnUpload.addEventListener("click", function () { showTab("upload"); });
   btnEditor.addEventListener("click", function () { showTab("editor"); });
+  btnContent.addEventListener("click", function () { showTab("content"); });
   btnAi.addEventListener("click", function () { showTab("ai"); });
   btnStats.addEventListener("click", function () { showTab("stats"); });
   btnComments.addEventListener("click", function () { showTab("comments"); });

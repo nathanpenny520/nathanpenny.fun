@@ -3,9 +3,10 @@
 Cloudflare Worker behind `https://workers.nathanpenny.fun` (custom domain;
 the `*.workers.dev` URL also exists but admin routes reject it — see Access
 below). Feature groups: comments (+ moderation), 写作台 drafts with scheduled
-publishing, first-party analytics, the Access-protected
-`/admin` page (image uploader + markdown editor + AI playground + stats +
-comments tabs), the site avatar chat, and the AI proxy.
+publishing, content data editors (gallery/creations JSON), first-party
+analytics, the Access-protected
+`/admin` page (image uploader + markdown editor + content editors + AI
+playground + stats + comments tabs), the site avatar chat, and the AI proxy.
 
 ## Endpoints
 
@@ -33,6 +34,7 @@ comments tabs), the site avatar chat, and the AI proxy.
 | DELETE | `/admin/api/comment`           | Cloudflare Access       | Delete one comment (`?id=`) or all comments of one sender (`?ip_hash=`) |
 | GET/POST/DELETE | `/admin/api/ban[s]`   | Cloudflare Access       | The `banned_ips` blocklist `POST /comments` checks first |
 | GET/POST/DELETE | `/admin/api/draft[s]` | Cloudflare Access       | 写作台 drafts in D1, optional `publish_at` schedule (drafts.js) |
+| GET/POST | `/admin/api/data?file=…`      | Cloudflare Access       | Whitelisted repo JSON files (`gallery`, `creations`): read `{sha, content}` / validated commit via the Contents API |
 | POST   | `/api/ai/v1/chat/completions`  | Bearer API key          | OpenAI-compatible proxy (see AI proxy below)   |
 | GET    | `/api/ai/v1/models`            | Bearer API key          | Model catalog (the free Workers AI `cf-*` models) |
 | *      | anything else                  | —                       | 404                                            |
@@ -93,6 +95,32 @@ Drafts live in the D1 `drafts` table (slug PK, `meta` JSON, `body`,
   GitHub failures abort/retry on the next tick. Max 5 drafts per tick.
 - Requires the same `GITHUB_TOKEN` secret as the editor; without it the
   cron simply publishes nothing.
+
+## Content data files (gallery / creations)
+
+The admin **Content** tab (content_page.js) gives the Gallery and Creations
+pages the same editing experience as the blog, minus the CI step. The files
+`data/gallery.json` and `data/creations.json` stay the source of truth in
+the repo; a save commits the whole file to `main` and the static host serves
+JSON as-is, so changes are live in a minute or two (every change also lands
+in git history).
+
+- `GET /admin/api/data?file=gallery|creations` → `{file, sha, content}` —
+  the raw file text + blob sha.
+- `POST /admin/api/data` `{file, content, sha?}` — the content string is
+  parsed and every item validated server-side (`validateItems()` in
+  editor.js: required keys, `type`/`origin`/`platform` enums, date format,
+  length caps, 500 entries / 256KB). Valid → committed with the message
+  `<label>: update via admin`; stale sha → 409 (reload and re-apply).
+- File names are a whitelist (`DATA_FILES` in editor.js) — no arbitrary
+  repo paths. `data/achievements.json` joins the whitelist when the
+  achievements editor ships (phase 2).
+- Creations video entries: `platform` omitted or `file` renders the native
+  `<video>` player; `bilibili` / `youtube` make `main.js videoEmbedUrl()`
+  convert the watch-page URL into `player.bilibili.com` / (no-cookie)
+  `youtube-nocookie.com` embeds inside a `.creation-embed` 16:9 iframe.
+  The UI extracts and previews the ID as you type. Cross-origin players
+  cannot pause the site's audio mini-player (accepted limitation).
 
 ## Image uploader (图床)
 
