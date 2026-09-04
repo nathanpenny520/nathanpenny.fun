@@ -285,8 +285,10 @@ function sendNotifyEmail(env, name, content) {
   if (!env.NOTIFY) return null; // binding not deployed — feature is off
   const excerpt = String(content).slice(0, 300);
   return env.NOTIFY.send({
-    // `to` is omitted on purpose: the binding's destination_address is used.
+    // The runtime still wants the recipient spelled out in `to` — it does
+    // not fall back to the binding's destination_address by itself.
     from: { email: "noreply@nathanpenny.fun", name: "nathanpenny.fun" },
+    to: "notify@nathanpenny.fun",
     subject: `New comment from ${String(name).slice(0, 50)}`,
     text: `New comment on nathanpenny.fun\n\nFrom: ${name}\n\n${excerpt}`
   }).catch((error) => {
