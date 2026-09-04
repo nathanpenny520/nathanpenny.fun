@@ -12,49 +12,54 @@
 
 export const AI_TAB_HTML = `
 <style>
-  #tabAi .ai-keyrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 10px; }
+  #tabAi .ai-settings {
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px;
+    padding: 12px; margin: 0 0 12px; display: grid; gap: 10px;
+  }
+  #tabAi .ai-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   #tabAi input, #tabAi select {
     font: inherit; font-size: 13px; padding: 6px 9px;
-    border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text);
+    border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); color: var(--color-text);
   }
-  #tabAi .ai-keyrow input[type="password"] { flex: 1 1 220px; }
+  #tabAi .ai-row input[type="password"] { flex: 1 1 220px; }
   #tabAi select { min-width: 250px; }
   #aiChat {
     display: flex; flex-direction: column; gap: 10px;
     height: min(56vh, 460px); overflow-y: auto;
-    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px;
     padding: 14px; margin: 0 0 10px;
   }
   .ai-msg { max-width: 85%; }
   .ai-msg.user { align-self: flex-end; }
   .ai-msg.assistant { align-self: flex-start; }
-  .ai-who { font-size: 11.5px; color: var(--muted); margin: 0 0 3px 2px; }
+  .ai-who { font-size: 11.5px; color: var(--color-text-muted); margin: 0 0 3px 2px; }
   .ai-msg.user .ai-who { text-align: right; }
   .ai-text {
     white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.55;
-    background: var(--row-hover); border: 1px solid var(--line);
+    background: var(--color-surface-alt); border: 1px solid var(--color-border);
     border-radius: 12px; padding: 8px 12px;
   }
-  .ai-msg.user .ai-text { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .ai-text.err { color: var(--err); background: var(--card); }
+  .ai-msg.user .ai-text { background: var(--color-accent-strong); border-color: var(--color-accent-strong); color: #fff; }
+  .ai-text.err { color: var(--color-danger); background: var(--color-surface); }
   .ai-form { display: flex; gap: 8px; }
   #aiInput { flex: 1 1 auto; }
-  .ai-note { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+  .ai-note { font-size: 12.5px; color: var(--color-text-muted); margin: 10px 0 0; }
 </style>
 <section id="tabAi" hidden>
   <p class="hint">AI playground over your own proxy (/api/ai/v1) — free Workers&nbsp;AI models, billed in Neurons (10k/day free). The key lives in this browser only (localStorage).</p>
 
-  <div class="ai-keyrow">
-    <input id="aiKey" type="password" placeholder="npai_… API key" autocomplete="off">
-    <button id="aiKeySave" class="primary" type="button">Save key</button>
-    <button id="aiKeyClear" type="button">Forget</button>
-    <span id="aiKeyStatus" class="status"></span>
-  </div>
-
-  <div class="ai-keyrow">
-    <label class="meta" for="aiModel">Model</label>
-    <select id="aiModel" aria-label="Model"></select>
-    <button id="aiReloadModels" type="button" title="Reload model list">↻</button>
+  <div class="ai-settings">
+    <div class="ai-row">
+      <input id="aiKey" type="password" placeholder="npai_… API key" autocomplete="off">
+      <button id="aiKeySave" class="primary" type="button">Save key</button>
+      <button id="aiKeyClear" type="button">Forget</button>
+      <span id="aiKeyStatus" class="status"></span>
+    </div>
+    <div class="ai-row">
+      <label class="meta" for="aiModel">Model</label>
+      <select id="aiModel" aria-label="Model"></select>
+      <button id="aiReloadModels" type="button" title="Reload model list">↻</button>
+    </div>
   </div>
 
   <div id="aiChat" aria-live="polite"></div>
