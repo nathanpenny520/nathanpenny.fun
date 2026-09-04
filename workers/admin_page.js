@@ -1,7 +1,8 @@
-// Self-hosted admin page served by GET /admin in comments.js: four tabs —
+// Self-hosted admin page served by GET /admin in comments.js: five tabs —
 // the image uploader, the markdown 写作台 (editor tab from editor_page.js),
-// the AI playground (ai_page.js) and the analytics stats tab (stats_page.js)
-// — all interpolated below. Styling mirrors the site frontend (frosted nav +
+// the AI playground (ai_page.js), the analytics stats tab (stats_page.js)
+// and the comment-moderation tab (comments_tab.js) — all interpolated below.
+// Styling mirrors the site frontend (frosted nav +
 // palette from styles/style.css). Self-contained (inline CSS/JS, noindex);
 // the only cross-origin asset is the site logo, loaded as an <img> from
 // nathanpenny.fun. This file is one template literal, so the page's own
@@ -9,6 +10,7 @@
 import { EDITOR_TAB_HTML } from "./editor_page.js";
 import { AI_TAB_HTML } from "./ai_page.js";
 import { STATS_TAB_HTML } from "./stats_page.js";
+import { COMMENTS_TAB_HTML } from "./comments_tab.js";
 
 export const ADMIN_PAGE_HTML = `<!doctype html>
 <html lang="en">
@@ -279,6 +281,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
       <button id="tabBtnEditor" class="nav-link" type="button">Editor</button>
       <button id="tabBtnAi" class="nav-link" type="button">AI</button>
       <button id="tabBtnStats" class="nav-link" type="button">Stats</button>
+      <button id="tabBtnComments" class="nav-link" type="button">Comments</button>
     </div>
     <a class="nav-icon" href="https://nathanpenny.fun/" target="_blank" rel="noopener" title="Open the site" aria-label="Open the site">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><path d="M15 3h6v6"></path><path d="M10 14L21 3"></path></svg>
@@ -337,6 +340,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   ${EDITOR_TAB_HTML}
   ${AI_TAB_HTML}
   ${STATS_TAB_HTML}
+  ${COMMENTS_TAB_HTML}
 </main>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -348,10 +352,12 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   var tabEditor = document.getElementById("tabEditor");
   var tabAi = document.getElementById("tabAi");
   var tabStats = document.getElementById("tabStats");
+  var tabComments = document.getElementById("tabComments");
   var btnUpload = document.getElementById("tabBtnUpload");
   var btnEditor = document.getElementById("tabBtnEditor");
   var btnAi = document.getElementById("tabBtnAi");
   var btnStats = document.getElementById("tabBtnStats");
+  var btnComments = document.getElementById("tabBtnComments");
 
   function showTab(which) {
     var editorActive = which === "editor";
@@ -359,10 +365,12 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
     tabEditor.hidden = !editorActive;
     tabAi.hidden = which !== "ai";
     tabStats.hidden = which !== "stats";
+    tabComments.hidden = which !== "comments";
     btnUpload.className = "nav-link" + (which === "upload" ? " active" : "");
     btnEditor.className = "nav-link" + (editorActive ? " active" : "");
     btnAi.className = "nav-link" + (which === "ai" ? " active" : "");
     btnStats.className = "nav-link" + (which === "stats" ? " active" : "");
+    btnComments.className = "nav-link" + (which === "comments" ? " active" : "");
     // The editor's two-pane layout needs more width than the other tabs.
     document.querySelector("main").classList.toggle("ed-wide", editorActive);
   }
@@ -371,6 +379,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   btnEditor.addEventListener("click", function () { showTab("editor"); });
   btnAi.addEventListener("click", function () { showTab("ai"); });
   btnStats.addEventListener("click", function () { showTab("stats"); });
+  btnComments.addEventListener("click", function () { showTab("comments"); });
 
   // Frosted-nav border/shadow once the page scrolls (site's .nav-scrolled).
   var adminNav = document.getElementById("adminNav");

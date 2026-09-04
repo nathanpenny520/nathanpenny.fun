@@ -8,10 +8,11 @@
   "name": "nathanpenny-api",
   "main": "comments.js",
   "compatibility_date": "2026-07-09",
-  // Nightly prune of ai_logs / ai_usage / comment_rate (pruneTables in
-  // comments.js). 03:17 UTC — off-peak for the APAC audience.
+  // Two triggers: the 15-min one publishes due scheduled drafts (drafts.js),
+  // the nightly one prunes ai_logs / ai_usage / comment_rate / analytics
+  // (pruneTables in comments.js). 03:17 UTC — off-peak for the APAC audience.
   "triggers": {
-    "crons": ["17 3 * * *"]
+    "crons": ["17 3 * * *", "*/15 * * * *"]
   },
   "workers_dev": true,
   "preview_urls": false,

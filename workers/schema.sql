@@ -46,12 +46,16 @@ CREATE INDEX IF NOT EXISTS idx_ai_logs_created ON ai_logs (created_at);
 
 -- Tables for the comment feature (created manually in prod 2026-07; DDL
 -- dumped verbatim from prod via sqlite_master, wrapped in IF NOT EXISTS so
--- this file can recreate the whole database from scratch).
+-- this file can recreate the whole database from scratch). ip_hash is the
+-- salted one-way hash of the commenter's IP (moderation below) — the
+-- address itself is never stored. Existing prod databases were migrated with:
+--   ALTER TABLE comments ADD COLUMN ip_hash TEXT NOT NULL DEFAULT '';
 CREATE TABLE IF NOT EXISTS comments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   email TEXT NOT NULL,
   content TEXT NOT NULL,
+  ip_hash TEXT NOT NULL DEFAULT '',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -149,4 +153,27 @@ CREATE TABLE IF NOT EXISTS analytics_rate (
   window_start INTEGER NOT NULL,
   count INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (ip, window_start)
+);
+
+-- Comment moderation (workers/moderation.js): the admin blocklist. ip_hash
+-- is the salted one-way hash of the commenter's IP (same ANALYTICS_SALT
+-- secret as the analytics visitor hash) — the IP itself is never stored, and
+-- POST /comments rejects senders whose hash is listed here.
+CREATE TABLE IF NOT EXISTS banned_ips (
+  ip_hash TEXT PRIMARY KEY,
+  note TEXT NOT NULL DEFAULT '',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 写作台 drafts (workers/drafts.js): form metadata + markdown body held in
+-- D1 until published — deliberately NOT in the public repo, and not in the
+-- publicly-readable R2 bucket. publish_at is an epoch-seconds schedule; the
+-- 15-min cron publishes due drafts through the editor's GitHub path and
+-- deletes the row on success.
+CREATE TABLE IF NOT EXISTS drafts (
+  slug TEXT PRIMARY KEY,
+  meta TEXT NOT NULL,               -- JSON: {title,date,category,tags,description}
+  body TEXT NOT NULL,
+  publish_at INTEGER,               -- epoch seconds; NULL = plain draft
+  updated_at INTEGER NOT NULL
 );

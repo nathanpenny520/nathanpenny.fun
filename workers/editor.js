@@ -49,7 +49,7 @@ function base64DecodeUtf8(b64) {
 
 // All editor GitHub calls funnel through here so the token can never leak
 // into logs or error responses — only status codes and GitHub's message do.
-async function ghFetch(env, path, init) {
+export async function ghFetch(env, path, init) {
   return fetch(CONTENTS_API + path, {
     method: (init && init.method) || "GET",
     body: init && init.body,
@@ -64,7 +64,7 @@ async function ghFetch(env, path, init) {
 }
 
 // GitHub error bodies never echo the token, but cap the relayed message anyway.
-async function ghMessage(res) {
+export async function ghMessage(res) {
   try {
     const data = await res.json();
     return data && data.message ? String(data.message).slice(0, 200) : "GitHub API " + res.status;
@@ -75,7 +75,7 @@ async function ghMessage(res) {
 
 // Mirror of the generator's hard rules — every failure here would otherwise
 // make tools/gen_post_pages.py sys.exit and leave a red CI run behind.
-function validatePost(content) {
+export function validatePost(content) {
   if (typeof content !== "string" || content.length === 0) return "Content is empty";
   if (content.charCodeAt(0) === 0xfeff) return "Content starts with a BOM — the generator requires frontmatter at byte 0; remove it";
   if (!content.startsWith("---\n")) return "Must start with frontmatter (--- on the first line)";
@@ -111,7 +111,7 @@ function validatePost(content) {
 // one line each so a stray newline can never break the YAML block; empty
 // description/tags lines are omitted, matching the generator's fallbacks.
 // Key order is canonical: title, date, description, category, tags.
-function composePost(meta, body) {
+export function composePost(meta, body) {
   const oneLine = (v) => String(v == null ? "" : v).replace(/[\r\n]+/g, " ").trim();
   const lines = [
     "---",
@@ -205,40 +205,56 @@ async function publishPost(request, env) {
     return editorJson(400, { error: "Provide {meta, body} or a full content string" });
   }
 
+  const result = await commitPost(env, slug, content, { sha: body.sha || null });
+  if (!result.ok) return editorJson(result.status, { error: result.error });
+  return editorJson(result.created ? 201 : 200, {
+    success: true,
+    created: result.created,
+    sha: result.sha,
+    commit_url: result.commit_url
+  });
+}
+
+// Commit a fully-composed post document to GitHub. Shared by the interactive
+// editor API and the scheduled-draft publisher (drafts.js) so both paths
+// validate, size-cap and commit identically. Returns a plain result object
+// instead of a Response — the cron has no request/response context to reuse.
+export async function commitPost(env, slug, content, opts) {
+  const options = opts || {};
   const contentError = validatePost(content);
-  if (contentError) return editorJson(400, { error: contentError });
+  if (contentError) return { ok: false, status: 400, error: contentError };
 
   if (new TextEncoder().encode(content).length > MAX_CONTENT_BYTES) {
-    return editorJson(413, { error: "Post exceeds 256KB" });
+    return { ok: false, status: 413, error: "Post exceeds 256KB" };
+  }
+  if (!env.GITHUB_TOKEN) {
+    return { ok: false, status: 503, error: "GITHUB_TOKEN not configured — run: npx wrangler secret put GITHUB_TOKEN" };
   }
 
-  const noToken = requireToken(env);
-  if (noToken) return noToken;
-
-  const creating = !body.sha;
+  const creating = !options.sha;
   const payload = {
-    message: (creating ? "publish: " : "update: ") + slug + " (editor)",
+    message: options.message || (creating ? "publish: " : "update: ") + slug + " (editor)",
     content: base64EncodeUtf8(content),
     branch: GITHUB_BRANCH
   };
-  if (!creating) payload.sha = String(body.sha);
+  if (!creating) payload.sha = String(options.sha);
 
   const res = await ghFetch(env, "/posts/" + encodeURIComponent(slug) + ".md", {
     method: "PUT",
     body: JSON.stringify(payload)
   });
   if (res.status === 409 || res.status === 422) {
-    return editorJson(409, { error: "Changed on GitHub since you loaded it — reload the post and try again" });
+    return { ok: false, status: 409, error: "Changed on GitHub since you loaded it — reload the post and try again" };
   }
-  if (!res.ok) return editorJson(502, { error: await ghMessage(res) });
+  if (!res.ok) return { ok: false, status: 502, error: await ghMessage(res) };
 
   const data = await res.json();
-  return editorJson(res.status === 201 ? 201 : 200, {
-    success: true,
+  return {
+    ok: true,
     created: res.status === 201,
     sha: data.content && data.content.sha,
     commit_url: data.commit && data.commit.html_url
-  });
+  };
 }
 
 async function deletePost(env, url) {

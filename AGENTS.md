@@ -1,10 +1,12 @@
 # AGENTS.md
 
-This file provides guidance to Codex when working with code in this repository.
+Guidance for Codex and other AI agents working in this repository lives in
+[CLAUDE.md](CLAUDE.md) — read that file; everything there applies here too.
 
-## Overview
-
-A hand-rolled static personal website + blog (`nathanpenny.fun`) with no build step, no package.json, and no framework. Frontend is plain HTML/CSS/vanilla JS; the only backend is a Cloudflare Worker (`workers/comments.js`) backed by a Cloudflare D1 SQLite database for the comments. All site text/content is authored directly in the HTML files.
+(This file used to hand-copy CLAUDE.md and drifted out of sync; it is now a
+deliberate pointer so the two can never disagree again. Site docs of record:
+[CLAUDE.md](CLAUDE.md) for the repo architecture and [workers/README.md](workers/README.md)
+for the Cloudflare Worker backend.)
 
 ## Commands
 

@@ -20,11 +20,16 @@
 //   DELETE /admin/api/post      delete a post (slug + sha query params)
 //   GET    /admin/api/stats?days=…  analytics dashboard data (analytics.js)
 //   GET    /admin/api/visitor?id=…  one visitor's sessions + timeline (analytics.js)
+//   GET/DELETE /admin/api/comment[s]  moderation list + delete (moderation.js)
+//   GET/POST/DELETE /admin/api/ban[s]  banned-sender blocklist (moderation.js)
+//   GET/POST/DELETE /admin/api/draft[s]  写作台 drafts in D1 (drafts.js)
 
 import { ADMIN_PAGE_HTML } from "./admin_page.js";
 import { handleAi, consumeQuota, writeLog, extractUsage, upstreamUrl } from "./ai_proxy.js";
 import { handleEditor } from "./editor.js";
 import { handleHit, handleAnalyticsApi } from "./analytics.js";
+import { handleModeration } from "./moderation.js";
+import { handleDrafts, publishDueDrafts } from "./drafts.js";
 import { verifyAccess, accessDenied } from "./access.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -112,6 +117,29 @@ async function bumpRateWindow(env, table, ip, nowMs, maxPerWindow, windowSeconds
 
 function checkRateLimit(env, ip, nowMs) {
   return bumpRateWindow(env, "comment_rate", ip, nowMs, RATE_MAX_PER_WINDOW, RATE_WINDOW_SECONDS);
+}
+
+// Salted one-way hash of the commenter's IP (same ANALYTICS_SALT secret as
+// the analytics visitor hash). Stored on every comment and checked against
+// banned_ips before anything else — the raw address is never written
+// anywhere, keeping the privacy policy's "no IP in our database" promise
+// intact while still letting the owner blocklist an abusive sender.
+async function sha256Hex(text) {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function ipHashOf(env, ip) {
+  return sha256Hex((env.ANALYTICS_SALT || "") + "\n" + ip).then((h) => h.slice(0, 16));
+}
+
+async function isBannedSender(env, ipHash) {
+  try {
+    const row = await env.DB.prepare("SELECT 1 FROM banned_ips WHERE ip_hash = ?1").bind(ipHash).first();
+    return !!row;
+  } catch (error) {
+    return false; // fail open, like the rate limiter
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -689,6 +717,17 @@ export default {
         return handleEditor(request, env, ctx, url);
       }
 
+      // --- Comment moderation + 写作台 drafts (Access-verified inside). ---
+      if (
+        url.pathname === "/admin/api/comments" || url.pathname === "/admin/api/comment" ||
+        url.pathname === "/admin/api/ban" || url.pathname === "/admin/api/bans"
+      ) {
+        return handleModeration(request, env, url);
+      }
+      if (url.pathname === "/admin/api/draft" || url.pathname === "/admin/api/drafts") {
+        return handleDrafts(request, env, url);
+      }
+
       // --- Cloudflare Access-protected admin surface (image uploader + editor page) ---
       if (url.pathname === "/admin" && request.method === "GET") {
         if (!(await verifyAccess(request, env))) return accessDenied();
@@ -731,9 +770,20 @@ export default {
         }
 
         if (request.method === "POST") {
-          // Cheap guard first: cap attempts per client IP before doing any
-          // parsing, so junk traffic never reaches siteverify or D1 writes.
           const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+          const ipHash = await ipHashOf(env, ip);
+
+          // Banned senders are rejected before any parsing, Turnstile work
+          // or rate-limit write — one indexed D1 read, fail-open.
+          if (await isBannedSender(env, ipHash)) {
+            return new Response(
+              JSON.stringify({ error: "Your comment cannot be posted." }),
+              { status: 403, headers: corsHeaders }
+            );
+          }
+
+          // Cheap guard next: cap attempts per client IP before doing any
+          // parsing, so junk traffic never reaches siteverify or D1 writes.
           if (!(await checkRateLimit(env, ip, Date.now()))) {
             return new Response(
               JSON.stringify({ error: "Too many comments posted. Please wait a minute and try again." }),
@@ -770,8 +820,8 @@ export default {
           }
 
           await env.DB.prepare(
-            "INSERT INTO comments (name, email, content) VALUES (?, ?, ?)"
-          ).bind(name, email, content).run();
+            "INSERT INTO comments (name, email, content, ip_hash) VALUES (?, ?, ?, ?)"
+          ).bind(name, email, content, ipHash).run();
 
           // Fire-and-forget: never delays or fails the comment response, and
           // rejected comments (rate limit / Turnstile) never reach this line.
@@ -805,6 +855,17 @@ export default {
   },
 
   async scheduled(controller, env, ctx) {
+    // Two triggers: the 15-minute one publishes due scheduled drafts (see
+    // drafts.js), the nightly one prunes the append-only tables.
+    if (controller.cron === "*/15 * * * *") {
+      try {
+        const published = await publishDueDrafts(env);
+        if (published) console.log("scheduled publish: " + published + " draft(s)");
+      } catch (error) {
+        console.error("scheduled publish failed:", error);
+      }
+      return;
+    }
     try {
       await pruneTables(env);
       console.log("cron prune done");

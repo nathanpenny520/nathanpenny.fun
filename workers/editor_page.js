@@ -29,6 +29,15 @@ export const EDITOR_TAB_HTML = `
   }
   #edList li { padding: 8px 10px; margin-bottom: 6px; cursor: pointer; }
   #edList li.active { border-color: var(--color-accent); background: var(--color-surface-alt); }
+  .ed-drafts-head {
+    display: flex; align-items: center; justify-content: space-between; margin: 12px 0 6px;
+  }
+  .ed-drafts-head span {
+    font-size: 11.5px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  #edDrafts li { padding: 8px 10px; margin-bottom: 6px; cursor: pointer; }
+  #edDrafts li.active { border-color: var(--color-accent); background: var(--color-surface-alt); }
+  #edScheduleAt { flex: 0 1 185px; }
   .ed-meta {
     display: grid; gap: 8px; margin: 0 0 10px;
     background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px;
@@ -115,6 +124,12 @@ export const EDITOR_TAB_HTML = `
       <input id="edSearch" type="text" placeholder="Filter by slug…" autocomplete="off" spellcheck="false" aria-label="Filter posts">
       <ul id="edList"></ul>
       <p class="empty" id="edListEmpty" hidden>No posts yet.</p>
+      <div class="ed-drafts-head">
+        <span>Drafts</span>
+        <button id="edDraftRefresh" type="button" title="Refresh drafts">↻</button>
+      </div>
+      <ul id="edDrafts"></ul>
+      <p class="empty" id="edDraftsEmpty" hidden>No drafts — "Save draft" stores one here.</p>
     </aside>
     <div class="ed-main">
       <div class="ed-meta">
@@ -158,6 +173,9 @@ export const EDITOR_TAB_HTML = `
         <button id="edPreviewBtn" type="button" aria-pressed="false">Preview</button>
         <button id="edImgBtn" type="button" title="Upload an image and insert markdown">Upload image</button>
         <input id="edImgInput" type="file" hidden accept="image/*">
+        <button id="edDraftSave" type="button" title="Store this post as a draft in the private database (not the public repo)">Save draft</button>
+        <input id="edScheduleAt" type="datetime-local" aria-label="Schedule publish time" title="When to publish">
+        <button id="edScheduleBtn" type="button" title="Save the draft and schedule it for publishing">Schedule</button>
         <button id="edPublishBtn" type="button" class="primary">Publish</button>
         <button id="edDeleteBtn" type="button" class="danger" hidden>Delete</button>
       </div>
@@ -215,8 +233,14 @@ export const EDITOR_TAB_HTML = `
     var edImgInput = document.getElementById("edImgInput");
     var edImportBtn = document.getElementById("edImportBtn");
     var edImportInput = document.getElementById("edImportInput");
+    var edDrafts = document.getElementById("edDrafts");
+    var edDraftsEmpty = document.getElementById("edDraftsEmpty");
+    var edDraftSave = document.getElementById("edDraftSave");
+    var edScheduleAt = document.getElementById("edScheduleAt");
+    var edScheduleBtn = document.getElementById("edScheduleBtn");
 
     var edSha = null;      // GitHub blob sha of the loaded post (null = creating)
+    var currentDraft = null; // slug of the loaded server-side draft, if any
     var editing = false;   // true once a real post is loaded or created
     var dirty = false;
     var previewOn = false;
@@ -637,6 +661,7 @@ export const EDITOR_TAB_HTML = `
         fillForm(doc.meta);
         edContent.value = doc.body;
         edSha = r.data.sha;
+        currentDraft = null;
         editing = true;
         dirty = false;
         edDeleteBtn.hidden = false;
@@ -652,6 +677,112 @@ export const EDITOR_TAB_HTML = `
         items[i].classList.toggle("active", items[i].dataset.slug === slug);
       }
     }
+
+    // --- server-side drafts (D1) + scheduled publishing ----------------------
+
+    function loadDrafts() {
+      api("/admin/api/drafts").then(function (r) {
+        if (!r.ok) return;
+        var drafts = r.data.drafts || [];
+        edDrafts.textContent = "";
+        edDraftsEmpty.hidden = drafts.length > 0;
+        drafts.forEach(function (d) {
+          var li = document.createElement("li");
+          li.dataset.slug = d.slug;
+          if (d.slug === currentDraft) li.classList.add("active");
+          var main = document.createElement("div");
+          main.className = "row-main";
+          var name = document.createElement("span");
+          name.className = "name";
+          name.textContent = d.title || d.slug;
+          var meta = document.createElement("span");
+          meta.className = "meta";
+          var when = "saved " + new Date((d.updated_at || 0) * 1000).toLocaleString();
+          if (d.publish_at) when += " · ⏰ " + new Date(d.publish_at * 1000).toLocaleString();
+          meta.textContent = when;
+          var del = document.createElement("button");
+          del.type = "button";
+          del.className = "danger";
+          del.textContent = "🗑";
+          del.title = "Delete draft";
+          del.addEventListener("click", function (e) {
+            e.stopPropagation();
+            if (!window.confirm("Delete draft " + d.slug + "?")) return;
+            api("/admin/api/draft?slug=" + encodeURIComponent(d.slug), { method: "DELETE" }).then(function (r) {
+              if (!r.ok) { toast(r.data.error || "Delete failed"); return; }
+              if (currentDraft === d.slug) currentDraft = null;
+              toast("Draft deleted");
+              loadDrafts();
+            }).catch(function () { toast("Delete failed"); });
+          });
+          main.appendChild(name);
+          main.appendChild(meta);
+          main.appendChild(del);
+          li.appendChild(main);
+          li.addEventListener("click", function () { openDraft(d.slug); });
+          edDrafts.appendChild(li);
+        });
+      }).catch(function () { /* drafts are optional */ });
+    }
+
+    function openDraft(slug) {
+      if (!confirmDiscard()) return;
+      setStatus("Loading draft " + escapeHtml(slug) + " …", "");
+      api("/admin/api/draft?slug=" + encodeURIComponent(slug)).then(function (r) {
+        if (!r.ok) { setStatus(r.data.error || ("HTTP " + r.status), "err"); return; }
+        fillForm(r.data.meta || {});
+        edContent.value = r.data.body || "";
+        edSlug.value = r.data.slug;
+        edSlug.disabled = false;
+        edSha = null;
+        editing = false;
+        dirty = false;
+        currentDraft = r.data.slug;
+        edDeleteBtn.hidden = true;
+        setActiveListRow(null);
+        setStatus("Draft loaded — publish when ready, or schedule it below", "ok");
+        renderPreview();
+      }).catch(function (e) { setStatus(e.message, "err"); });
+    }
+
+    function saveDraft(publishAt, done) {
+      var slug = edSlug.value.trim();
+      if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(slug)) {
+        setStatus("Set a valid slug first (lowercase letters, digits, hyphens)", "err");
+        return;
+      }
+      api("/admin/api/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: slug, meta: readMeta(), body: edContent.value, publish_at: publishAt || null })
+      }).then(function (r) {
+        if (!r.ok) { setStatus(r.data.error || ("HTTP " + r.status), "err"); return; }
+        currentDraft = slug;
+        dirty = false;
+        loadDrafts();
+        if (done) done(slug, publishAt);
+      }).catch(function (e) { setStatus(e.message || "Network error", "err"); });
+    }
+
+    edDraftSave.addEventListener("click", function () {
+      saveDraft(null, function () {
+        setStatus("Draft saved — it lives in the private database, not the public repo", "ok");
+        toast("Draft saved");
+      });
+    });
+
+    edScheduleBtn.addEventListener("click", function () {
+      var when = edScheduleAt.value;
+      var ts = when ? Math.floor(new Date(when).getTime() / 1000) : 0;
+      if (!ts) { setStatus("Pick a date and time to schedule", "err"); return; }
+      if (ts < Date.now() / 1000 - 60) { setStatus("That time is already in the past", "err"); return; }
+      saveDraft(ts, function (slug, at) {
+        setStatus("Scheduled: publishes " + new Date(at * 1000).toLocaleString() + " (checked every 15 min)", "ok");
+        toast("Publish scheduled");
+      });
+    });
+
+    document.getElementById("edDraftRefresh").addEventListener("click", loadDrafts);
 
     // --- local .md import ---------------------------------------------------
 
@@ -687,6 +818,7 @@ export const EDITOR_TAB_HTML = `
     edNewBtn.addEventListener("click", function () {
       if (!confirmDiscard()) return;
       edSha = null;
+      currentDraft = null;
       editing = false;
       dirty = false;
       edSlug.disabled = false;
@@ -746,7 +878,12 @@ export const EDITOR_TAB_HTML = `
         edSlug.disabled = true;
         edDeleteBtn.hidden = false;
         clearNewDraft();
+        if (currentDraft === slug) {
+          currentDraft = null;
+          api("/admin/api/draft?slug=" + encodeURIComponent(slug), { method: "DELETE" }).catch(function () {});
+        }
         setActiveListRow(slug);
+        loadDrafts();
         var live = "https://nathanpenny.fun/blog/" + encodeURIComponent(slug) + "/";
         var html = (r.data.created ? "Created " : "Updated ") + escapeHtml(slug) +
           " — live in ~1 minute (CI): <a target='_blank' rel='noopener' href='" + live + "'>" + escapeHtml(slug) + "</a>";
@@ -913,6 +1050,7 @@ export const EDITOR_TAB_HTML = `
 
     fillForm({}); // sets today's date as the default
     loadList();
+    loadDrafts();
   }
 
   // This script sits inside <main>, before the shared #toast element, so wait

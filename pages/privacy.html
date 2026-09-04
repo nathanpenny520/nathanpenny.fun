@@ -66,7 +66,7 @@
 
       <h3 class="section-title">What this site collects</h3>
       <div class="blog-card">
-        <p><strong>Comments (when you post one).</strong> The name and text you write are shown publicly on the site. Your email address is stored with the comment but never displayed, never used for mailing, and never shared. Comments live in a Cloudflare D1 database and are removed on request (see <em>Your choices</em> below). Before a comment is accepted, Cloudflare Turnstile runs a human check, and per-IP rate limiting blocks spam floods.</p>
+        <p><strong>Comments (when you post one).</strong> The name and text you write are shown publicly on the site. Your email address is stored with the comment but never displayed, never used for mailing, and never shared. Comments live in a Cloudflare D1 database and are removed on request (see <em>Your choices</em> below). Before a comment is accepted, Cloudflare Turnstile runs a human check, and per-IP rate limiting blocks spam floods. To keep abusive senders out, each submission also stores a one-way, salted hash of the sender's network address — never the address itself — which the site owner can blocklist.</p>
       </div>
       <div class="blog-card">
         <p><strong>First-party analytics (on every page).</strong> This site measures its own traffic with a small script that reports each pageview to this site's own Cloudflare Worker — no third party is involved. Each pageview records: the page path, the site that referred you (if any), an approximate country derived by Cloudflare's edge, your device type and browser/OS as derived from the user-agent string, your browser language and timezone, and how long the page stayed visible.</p>

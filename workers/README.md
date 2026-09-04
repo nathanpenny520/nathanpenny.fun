@@ -2,9 +2,10 @@
 
 Cloudflare Worker behind `https://workers.nathanpenny.fun` (custom domain;
 the `*.workers.dev` URL also exists but admin routes reject it — see Access
-below). Feature groups: comments, first-party analytics, the Access-protected
-`/admin` page (image uploader + markdown editor + AI playground + stats
-tabs), the site avatar chat, and the AI proxy.
+below). Feature groups: comments (+ moderation), 写作台 drafts with scheduled
+publishing, first-party analytics, the Access-protected
+`/admin` page (image uploader + markdown editor + AI playground + stats +
+comments tabs), the site avatar chat, and the AI proxy.
 
 ## Endpoints
 
@@ -28,6 +29,10 @@ tabs), the site avatar chat, and the AI proxy.
 | DELETE | `/admin/api/post?slug=…&sha=…` | Cloudflare Access       | Delete a post (CI prunes its generated page)   |
 | GET    | `/admin/api/stats?days=N&self=1` | Cloudflare Access     | Analytics dashboard data for the Stats tab (7/30/90d; `self=1` includes the owner's flagged visits) |
 | GET    | `/admin/api/visitor?id=…`      | Cloudflare Access       | One visitor's profile + sessions + page timeline |
+| GET    | `/admin/api/comments?offset=0` | Cloudflare Access       | Moderation list: every comment incl. `email` + `ip_hash` (50/page; moderation.js) |
+| DELETE | `/admin/api/comment`           | Cloudflare Access       | Delete one comment (`?id=`) or all comments of one sender (`?ip_hash=`) |
+| GET/POST/DELETE | `/admin/api/ban[s]`   | Cloudflare Access       | The `banned_ips` blocklist `POST /comments` checks first |
+| GET/POST/DELETE | `/admin/api/draft[s]` | Cloudflare Access       | 写作台 drafts in D1, optional `publish_at` schedule (drafts.js) |
 | POST   | `/api/ai/v1/chat/completions`  | Bearer API key          | OpenAI-compatible proxy (see AI proxy below)   |
 | GET    | `/api/ai/v1/models`            | Bearer API key          | Model catalog (the free Workers AI `cf-*` models) |
 | *      | anything else                  | —                       | 404                                            |
@@ -40,6 +45,54 @@ tabs), the site avatar chat, and the AI proxy.
    this account, so the cap lives in D1.)
 2. **Cloudflare Turnstile** — token verified server-side; failure → 403.
    See the Turnstile section below for keys/hostnames.
+
+## Comment moderation (评论审核)
+
+The `/admin` **Comments** tab (comments_tab.js) is the management entrance
+the public site deliberately lacks. Backed by moderation.js:
+
+- `GET /admin/api/comments?offset=N` — every comment **including** `email`
+  and `ip_hash` (the public `GET /comments` withholds them), 50 per page,
+  newest first, with a total count.
+- `DELETE /admin/api/comment?id=…` — delete one comment (permanent).
+- `DELETE /admin/api/comment?ip_hash=…` — bulk-delete every comment of one
+  sender.
+- `GET/POST/DELETE /admin/api/ban[s]` — the `banned_ips` blocklist
+  (`{ip_hash, note}`). `POST /comments` checks it **before** rate limiting
+  and Turnstile; banned senders get a 403 "Your comment cannot be posted."
+  The check fails open on D1 trouble, like the rate limiter.
+
+Privacy: `ip_hash` is a 16-hex salted one-way hash of the sender's IP —
+`sha256(ANALYTICS_SALT + "\n" + ip)`, the same salt secret the analytics
+visitor hash uses. The raw address is never stored anywhere, so the
+`/privacy` promise ("no IP in our database") stays true; the hash still lets
+the owner recognize and blocklist an abusive sender. `POST /comments` stores
+the hash on every new row; comments posted before this feature carry `''`.
+(The salt is rotated → old hashes stop matching; re-ban from fresh comments.)
+
+## Drafts & scheduled publishing (草稿与定时发布)
+
+Drafts live in the D1 `drafts` table (slug PK, `meta` JSON, `body`,
+`publish_at`, `updated_at`) — deliberately **not** in the public repo and
+**not** in R2 (the bucket is publicly readable via storage.nathanpenny.fun).
+
+- The editor tab sidebar gains a **Drafts** list: Save draft (Save draft)
+  upserts the current form + body; clicking a draft loads it back into the
+  form; 🗑 deletes it. Publishing a loaded draft goes through the normal
+  Publish and deletes the draft on success.
+- Scheduling: a `datetime-local` input + Schedule button saves the draft
+  with `publish_at` (epoch seconds). Every draft row shows its schedule.
+- A **15-minute Cron** (`*/15 * * * *`, wrangler.jsonc; the Worker now has
+  two triggers) runs `publishDueDrafts()` in drafts.js: for each due draft
+  it composes + validates exactly like the interactive editor
+  (`composePost` → `validatePost` → `commitPost` in editor.js), reads the
+  existing blob sha first so an existing post is updated rather than 422'd,
+  commits with the message `publish/update: <slug> (scheduled draft)`, and
+  deletes the draft row on success. A deterministic validation failure
+  clears the draft's schedule (kept as a plain draft, logged); transient
+  GitHub failures abort/retry on the next tick. Max 5 drafts per tick.
+- Requires the same `GITHUB_TOKEN` secret as the editor; without it the
+  cron simply publishes nothing.
 
 ## Image uploader (图床)
 
@@ -296,8 +349,11 @@ working but with weaker visitor separation.
 
 Database `nathanpenny`, bound as `env.DB` (`wrangler.jsonc`). Tables:
 
-- `comments`, `comment_rate` — comment feature (created manually 2026-07;
-  the DDL now also lives in `workers/schema.sql`, dumped verbatim from prod)
+- `comments` (+ the `ip_hash` column added by `ALTER TABLE`), `comment_rate`
+  — comment feature (created manually 2026-07; the DDL now also lives in
+  `workers/schema.sql`, dumped verbatim from prod)
+- `banned_ips` — comment moderation blocklist (salted IP hashes)
+- `drafts` — 写作台 drafts + `publish_at` schedules
 - `chat_rate` — per-IP limiter for `/api/site-chat`
 - `analytics_hits`, `analytics_visits`, `analytics_visitors`,
   `analytics_rate` — first-party analytics (see the section above)
@@ -329,10 +385,13 @@ with `npx wrangler secret put <NAME>`; a missing `CF_AI_TOKEN` makes the AI
 proxy and site chat return 503, and the editor fails closed with a 503 hint
 until `GITHUB_TOKEN` exists.
 
-## Cron: nightly pruning
+## Cron: scheduled publishing + nightly pruning
 
-`wrangler.jsonc` registers one daily cron (03:17 UTC) → `scheduled()` in
-comments.js → `pruneTables()`:
+`wrangler.jsonc` registers two crons → `scheduled()` in comments.js branches
+on `controller.cron`:
+
+- `*/15 * * * *` → `publishDueDrafts()` (see Drafts & scheduled publishing)
+- `17 3 * * *` (03:17 UTC, off-peak for the APAC audience) → `pruneTables()`:
 
 - `ai_logs` rows older than 90 days — batched id-subquery deletes (D1 has no
   `DELETE ... LIMIT`), capped rounds so a large backlog shrinks over days
