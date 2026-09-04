@@ -184,9 +184,20 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
     .nav-container { gap: 14px; }
     .nav-links { gap: 13px; }
   }
-  /* On tiny phones the four links + two icons need the brand text gone */
+  /* On tiny phones the brand text goes and the six-tab strip scrolls
+     sideways: tabs + icons cannot fit a 390px row without shrinking tap
+     targets to unusable or colliding with the brand (the overlap this
+     fixes). The scroll container keeps every tab full-size and tappable. */
   @media (max-width: 520px) {
     .logo { display: none; }
+    .nav-container { gap: 10px; width: 96%; }
+    .nav-brand { margin-right: 0; }
+    .nav-links {
+      flex: 1 1 auto; min-width: 0; gap: 16px;
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-link { white-space: nowrap; flex-shrink: 0; }
   }
   #tabUpload .fm-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 0 14px; }
   .fm-crumbs { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; font-size: 13.5px; min-width: 0; }
