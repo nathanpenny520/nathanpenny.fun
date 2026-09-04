@@ -1764,6 +1764,15 @@ a.cat-badge:hover {
        instead of pushing the content down a full screen */
   }
 
+  /* Stacking alone is not enough: the desktop row rule's align-items:
+     flex-start keeps .blog-main fit-content-sized in the column direction,
+     so a wide table's min-width (e.g. the 700px planets table) propagates
+     up as min-content and blows the article column out to ~760px — which
+     html's overflow-x: clip then amputates. A definite width wins. */
+  .blog-main {
+    width: 100%;
+  }
+
   .blog-toc {
     padding: 15px;
   }
@@ -2295,6 +2304,8 @@ a.cat-badge:hover {
   align-items: center;
   gap: 14px;
   padding: 10px 24px;
+  /* Keep the controls clear of the iOS home indicator. */
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
