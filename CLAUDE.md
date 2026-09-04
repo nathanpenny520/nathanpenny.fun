@@ -32,7 +32,7 @@ Eight pages share an identical, hand-copied `nav` + `footer` block (there is no 
 - `pages/creations.html` — featured songs/videos + a searchable music library with a bottom audio mini-player
 - `pages/achievements.html` — the achievements page (publications, projects, etc.; intentionally empty for now — see `docs/achievements.md` for how to fill it in)
 - `pages/contact.html` — social links, comment form
-- `pages/privacy.html` — bilingual (EN + 中文) privacy policy linked from every footer; documents the first-party analytics, the comment data, GA and the deliberate no-cookie-banner stance
+- `pages/privacy.html` — English-only privacy policy linked from every footer; documents the first-party analytics, the comment data, GA, the deliberate no-cookie-banner stance, and the open-source repo link
 
 Because pages live one level deep, **paths inside `pages/*.html` use `../` prefixes** for CSS, JS, images, and logo; `index.html` uses plain `./`. When adding a new page, copy the nav/footer from an existing page and fix the `../` prefixes.
 
