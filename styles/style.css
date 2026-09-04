@@ -621,6 +621,28 @@ html {
   padding: 70px 20px 90px;
 }
 
+/* Penny mascot, hero cameo: a quiet corner resident, dark theme + desktop
+   only, never competing with the copy (docs/penny-mascot-plan.md §5.5). */
+.penny-hero {
+  display: none;
+  position: absolute;
+  right: 3%;
+  bottom: 6%;
+  width: 112px;
+  height: auto;
+  opacity: 0.55;
+  pointer-events: none;
+  animation: penny-float 3.2s ease-in-out infinite;
+}
+
+@media (min-width: 900px) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .penny-hero { display: block; }
+}
+
+@media (min-width: 900px) {
+  :root[data-theme="dark"] .penny-hero { display: block; }
+}
+
 /* Clipped backdrop layer: the aurora blobs and the star canvas live in here */
 .hero-sky {
   position: absolute;
@@ -1118,6 +1140,18 @@ html {
 .form-status {
   font-size: 14px;
   font-weight: 500;
+}
+
+/* Comment posted: Penny's happy face rides along with the success line
+   (the class is dropped by the next showStatus call, like any other state). */
+.form-status.penny-cheer::before {
+  content: "";
+  display: inline-block;
+  width: 30px;
+  height: 26px;
+  margin-right: 7px;
+  vertical-align: -7px;
+  background: url("../images/assets/mascot/web/expr-happy.webp") no-repeat center / contain;
 }
 
 .form-status.success {
@@ -2631,6 +2665,22 @@ body.creation-player-open .toast {
   font-size: 15px;
 }
 
+/* Penny cameos for the friendly states: napping while comments load,
+   holding a star when there is nothing to show yet. */
+.comment-loading,
+.comment-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.penny-mini {
+  width: 110px;
+  height: auto;
+  animation: penny-float 3.2s ease-in-out infinite;
+}
+
 .comment-error {
   color: var(--color-danger);
 }
@@ -2753,6 +2803,24 @@ footer p {
 .toast.show {
   opacity: 1;
   transform: translate(-50%, 0);
+}
+
+/* Optional Penny avatar slot: showToast(message, iconUrl) adds has-icon
+   and a leading round chip (core-penny-512 by default). */
+.toast.has-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.toast-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fff;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3056,7 +3124,55 @@ footer p {
 .error-code-ufo {
   display: inline-block;
   font-size: 0.8em;
-  animation: error-ufo-bob 2.4s ease-in-out infinite;
+  animation: error-ufo-bob 2.4s ease-in-out infinite, penny-breathe 2.5s ease-in-out infinite;
+}
+
+/* Penny, lit by the same beam that took the page: floating between the 404
+   and the headline (docs/penny-mascot-plan.md §5.1). */
+.penny-beamed {
+  display: block;
+  width: min(280px, 60%);
+  margin: 6px auto 0;
+  animation: penny-float 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 28px rgba(26, 188, 156, 0.3));
+}
+
+/* Light themes get a soft card behind the artwork for readability. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .penny-beamed {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: 18px;
+    padding: 12px;
+    box-shadow: var(--shadow-card);
+  }
+}
+
+:root[data-theme="light"] .penny-beamed {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+@keyframes penny-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes penny-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .penny-beamed,
+  .penny-hero,
+  .penny-mini,
+  .error-code-ufo {
+    animation: none;
+  }
 }
 
 .error-page h1 {

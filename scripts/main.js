@@ -311,6 +311,10 @@ function initAnalytics() {
 // DOMContentLoaded fires), so it is correct at any page depth.
 const AVATAR_URL = new URL('../images/NathanPenny.webp', document.currentScript.src).href;
 
+// Penny mascot (docs/penny-mascot-plan.md): the toast avatar. Script-relative
+// like AVATAR_URL, so it resolves at any page depth.
+const PENNY_ICON_URL = new URL('../images/assets/mascot/web/core-penny-512.webp', document.currentScript.src).href;
+
 // Convert special HTML characters to entities so user content cannot inject markup.
 function escapeHtml(text) {
   if (text == null) return '';
@@ -833,7 +837,12 @@ async function loadComments() {
     list.innerHTML = '';
 
     if (!Array.isArray(data) || data.length === 0) {
-      list.innerHTML = '<p class="comment-empty">No comments yet. Be the first!</p>';
+      // Static mascot markup — nothing user-supplied, so innerHTML is safe here.
+      list.innerHTML =
+        '<div class="comment-empty">' +
+        '<img class="penny-mini" src="../images/assets/mascot/web/act-hugging.webp" alt="" width="359" height="390">' +
+        '<p>No comments yet. Be the first!</p>' +
+        '</div>';
       return;
     }
 
@@ -897,6 +906,7 @@ function initCommentForm() {
 
       form.reset();
       showStatus(status, 'Posted successfully!', 'success');
+      status.classList.add('penny-cheer');
       loadComments();
     } catch (error) {
       showStatus(status, 'Error: ' + error.message, 'error');
@@ -2041,11 +2051,23 @@ const UFO_ACHIEVEMENTS = {
   10: '🏆 Legendary: 10 UFOs caught. They know your name now.'
 };
 
-// Small feedback toast at the bottom of the screen.
-function showToast(message) {
+// Small feedback toast at the bottom of the screen. An optional second
+// argument puts an avatar in a leading icon slot (defaults to Penny; pass
+// null explicitly for a text-only toast).
+function showToast(message, iconUrl) {
   const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = message;
+  toast.className = 'toast' + (iconUrl === null ? '' : ' has-icon');
+  if (iconUrl !== null) {
+    const icon = document.createElement('img');
+    icon.className = 'toast-icon';
+    icon.src = iconUrl || PENNY_ICON_URL;
+    icon.alt = '';
+    toast.appendChild(icon);
+  }
+  const text = document.createElement('span');
+  text.textContent = message;
+  toast.appendChild(text);
+
   document.body.appendChild(toast);
 
   requestAnimationFrame(() => toast.classList.add('show'));
