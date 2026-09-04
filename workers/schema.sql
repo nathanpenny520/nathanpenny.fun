@@ -50,12 +50,17 @@ CREATE INDEX IF NOT EXISTS idx_ai_logs_created ON ai_logs (created_at);
 -- salted one-way hash of the commenter's IP (moderation below) — the
 -- address itself is never stored. Existing prod databases were migrated with:
 --   ALTER TABLE comments ADD COLUMN ip_hash TEXT NOT NULL DEFAULT '';
+-- parent_id (2026-09) threads one level of replies: NULL on top-level
+-- comments, the top-level comment's id on a reply. Existing prod databases
+-- were migrated with:
+--   ALTER TABLE comments ADD COLUMN parent_id INTEGER;
 CREATE TABLE IF NOT EXISTS comments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   email TEXT NOT NULL,
   content TEXT NOT NULL,
   ip_hash TEXT NOT NULL DEFAULT '',
+  parent_id INTEGER,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

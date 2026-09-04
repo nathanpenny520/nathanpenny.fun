@@ -38,7 +38,7 @@ export async function handleModeration(request, env, url) {
       const offset = Math.max(0, parseInt(url.searchParams.get("offset"), 10) || 0);
       const [page, total] = await env.DB.batch([
         env.DB.prepare(
-          "SELECT id, name, email, content, ip_hash, created_at FROM comments ORDER BY id DESC LIMIT ?1 OFFSET ?2"
+          "SELECT id, parent_id, name, email, content, ip_hash, created_at FROM comments ORDER BY id DESC LIMIT ?1 OFFSET ?2"
         ).bind(PAGE_SIZE, offset),
         env.DB.prepare("SELECT COUNT(*) AS n FROM comments")
       ]);
@@ -56,8 +56,12 @@ export async function handleModeration(request, env, url) {
       const id = parseInt(url.searchParams.get("id"), 10);
       const hash = (url.searchParams.get("ip_hash") || "").toLowerCase();
       if (id) {
-        await env.DB.prepare("DELETE FROM comments WHERE id = ?1").bind(id).run();
-        return json(200, { success: true, deleted: 1 });
+        // Deleting a top-level comment takes its replies with it, so the
+        // public thread (and the moderation list) never shows orphans.
+        const res = await env.DB.prepare(
+          "DELETE FROM comments WHERE id = ?1 OR parent_id = ?1"
+        ).bind(id).run();
+        return json(200, { success: true, deleted: res.meta ? res.meta.changes : 1 });
       }
       if (HASH_RE.test(hash)) {
         const res = await env.DB.prepare("DELETE FROM comments WHERE ip_hash = ?1").bind(hash).run();

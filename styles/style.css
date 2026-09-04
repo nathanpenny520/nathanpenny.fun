@@ -2673,6 +2673,75 @@ body.creation-player-open .toast {
   color: var(--color-danger);
 }
 
+/* One level of threading: replies render inside their parent's card, and a
+   small ghost button on the parent invites an answer. */
+.comment-replies {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+  padding-left: 16px;
+  border-left: 2px solid var(--color-border-light);
+}
+
+.comment-reply {
+  padding: 14px 16px;
+  box-shadow: none;
+  border: 1px solid var(--color-border-light);
+}
+
+.comment-reply .comment-content {
+  font-size: 14px;
+}
+
+.comment-reply-btn {
+  display: block;
+  margin: 10px 0 0 auto;
+  padding: 2px 12px;
+  font-size: 13px;
+  color: var(--color-accent-strong);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.comment-reply-btn:hover {
+  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* The "Replying to …" chip above the form while a reply is aimed. */
+.comment-reply-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: var(--color-accent-strong);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-accent);
+  border-radius: 8px;
+}
+
+.comment-reply-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.comment-reply-cancel:hover {
+  color: var(--color-danger);
+}
+
 
 /* ==========================================================================
    FOOTER

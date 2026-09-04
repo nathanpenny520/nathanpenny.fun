@@ -183,6 +183,10 @@
         <h2 class="section-title">Leave a Comment</h2>
         <div class="blog-card">
           <form id="commentForm" class="visitor-form">
+            <div id="commentReplyBar" class="comment-reply-bar" hidden>
+              <span id="commentReplyLabel"></span>
+              <button type="button" id="commentReplyCancel" class="comment-reply-cancel" aria-label="Cancel reply">&times;</button>
+            </div>
             <div class="form-row">
               <label for="commentName">Nickname</label>
               <input type="text" id="commentName" name="name" placeholder="Enter your nickname" autocomplete="nickname" required>

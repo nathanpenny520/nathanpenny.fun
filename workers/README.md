@@ -12,8 +12,8 @@ playground + stats + comments tabs), the site avatar chat, and the AI proxy.
 
 | Method | Path                           | Protection              | Purpose                                        |
 |--------|--------------------------------|-------------------------|------------------------------------------------|
-| GET    | `/comments`                    | public                  | List comments (`email` deliberately excluded)  |
-| POST   | `/comments`                    | public                  | Create a comment (rate limit + Turnstile)      |
+| GET    | `/comments`                    | public                  | List comments threaded one level (`replies[]` under each top-level comment; `email` deliberately excluded) |
+| POST   | `/comments`                    | public                  | Create a comment or reply (optional `parent` id — must reference a top-level comment; rate limit + Turnstile) |
 | POST   | `/api/site-chat`               | public                  | Site avatar chat (per-IP rate limit, internal key) |
 | POST   | `/api/analytics/hit`           | public                  | First-party analytics beacon (see below; always 204) |
 | GET    | `/admin`                       | Cloudflare Access       | Admin page: 图床 + 写作台 + AI playground + Stats tabs (admin_page.js + editor_page.js + ai_page.js + stats_page.js) |
@@ -31,7 +31,7 @@ playground + stats + comments tabs), the site avatar chat, and the AI proxy.
 | GET    | `/admin/api/stats?days=N&self=1` | Cloudflare Access     | Analytics dashboard data for the Stats tab (7/30/90d; `self=1` includes the owner's flagged visits) |
 | GET    | `/admin/api/visitor?id=…`      | Cloudflare Access       | One visitor's profile + sessions + page timeline |
 | GET    | `/admin/api/comments?offset=0` | Cloudflare Access       | Moderation list: every comment incl. `email` + `ip_hash` (50/page; moderation.js) |
-| DELETE | `/admin/api/comment`           | Cloudflare Access       | Delete one comment (`?id=`) or all comments of one sender (`?ip_hash=`) |
+| DELETE | `/admin/api/comment`           | Cloudflare Access       | Delete one comment (`?id=`, replies go with it) or all comments of one sender (`?ip_hash=`) |
 | GET/POST/DELETE | `/admin/api/ban[s]`   | Cloudflare Access       | The `banned_ips` blocklist `POST /comments` checks first |
 | GET/POST/DELETE | `/admin/api/draft[s]` | Cloudflare Access       | 写作台 drafts in D1, optional `publish_at` schedule (drafts.js) |
 | GET/POST | `/admin/api/data?file=…`      | Cloudflare Access       | Whitelisted repo JSON files (`gallery`, `creations`): read `{sha, content}` / validated commit via the Contents API |
@@ -56,7 +56,8 @@ the public site deliberately lacks. Backed by moderation.js:
 - `GET /admin/api/comments?offset=N` — every comment **including** `email`
   and `ip_hash` (the public `GET /comments` withholds them), 50 per page,
   newest first, with a total count.
-- `DELETE /admin/api/comment?id=…` — delete one comment (permanent).
+- `DELETE /admin/api/comment?id=…` — delete one comment (permanent); a
+  top-level comment takes its replies with it so no orphans survive.
 - `DELETE /admin/api/comment?ip_hash=…` — bulk-delete every comment of one
   sender.
 - `GET/POST/DELETE /admin/api/ban[s]` — the `banned_ips` blocklist

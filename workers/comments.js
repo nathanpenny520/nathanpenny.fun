@@ -281,6 +281,25 @@ async function handleSiteChat(request, env, ctx, corsHeaders) {
 // email, IP or the full text.
 // ---------------------------------------------------------------------------
 
+// Thread GET /comments rows into top-level comments (newest first) with
+// their replies attached oldest-first. Replies whose parent is missing
+// (deleted) or which point at another reply are dropped defensively.
+function threadComments(rows) {
+  const tops = [];
+  const byId = new Map();
+  for (const row of rows) {
+    if (!row.parent_id) {
+      row.replies = [];
+      byId.set(row.id, row);
+      tops.push(row);
+    }
+  }
+  for (const row of [...rows].reverse()) {
+    if (row.parent_id && byId.has(row.parent_id)) byId.get(row.parent_id).replies.push(row);
+  }
+  return tops;
+}
+
 // Escape user-provided text before embedding it in the HTML email body
 // (name + excerpt come straight from the comment form).
 function escapeEmailHtml(value) {
@@ -292,7 +311,7 @@ function escapeEmailHtml(value) {
 // Branded HTML body for the notification. Inline styles only (email clients
 // strip <style> blocks), table layout for wide client support, no external
 // images (they hurt spam scoring), site palette: teal #1abc9c / slate #2c3e50.
-function notifyEmailHtml(nameHtml, excerptHtml) {
+function notifyEmailHtml(nameHtml, excerptHtml, isReply) {
   return [
     '<div style="margin:0;padding:24px 12px;background:#f5f7fa;font-family:-apple-system,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;">',
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">',
@@ -300,7 +319,7 @@ function notifyEmailHtml(nameHtml, excerptHtml) {
     '<tr><td style="height:4px;background:#1abc9c;font-size:0;line-height:0;">&nbsp;</td></tr>',
     '<tr><td style="padding:24px 28px 8px 28px;">',
     '<p style="margin:0 0 4px 0;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#7f8c8d;">nathanpenny.fun</p>',
-    '<h1 style="margin:0;font-size:20px;color:#2c3e50;">&#128172; New comment</h1>',
+    '<h1 style="margin:0;font-size:20px;color:#2c3e50;">&#128172; New ' + (isReply ? "reply" : "comment") + '</h1>',
     '</td></tr>',
     '<tr><td style="padding:8px 28px 0 28px;">',
     '<p style="margin:0 0 12px 0;font-size:15px;color:#333333;"><strong style="color:#16a085;">' + nameHtml + '</strong> left a comment:</p>',
@@ -318,7 +337,7 @@ function notifyEmailHtml(nameHtml, excerptHtml) {
   ].join("");
 }
 
-function sendNotifyEmail(env, name, content) {
+function sendNotifyEmail(env, name, content, isReply) {
   if (!env.NOTIFY) return null; // binding not deployed — feature is off
   const safeContent = String(content).slice(0, 300);
   // The HTML part carries escaped copies of the user input; slice BEFORE
@@ -330,9 +349,9 @@ function sendNotifyEmail(env, name, content) {
     // not fall back to the binding's destination_address by itself.
     from: { email: "noreply@nathanpenny.fun", name: "nathanpenny.fun" },
     to: "notify@nathanpenny.fun",
-    subject: `💬 New comment from ${String(name).slice(0, 50)}`,
-    text: `New comment on nathanpenny.fun\n\nFrom: ${name}\n\n${safeContent}`,
-    html: notifyEmailHtml(nameHtml, excerptHtml)
+    subject: `💬 New ${isReply ? "reply" : "comment"} from ${String(name).slice(0, 50)}`,
+    text: `New ${isReply ? "reply" : "comment"} on nathanpenny.fun\n\nFrom: ${name}\n\n${safeContent}`,
+    html: notifyEmailHtml(nameHtml, excerptHtml, isReply)
   }).catch((error) => {
     // A failed notification must never affect the comment response.
     console.error("notify email failed:", error && (error.code || error.message));
@@ -812,9 +831,9 @@ export default {
       if (url.pathname === "/comments") {
         if (request.method === "GET") {
           const { results } = await env.DB.prepare(
-            "SELECT id, name, content, created_at FROM comments ORDER BY created_at DESC LIMIT 100"
+            "SELECT id, parent_id, name, content, created_at FROM comments ORDER BY created_at DESC LIMIT 100"
           ).all();
-          return new Response(JSON.stringify(results || []), { headers: corsHeaders });
+          return new Response(JSON.stringify(threadComments(results || [])), { headers: corsHeaders });
         }
 
         if (request.method === "POST") {
@@ -856,6 +875,28 @@ export default {
             );
           }
 
+          // Replies: an optional parent id, which must reference an existing
+          // top-level comment — one level of threading, no reply-to-reply.
+          let parent = null;
+          if (body.parent !== undefined && body.parent !== null && body.parent !== "") {
+            parent = Number(body.parent);
+            if (!Number.isInteger(parent) || parent <= 0) {
+              return new Response(
+                JSON.stringify({ error: "Invalid parent comment" }),
+                { status: 400, headers: corsHeaders }
+              );
+            }
+            const checked = await env.DB.prepare(
+              "SELECT id FROM comments WHERE id = ?1 AND parent_id IS NULL"
+            ).bind(parent).first();
+            if (!checked) {
+              return new Response(
+                JSON.stringify({ error: "The comment you replied to no longer exists" }),
+                { status: 400, headers: corsHeaders }
+              );
+            }
+          }
+
           if (!(await verifyTurnstile(env, body["cf-turnstile-response"]))) {
             const status = env.TURNSTILE_SECRET ? 403 : 500;
             const message = env.TURNSTILE_SECRET
@@ -868,12 +909,12 @@ export default {
           }
 
           await env.DB.prepare(
-            "INSERT INTO comments (name, email, content, ip_hash) VALUES (?, ?, ?, ?)"
-          ).bind(name, email, content, ipHash).run();
+            "INSERT INTO comments (name, email, content, ip_hash, parent_id) VALUES (?, ?, ?, ?, ?)"
+          ).bind(name, email, content, ipHash, parent).run();
 
           // Fire-and-forget: never delays or fails the comment response, and
           // rejected comments (rate limit / Turnstile) never reach this line.
-          ctx.waitUntil(sendNotifyEmail(env, name, content));
+          ctx.waitUntil(sendNotifyEmail(env, name, content, parent !== null));
 
           return new Response(
             JSON.stringify({ success: true, message: "Comment posted!" }),

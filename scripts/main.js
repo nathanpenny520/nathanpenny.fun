@@ -831,6 +831,54 @@ async function loadCreations() {
 
 const COMMENTS_API_URL = `${API_URL}/comments`;
 
+// Reply target for the comment form: { id, name } while replying to a
+// comment, null for a fresh top-level comment.
+let replyTarget = null;
+
+function buildCommentCard(item, isReply) {
+  const card = document.createElement('article');
+  card.className = isReply ? 'comment-card comment-reply' : 'comment-card';
+  card.innerHTML = `
+    <div class="comment-header">
+      <span class="comment-author">${escapeHtml(item.name)}</span>
+      <time class="comment-time">${new Date(item.created_at).toLocaleString()}</time>
+    </div>
+    <p class="comment-content">${escapeHtml(item.content)}</p>
+  `;
+  if (!isReply) {
+    const replies = document.createElement('div');
+    replies.className = 'comment-replies';
+    card.appendChild(replies);
+    const replyBtn = document.createElement('button');
+    replyBtn.type = 'button';
+    replyBtn.className = 'comment-reply-btn';
+    replyBtn.textContent = 'Reply';
+    replyBtn.addEventListener('click', () => startReply(item));
+    card.appendChild(replyBtn);
+  }
+  return card;
+}
+
+// "Reply" on a top-level comment: aim the comment form at it until cancelled
+// or submitted. Threading is one level deep — the server rejects anything else.
+function startReply(item) {
+  replyTarget = { id: item.id, name: item.name };
+  const bar = document.getElementById('commentReplyBar');
+  const label = document.getElementById('commentReplyLabel');
+  if (bar && label) {
+    label.textContent = `Replying to ${item.name}`;
+    bar.hidden = false;
+  }
+  document.getElementById('commentForm')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('commentContent')?.focus();
+}
+
+function cancelReply() {
+  replyTarget = null;
+  const bar = document.getElementById('commentReplyBar');
+  if (bar) bar.hidden = true;
+}
+
 async function loadComments() {
   const list = document.getElementById('commentList');
   if (!list) return;
@@ -853,15 +901,11 @@ async function loadComments() {
     }
 
     data.forEach(item => {
-      const card = document.createElement('article');
-      card.className = 'comment-card';
-      card.innerHTML = `
-        <div class="comment-header">
-          <span class="comment-author">${escapeHtml(item.name)}</span>
-          <time class="comment-time">${new Date(item.created_at).toLocaleString()}</time>
-        </div>
-        <p class="comment-content">${escapeHtml(item.content)}</p>
-      `;
+      const card = buildCommentCard(item, false);
+      const repliesBox = card.querySelector('.comment-replies');
+      (item.replies || []).forEach(reply => {
+        repliesBox.appendChild(buildCommentCard(reply, true));
+      });
       list.appendChild(card);
     });
   } catch (error) {
@@ -873,6 +917,8 @@ function initCommentForm() {
   const form = document.getElementById('commentForm');
   const status = document.getElementById('commentStatus');
   if (!form) return;
+
+  document.getElementById('commentReplyCancel')?.addEventListener('click', cancelReply);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -901,7 +947,13 @@ function initCommentForm() {
       const response = await fetch(COMMENTS_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, content, 'cf-turnstile-response': turnstileToken })
+        body: JSON.stringify({
+          name,
+          email,
+          content,
+          'cf-turnstile-response': turnstileToken,
+          ...(replyTarget ? { parent: replyTarget.id } : {})
+        })
       });
 
       const result = await response.json();
@@ -910,8 +962,10 @@ function initCommentForm() {
         throw new Error(result.error || 'Submission failed');
       }
 
+      const wasReply = Boolean(replyTarget);
+      cancelReply();
       form.reset();
-      showStatus(status, 'Posted successfully!', 'success');
+      showStatus(status, wasReply ? 'Reply posted!' : 'Posted successfully!', 'success');
       loadComments();
     } catch (error) {
       showStatus(status, 'Error: ' + error.message, 'error');

@@ -131,6 +131,12 @@ export const COMMENTS_TAB_HTML = `
       main.appendChild(name);
       main.appendChild(hash);
       main.appendChild(date);
+      if (c.parent_id) {
+        var replyTag = document.createElement("span");
+        replyTag.className = "meta";
+        replyTag.textContent = "↩ reply to #" + c.parent_id;
+        main.appendChild(replyTag);
+      }
 
       var mail = document.createElement("div");
       mail.className = "meta";
