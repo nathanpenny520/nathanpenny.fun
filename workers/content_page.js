@@ -25,6 +25,10 @@ export const CONTENT_TAB_HTML = `
   #tabContent .ct-side ul { max-height: 62vh; overflow-y: auto; }
   #galList li, #creList li { cursor: pointer; }
   #galList li.active, #creList li.active { border-color: var(--color-accent); background: var(--color-surface-alt); }
+  #tabContent .ct-filter { display: flex; gap: 6px; margin: 0 0 8px; }
+  #tabContent .ct-fbtn { padding: 2px 10px; font-size: 12px; border-radius: 999px; }
+  #tabContent .ct-fbtn.active { background: var(--color-accent-strong); border-color: var(--color-accent-strong); color: #fff; }
+  #tabContent .ct-fbtn.active:hover { background: #12856f; border-color: #12856f; color: #fff; }
   #tabContent .ct-thumb {
     width: 64px; height: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: var(--color-bg);
   }
@@ -104,8 +108,13 @@ export const CONTENT_TAB_HTML = `
         <button id="creAdd" type="button" class="primary">+ Add</button>
         <button id="creReload" type="button" title="Reload from GitHub and discard local edits">↻</button>
       </div>
+      <div class="ct-filter" role="group" aria-label="Filter by type">
+        <button id="creFAll" class="ct-fbtn active" type="button">All</button>
+        <button id="creFSongs" class="ct-fbtn" type="button">Songs</button>
+        <button id="creFVideos" class="ct-fbtn" type="button">Videos</button>
+      </div>
       <ul id="creList"></ul>
-      <p class="empty" id="creEmpty" hidden>No featured items yet.</p>
+      <p class="empty" id="creEmpty" hidden>No featured items here.</p>
     </aside>
     <div class="ct-main">
       <div class="ed-meta">
@@ -391,7 +400,7 @@ export const CONTENT_TAB_HTML = `
         del.title = "Delete entry";
         del.addEventListener("click", function (e) {
           e.stopPropagation();
-          if (!window.confirm("Delete entry \"" + (it.title || it.id) + "\"? (Removed only when you Save.)")) return;
+          if (!window.confirm('Delete entry "' + (it.title || it.id) + '"? (Removed only when you Save.)')) return;
           s.items.splice(i, 1);
           if (s.sel === i) s.sel = -1;
           else if (s.sel > i) s.sel -= 1;
@@ -508,6 +517,24 @@ export const CONTENT_TAB_HTML = `
       cover: document.getElementById("creCover"),
       coverRow: document.getElementById("creCoverRow")
     };
+    var creF = {
+      all: document.getElementById("creFAll"),
+      songs: document.getElementById("creFSongs"),
+      videos: document.getElementById("creFVideos")
+    };
+    var creFilter = "all";
+
+    function creSetFilter(f) {
+      creFilter = f;
+      creF.all.className = "ct-fbtn" + (f === "all" ? " active" : "");
+      creF.songs.className = "ct-fbtn" + (f === "songs" ? " active" : "");
+      creF.videos.className = "ct-fbtn" + (f === "videos" ? " active" : "");
+      creRenderList();
+    }
+
+    creF.all.addEventListener("click", function () { creSetFilter("all"); });
+    creF.songs.addEventListener("click", function () { creSetFilter("songs"); });
+    creF.videos.addEventListener("click", function () { creSetFilter("videos"); });
 
     // Mirrors videoEmbedUrl() in main.js — shows what the site will extract.
     function embedIdOf(platform, src) {
@@ -541,8 +568,10 @@ export const CONTENT_TAB_HTML = `
     function creRenderList() {
       var s = sections.creations;
       s.list.textContent = "";
-      s.empty.hidden = s.items.length > 0;
+      var shown = 0;
       s.items.forEach(function (it, i) {
+        if (creFilter !== "all" && ((creFilter === "songs") !== (it.type === "song"))) return;
+        shown += 1;
         var li = document.createElement("li");
         if (i === s.sel) li.classList.add("active");
         var main = document.createElement("div");
@@ -582,7 +611,7 @@ export const CONTENT_TAB_HTML = `
         del.title = "Delete entry";
         del.addEventListener("click", function (e) {
           e.stopPropagation();
-          if (!window.confirm("Delete entry \"" + (it.title || it.id) + "\"? (Removed only when you Save.)")) return;
+          if (!window.confirm('Delete entry "' + (it.title || it.id) + '"? (Removed only when you Save.)')) return;
           s.items.splice(i, 1);
           if (s.sel === i) s.sel = -1;
           else if (s.sel > i) s.sel -= 1;
@@ -602,6 +631,8 @@ export const CONTENT_TAB_HTML = `
         });
         s.list.appendChild(li);
       });
+      s.empty.hidden = shown > 0;
+      s.empty.textContent = s.items.length ? "Nothing matches this filter." : "No featured items here.";
     }
 
     function creFillForm() {
@@ -651,6 +682,7 @@ export const CONTENT_TAB_HTML = `
     document.getElementById("creAdd").addEventListener("click", function () {
       var s = sections.creations;
       if (!okToLeave("creations")) return;
+      creSetFilter("all");
       s.items.push({
         id: uniqueId(s.items, slugify("creations-" + todayLocal())),
         type: "video",
@@ -750,7 +782,7 @@ export const CONTENT_TAB_HTML = `
         }
         return o;
       });
-      var text = JSON.stringify(clean, null, 2) + "\n";
+      var text = JSON.stringify(clean, null, 2) + "\\n";
       var btn = document.getElementById(kind === "gallery" ? "galSave" : "creSave");
       btn.disabled = true;
       setStatus(kind, "Committing to GitHub…", "");

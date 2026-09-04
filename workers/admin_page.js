@@ -105,6 +105,9 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   }
   :root[data-theme="light"] { color-scheme: light; }
   * { box-sizing: border-box; }
+  /* The hidden attribute must always win over any display rule below —
+     author display values (grid/flex/block) would otherwise defeat it. */
+  [hidden] { display: none !important; }
   body {
     margin: 0; background: var(--color-bg); color: var(--color-text);
     font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft Yahei", sans-serif;
