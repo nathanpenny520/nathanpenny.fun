@@ -413,7 +413,9 @@ Access application + policy (Zero Trust dashboard), the secrets
 (`TURNSTILE_SECRET`, `GITHUB_TOKEN`, `CF_AI_TOKEN`, `ANALYTICS_SALT` — check
 with `npx wrangler secret list`), the D1 rows for API keys (including the
 internal `site-avatar` one), and the verified email destination address
-behind the `NOTIFY` send_email binding (not configured yet). Secrets are set
+behind the `NOTIFY` send_email binding (`notify@nathanpenny.fun` — an Email
+Routing rule relays it to the owner's real mailbox, kept out of this public
+repo). Secrets are set
 with `npx wrangler secret put <NAME>`; a missing `CF_AI_TOKEN` makes the AI
 proxy and site chat return 503, and the editor fails closed with a 503 hint
 until `GITHUB_TOKEN` exists.
@@ -453,10 +455,13 @@ destination addresses are free on every plan and never count against quotas.
 
 Content is deliberately minimal — commenter name + a 300-char excerpt; no
 commenter email, no IP, no full text. From: `noreply@nathanpenny.fun`,
-which requires the `nathanpenny.fun` sending domain onboarded
-(`npx wrangler email sending enable nathanpenny.fun`, adds SPF/DKIM DNS).
-Prerequisite: verify the owner address under Email → Destination addresses
-first. Without the binding deployed the feature is simply off.
+which requires the `nathanpenny.fun` sending domain onboarded (Email
+Service in the dashboard; `npx wrangler email sending enable
+nathanpenny.fun` does the same from the CLI but 403s under a default
+`wrangler login` — it lacks the zone email-sending scope). Prerequisites:
+a routing rule delivers `notify@nathanpenny.fun` to the owner's real
+mailbox, and that address is verified under Email Routing → Destination
+Addresses. Without the binding deployed the feature is simply off.
 
 ## Turnstile (comment spam protection)
 

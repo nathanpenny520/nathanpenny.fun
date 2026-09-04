@@ -45,5 +45,16 @@
       "database_name": "nathanpenny",
       "database_id": "a01603c4-40b4-41f9-bf73-bb9257a9155c"
     }
+  ],
+  // New-comment owner notification (comments.js sendNotifyEmail). The
+  // destination is a domain address that an Email Routing rule relays into
+  // the owner's real mailbox — deliberately not inlined here, so this
+  // public repo never exposes it. Must stay a VERIFIED destination address
+  // (Email Routing -> Destination Addresses), else sends fail (logged only).
+  "send_email": [
+    {
+      "name": "NOTIFY",
+      "destination_address": "notify@nathanpenny.fun"
+    }
   ]
 }
