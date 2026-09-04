@@ -3112,37 +3112,34 @@ footer p {
 .error-code-ufo {
   display: inline-block;
   font-size: 0.8em;
-  animation: error-ufo-bob 2.4s ease-in-out infinite, penny-breathe 2.5s ease-in-out infinite;
+  animation: error-ufo-bob 2.4s ease-in-out infinite;
 }
 
-/* Penny, lit by the same beam that took the page: small, tucked right under
-   the UFO in the 4🛸4 line so the beam visually lands on her
-   so the beam visually lands on her. */
+/* The abduction scene: the UFO emoji up top, a breathing light beam
+   stretching down from it, and Penny floating inside the beam's mouth —
+   one compact connected composition instead of a floating cut-out. */
+.abduct-scene {
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.ufo-beam {
+  width: 200px;
+  height: 150px;
+  margin: -36px auto -64px;
+  background: linear-gradient(to bottom, rgba(126, 244, 214, 0.5), rgba(126, 244, 214, 0.04));
+  clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+  animation: penny-breathe 2.5s ease-in-out infinite;
+}
+
 .penny-beamed {
+  position: relative;
   display: block;
-  width: 150px;
-  margin: -14px auto 0;
+  width: 170px;
+  height: auto;
+  margin: 0 auto;
   animation: penny-float 3s ease-in-out infinite;
-  filter: drop-shadow(0 0 22px rgba(26, 188, 156, 0.3));
-}
-
-/* Light themes get a soft card behind the artwork for readability. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .penny-beamed {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-light);
-    border-radius: 18px;
-    padding: 12px;
-    box-shadow: var(--shadow-card);
-  }
-}
-
-:root[data-theme="light"] .penny-beamed {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-light);
-  border-radius: 18px;
-  padding: 12px;
-  box-shadow: var(--shadow-card);
+  filter: drop-shadow(0 0 24px rgba(26, 188, 156, 0.3));
 }
 
 @keyframes penny-float {
@@ -3159,6 +3156,7 @@ footer p {
   .penny-beamed,
   .penny-hero,
   .penny-mini,
+  .ufo-beam,
   .error-code-ufo {
     animation: none;
   }
