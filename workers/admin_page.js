@@ -393,9 +393,12 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
     showTab(name);
     history.replaceState(null, "", "#" + name);
   }
-  function showTabFromHash() {
+  function tabFromHash() {
     var name = location.hash.replace("#", "");
-    if (TAB_NAMES.indexOf(name) !== -1) showTab(name);
+    return TAB_NAMES.indexOf(name) !== -1 ? name : "upload";
+  }
+  function showTabFromHash() {
+    showTab(tabFromHash());
   }
   btnUpload.addEventListener("click", function () { showTabKeep("upload"); });
   btnEditor.addEventListener("click", function () { showTabKeep("editor"); });
@@ -446,7 +449,8 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   // is the visible tab; the uploader defers to it below.
   window.npEditorActive = function () { return !tabEditor.hidden; };
 
-  showTab("upload");
+  // The initial tab was already set from the URL hash (defaulting to
+  // upload) by showTabFromHash() in the nav block above — do not reset it.
 })();
 </script>
 
