@@ -281,16 +281,58 @@ async function handleSiteChat(request, env, ctx, corsHeaders) {
 // email, IP or the full text.
 // ---------------------------------------------------------------------------
 
+// Escape user-provided text before embedding it in the HTML email body
+// (name + excerpt come straight from the comment form).
+function escapeEmailHtml(value) {
+  return String(value).replace(/[&<>"']/g, (ch) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+  ));
+}
+
+// Branded HTML body for the notification. Inline styles only (email clients
+// strip <style> blocks), table layout for wide client support, no external
+// images (they hurt spam scoring), site palette: teal #1abc9c / slate #2c3e50.
+function notifyEmailHtml(nameHtml, excerptHtml) {
+  return [
+    '<div style="margin:0;padding:24px 12px;background:#f5f7fa;font-family:-apple-system,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;">',
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">',
+    '<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;">',
+    '<tr><td style="height:4px;background:#1abc9c;font-size:0;line-height:0;">&nbsp;</td></tr>',
+    '<tr><td style="padding:24px 28px 8px 28px;">',
+    '<p style="margin:0 0 4px 0;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#7f8c8d;">nathanpenny.fun</p>',
+    '<h1 style="margin:0;font-size:20px;color:#2c3e50;">&#128172; New comment</h1>',
+    '</td></tr>',
+    '<tr><td style="padding:8px 28px 0 28px;">',
+    '<p style="margin:0 0 12px 0;font-size:15px;color:#333333;"><strong style="color:#16a085;">' + nameHtml + '</strong> left a comment:</p>',
+    '<blockquote style="margin:0;padding:12px 16px;background:#f8f9fa;border-left:3px solid #1abc9c;border-radius:0 8px 8px 0;font-size:14px;line-height:1.6;color:#34495e;">' + excerptHtml + '</blockquote>',
+    '</td></tr>',
+    '<tr><td style="padding:20px 28px 24px 28px;">',
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr>',
+    '<td style="background:#1abc9c;border-radius:8px;"><a href="https://workers.nathanpenny.fun/admin" style="display:inline-block;padding:10px 20px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">Open the admin</a></td>',
+    '</tr></table>',
+    '</td></tr>',
+    '<tr><td style="padding:12px 28px 20px 28px;border-top:1px solid #ecf0f1;">',
+    '<p style="margin:0;font-size:12px;color:#95a5a6;">Comment notification from your Worker &middot; sent ' + new Date().toUTCString() + ' &middot; replies to this address are not monitored.</p>',
+    '</td></tr>',
+    '</table></td></tr></table></div>'
+  ].join("");
+}
+
 function sendNotifyEmail(env, name, content) {
   if (!env.NOTIFY) return null; // binding not deployed — feature is off
-  const excerpt = String(content).slice(0, 300);
+  const safeContent = String(content).slice(0, 300);
+  // The HTML part carries escaped copies of the user input; slice BEFORE
+  // escaping so a cut can never split an HTML entity.
+  const excerptHtml = escapeEmailHtml(safeContent).replace(/\n/g, "<br>");
+  const nameHtml = escapeEmailHtml(String(name).slice(0, 50));
   return env.NOTIFY.send({
     // The runtime still wants the recipient spelled out in `to` — it does
     // not fall back to the binding's destination_address by itself.
     from: { email: "noreply@nathanpenny.fun", name: "nathanpenny.fun" },
     to: "notify@nathanpenny.fun",
-    subject: `New comment from ${String(name).slice(0, 50)}`,
-    text: `New comment on nathanpenny.fun\n\nFrom: ${name}\n\n${excerpt}`
+    subject: `💬 New comment from ${String(name).slice(0, 50)}`,
+    text: `New comment on nathanpenny.fun\n\nFrom: ${name}\n\n${safeContent}`,
+    html: notifyEmailHtml(nameHtml, excerptHtml)
   }).catch((error) => {
     // A failed notification must never affect the comment response.
     console.error("notify email failed:", error && (error.code || error.message));
