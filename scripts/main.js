@@ -576,7 +576,7 @@ function renderCreations(grid, featured) {
         // loading) broke playback in the embedded player. YouTube keeps the
         // richer (and standard) attribute set.
         const attrs = item.platform === 'bilibili'
-          ? 'scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"'
+          ? 'scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" allow="autoplay; fullscreen; picture-in-picture; encrypted-media"'
           : 'loading="lazy" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="no-referrer-when-downgrade"';
         player =
           '<div class="creation-embed">' +

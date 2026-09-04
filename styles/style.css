@@ -2139,6 +2139,16 @@ a.cat-badge:hover {
   border: 0;
 }
 
+/* Fullscreen must escape the 16:9 card box: author position/inset rules
+   above would otherwise keep the fullscreened iframe pinned inside the
+   card, so restore fixed-viewport geometry for the :fullscreen state. */
+.creation-embed iframe:fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .creation-body {
   padding: 14px 16px 16px;
 }
