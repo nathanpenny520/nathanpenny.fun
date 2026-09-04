@@ -1142,18 +1142,6 @@ html {
   font-weight: 500;
 }
 
-/* Comment posted: Penny's happy face rides along with the success line
-   (the class is dropped by the next showStatus call, like any other state). */
-.form-status.penny-cheer::before {
-  content: "";
-  display: inline-block;
-  width: 30px;
-  height: 26px;
-  margin-right: 7px;
-  vertical-align: -7px;
-  background: url("../images/assets/mascot/web/expr-happy.webp") no-repeat center / contain;
-}
-
 .form-status.success {
   color: var(--color-success);
 }
@@ -3127,14 +3115,15 @@ footer p {
   animation: error-ufo-bob 2.4s ease-in-out infinite, penny-breathe 2.5s ease-in-out infinite;
 }
 
-/* Penny, lit by the same beam that took the page: floating between the 404
-   and the headline (docs/penny-mascot-plan.md §5.1). */
+/* Penny, lit by the same beam that took the page: small, tucked right under
+   the UFO in the 4🛸4 line so the beam visually lands on her
+   (docs/penny-mascot-plan.md §5.1). */
 .penny-beamed {
   display: block;
-  width: min(280px, 60%);
-  margin: 6px auto 0;
+  width: 150px;
+  margin: -14px auto 0;
   animation: penny-float 3s ease-in-out infinite;
-  filter: drop-shadow(0 0 28px rgba(26, 188, 156, 0.3));
+  filter: drop-shadow(0 0 22px rgba(26, 188, 156, 0.3));
 }
 
 /* Light themes get a soft card behind the artwork for readability. */

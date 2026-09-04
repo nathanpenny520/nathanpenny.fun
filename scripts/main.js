@@ -906,7 +906,6 @@ function initCommentForm() {
 
       form.reset();
       showStatus(status, 'Posted successfully!', 'success');
-      status.classList.add('penny-cheer');
       loadComments();
     } catch (error) {
       showStatus(status, 'Error: ' + error.message, 'error');

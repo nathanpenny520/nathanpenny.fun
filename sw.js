@@ -2,7 +2,7 @@
 // Bump CACHE_VERSION whenever deployed assets change meaningfully; old
 // caches are deleted on activation.
 
-const CACHE_VERSION = 'v26';
+const CACHE_VERSION = 'v27';
 const CACHE_NAME = `nathanpenny-fun-${CACHE_VERSION}`;
 
 // Core assets precached at install time so the site shell works offline.
@@ -31,7 +31,6 @@ const PRECACHE = [
   './data/achievements.json',
   './images/assets/mascot/web/core-penny-512.webp',
   './images/assets/mascot/web/core-penny-1024.webp',
-  './images/assets/mascot/web/expr-happy.webp',
   './images/assets/mascot/web/act-sleepy.webp',
   './images/assets/mascot/web/act-hugging.webp',
   './images/assets/mascot/web/act-waving.webp',
