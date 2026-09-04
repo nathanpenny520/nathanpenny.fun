@@ -2565,7 +2565,8 @@ footer p {
 
 
 /* ==========================================================================
-   WIDGETS: PROGRESS BAR, BACK TO TOP, UFO EASTER EGG, TOAST
+   WIDGETS: PROGRESS BAR, BACK TO TOP, TOAST (the UFO easter egg is drawn
+   on the #starField canvas by main.js and has no CSS here)
    ========================================================================== */
 
 /* Blog reading progress bar (fixed at the very top of the viewport) */
@@ -2628,68 +2629,7 @@ footer p {
   background: var(--color-accent-strong);
 }
 
-/* The wandering UFO: flies across the screen, visitors can click to catch it */
-.ufo {
-  position: fixed;
-  top: 12vh;
-  left: 0;
-  border: none;
-  background: transparent;
-  font-size: 36px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 8px;
-  z-index: 1100;
-  animation: ufo-fly 9s linear forwards;
-}
-
-.ufo.ufo-rtl {
-  animation-name: ufo-fly-rtl;
-}
-
-/* Gentle vertical wobble while flying */
-.ufo span {
-  display: inline-block;
-  animation: ufo-bob 1.6s ease-in-out infinite;
-}
-
-/* Caught: quick beam-flash then zoom away */
-.ufo.caught {
-  animation: ufo-caught 0.7s ease-in forwards;
-}
-
-.ufo.caught::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  width: 3px;
-  height: 45vh;
-  background: linear-gradient(var(--color-accent-soft), transparent);
-  transform: translateX(-50%);
-}
-
-@keyframes ufo-fly {
-  from { transform: translateX(-80px); }
-  to   { transform: translateX(calc(100vw + 80px)); }
-}
-
-@keyframes ufo-fly-rtl {
-  from { transform: translateX(calc(100vw + 80px)); }
-  to   { transform: translateX(-80px); }
-}
-
-@keyframes ufo-bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-10px); }
-}
-
-@keyframes ufo-caught {
-  40% { transform: scale(1.5); opacity: 1; }
-  100% { transform: scale(0.2) translateY(-40vh); opacity: 0; }
-}
-
-/* Small feedback toast */
+/* Small feedback toast (the starfield UFO's catch message and the like) */
 .toast {
   position: fixed;
   bottom: 28px;

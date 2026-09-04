@@ -1168,9 +1168,10 @@ function skyBuildStars(canvas) {
   return stars;
 }
 
-// A burst of short-lived orange sparks flying out of the impact point.
-function skySpawnSparks(state, x, y) {
-  const colors = ['#ffe8b0', '#ffc46b', '#ff9f43', '#ff7b54'];
+// A burst of short-lived sparks flying out of a point (orange for rock
+// impacts, teal for the UFO).
+function skySpawnSparks(state, x, y, palette) {
+  const colors = palette || ['#ffe8b0', '#ffc46b', '#ff9f43', '#ff7b54'];
 
   for (let i = 0; i < 26; i++) {
     const angle = Math.random() * Math.PI * 2;
@@ -1209,6 +1210,242 @@ function skyImpact(state, x, y) {
   });
 }
 
+// Spawn a saucer crossing the upper sky (the starfield easter egg).
+function skySpawnUfo(state, now) {
+  const w = state.canvas.clientWidth;
+  const ltr = Math.random() < 0.5;
+  const baseY = state.canvas.clientHeight * (0.10 + Math.random() * 0.22);
+
+  return {
+    mode: 'fly',                       // 'fly' | 'caught'
+    x: ltr ? -70 : w + 70,
+    vx: (ltr ? 1 : -1) * (0.9 + Math.random() * 0.5),  // px per frame
+    baseY: baseY,
+    y: baseY,
+    dir: ltr ? 1 : -1,
+    lightsPhase: Math.random() * Math.PI * 2,
+    nextBeamAt: now + 4000 + Math.random() * 6000,
+    beam: null,                        // {starIndex, sx, sy, t, phase}
+    caughtT: 0
+  };
+}
+
+// One frame of the starfield saucer: cruise the sky, now and then dip a
+// tractor beam to steal a star, and fly off dramatically when clicked.
+// Pure canvas — nothing is overlaid on the page content.
+function skyUpdateUfo(state, now) {
+  const w = state.canvas.clientWidth;
+  const h = state.canvas.clientHeight;
+  const ctx = state.ctx;
+  const t = now / 1000;
+
+  if (!state.ufo && now > state.nextUfoAt) {
+    if (now - state.nextUfoAt > 30000) {
+      state.nextUfoAt = now + 30000;  // the tab slept; don't spawn a burst
+    } else {
+      state.ufo = skySpawnUfo(state, now);
+    }
+  }
+  const ufo = state.ufo;
+  if (!ufo) return;
+
+  if (ufo.mode === 'caught') {
+    ufo.caughtT += 1;
+    const p = ufo.caughtT;
+
+    if (p < 14) {
+      // The failed escape: a wide beam blast plus a panicked jitter.
+      const blast = (1 - p / 14) * 0.55;
+      const blastH = Math.min(h - ufo.y, 190);
+      const flare = 34 + p * 3;
+      const grad = ctx.createLinearGradient(ufo.x, ufo.y, ufo.x, ufo.y + blastH);
+      grad.addColorStop(0, `rgba(126, 244, 214, ${blast})`);
+      grad.addColorStop(1, 'rgba(126, 244, 214, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(ufo.x - 9, ufo.y + 6);
+      ctx.lineTo(ufo.x + 9, ufo.y + 6);
+      ctx.lineTo(ufo.x + flare, ufo.y + blastH);
+      ctx.lineTo(ufo.x - flare, ufo.y + blastH);
+      ctx.closePath();
+      ctx.fill();
+      ufo.x += (Math.random() - 0.5) * 3;
+    } else if (p === 15) {
+      skySpawnSparks(state, ufo.x, ufo.y, ['#7ef4d6', '#1abc9c', '#d9fff5']);
+    } else {
+      // Zoom away off the top with acceleration and a short streak.
+      ufo.vy = (ufo.vy || 2) + 0.55;
+      ufo.y -= ufo.vy;
+      ufo.x += Math.sin(p * 0.4) * 1.2;
+      const streak = ctx.createLinearGradient(ufo.x, ufo.y, ufo.x, ufo.y + ufo.vy * 8);
+      streak.addColorStop(0, 'rgba(126, 244, 214, 0.5)');
+      streak.addColorStop(1, 'rgba(126, 244, 214, 0)');
+      ctx.strokeStyle = streak;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(ufo.x, ufo.y);
+      ctx.lineTo(ufo.x, ufo.y + ufo.vy * 8);
+      ctx.stroke();
+    }
+
+    drawSaucer(ctx, ufo.x, ufo.y, t, p < 14 ? 1 - p / 28 : 1.15);
+
+    if (ufo.y < -90) {
+      state.ufo = null;
+      state.nextUfoAt = now + 100000 + Math.random() * 80000;
+    }
+    return;
+  }
+
+  // Cruise: drift sideways with a gentle sine bob; leave once past an edge.
+  ufo.x += ufo.vx;
+  ufo.y = ufo.baseY + Math.sin(t * 1.4 + ufo.lightsPhase) * 9;
+  if ((ufo.vx > 0 && ufo.x > w + 90) || (ufo.vx < 0 && ufo.x < -90)) {
+    state.ufo = null;
+    state.nextUfoAt = now + 100000 + Math.random() * 80000;
+    return;
+  }
+
+  // Tractor beam: lock onto a random star, dissolve it, and reel it in.
+  // A beam only starts with enough runway left before the exit edge.
+  const runway = ufo.vx > 0 ? w + 90 - ufo.x : ufo.x + 90;
+  if (!ufo.beam && now > ufo.nextBeamAt && runway > 260 && state.stars.length) {
+    const starIndex = Math.floor(Math.random() * state.stars.length);
+    const star = state.stars[starIndex];
+    // Freeze the star's wrapped position (parallax drift over ~2s is negligible).
+    ufo.beam = {
+      starIndex,
+      sx: ((star.x + state.parallaxX * star.depth) % w + w) % w,
+      sy: ((star.y + state.parallaxY * star.depth - state.scrollY * 0.06 * star.depth) % h + h) % h,
+      t: 0,
+      phase: 'down'                    // 'down' → 'lift'
+    };
+  }
+
+  if (ufo.beam && !state.stars[ufo.beam.starIndex]) {
+    ufo.beam = null;  // a resize rebuilt the star array mid-abduction
+    ufo.nextBeamAt = now + 12000 + Math.random() * 15000;
+  }
+
+  if (ufo.beam) {
+    const beam = ufo.beam;
+    beam.t += 1;
+    const flicker = 0.8 + 0.2 * Math.sin(t * 24);
+
+    if (beam.phase === 'down') {
+      const p = Math.min(beam.t / 22, 1);
+      const bottomY = ufo.y + 8 + (beam.sy - ufo.y - 8) * p;
+      const halfTop = 7 * p;
+      const halfBottom = 13 * p;
+      const grad = ctx.createLinearGradient(ufo.x, ufo.y + 8, ufo.x, bottomY);
+      grad.addColorStop(0, `rgba(126, 244, 214, ${0.4 * flicker})`);
+      grad.addColorStop(1, 'rgba(126, 244, 214, 0.05)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(ufo.x - halfTop, ufo.y + 8);
+      ctx.lineTo(ufo.x + halfTop, ufo.y + 8);
+      ctx.lineTo(ufo.x + (beam.sx - ufo.x) * p + halfBottom, bottomY);
+      ctx.lineTo(ufo.x + (beam.sx - ufo.x) * p - halfBottom, bottomY);
+      ctx.closePath();
+      ctx.fill();
+
+      if (p >= 1) {
+        beam.phase = 'lift';
+        beam.t = 0;
+        // The target star is "gone" the lift starts — respawn it elsewhere.
+        const star = state.stars[beam.starIndex];
+        star.x = Math.random() * w;
+        star.y = Math.random() * h;
+        star.r = 0.3 + Math.random() * 1.1;
+        star.alpha = 0.2 + Math.random() * 0.6;
+        star.speed = 0.3 + Math.random() * 0.9;
+        star.phase = Math.random() * Math.PI * 2;
+      }
+    } else {
+      const p = Math.min(beam.t / 42, 1);
+      const ease = p * p;
+      const px = beam.sx + (ufo.x - beam.sx) * ease;
+      const py = beam.sy + (ufo.y + 8 - beam.sy) * ease;
+
+      const grad = ctx.createLinearGradient(ufo.x, ufo.y + 8, beam.sx, beam.sy);
+      grad.addColorStop(0, `rgba(126, 244, 214, ${0.35 * flicker})`);
+      grad.addColorStop(1, 'rgba(126, 244, 214, 0.07)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(ufo.x - 7, ufo.y + 8);
+      ctx.lineTo(ufo.x + 7, ufo.y + 8);
+      ctx.lineTo(beam.sx + 13, beam.sy);
+      ctx.lineTo(beam.sx - 13, beam.sy);
+      ctx.closePath();
+      ctx.fill();
+
+      // The reeled-in star: a bright dot with a small trail.
+      ctx.strokeStyle = `rgba(126, 244, 214, ${0.6 * (1 - ease * 0.5)})`;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px + (beam.sx - px) * 0.12, py + (beam.sy - py) * 0.12);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(217, 255, 245, ${0.95 - ease * 0.3})`;
+      ctx.beginPath();
+      ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (p >= 1) {
+        ufo.beam = null;
+        ufo.nextBeamAt = now + 12000 + Math.random() * 15000;
+      }
+    }
+  }
+
+  drawSaucer(ctx, ufo.x, ufo.y, t, 1);
+}
+
+// The saucer itself: teal glow, metal hull, glass dome, five blinking rim
+// lights. scale dips for the caught shake and swells for the zoom-away.
+function drawSaucer(ctx, x, y, t, scale) {
+  const glow = ctx.createRadialGradient(x, y + 4, 2, x, y + 4, 36 * scale);
+  glow.addColorStop(0, 'rgba(26, 188, 156, 0.20)');
+  glow.addColorStop(1, 'rgba(26, 188, 156, 0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y + 4, 36 * scale, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  const hull = ctx.createLinearGradient(-26, 0, 26, 0);
+  hull.addColorStop(0, '#8ba0b6');
+  hull.addColorStop(0.5, '#dbe6f2');
+  hull.addColorStop(1, '#7a8ea4');
+  ctx.fillStyle = hull;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 26, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const dome = ctx.createLinearGradient(0, -15, 0, 0);
+  dome.addColorStop(0, 'rgba(160, 245, 225, 0.95)');
+  dome.addColorStop(1, 'rgba(26, 188, 156, 0.30)');
+  ctx.fillStyle = dome;
+  ctx.beginPath();
+  ctx.arc(0, -2, 11, Math.PI, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  for (let i = 0; i < 5; i++) {
+    const on = 0.5 + 0.5 * Math.sin(t * 5 - i * 1.1);
+    ctx.fillStyle = `rgba(126, 244, 214, ${0.35 + on * 0.6})`;
+    ctx.beginPath();
+    ctx.arc(-20 + i * 10, 3, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
 // One animation frame: twinkle the stars, ease the parallax, throw the odd
 // meteor, and every so often drop a rock that hits the page.
 function skyDrawFrame(state, now) {
@@ -1245,6 +1482,9 @@ function skyDrawFrame(state, now) {
       ctx.fill();
     }
   }
+
+  // The easter-egg saucer: cruises, beams stars up, flees when caught.
+  skyUpdateUfo(state, now);
 
   // Occasional meteor streaking across the sky.
   if (!state.meteor && now > state.nextShootAt) {
@@ -1383,6 +1623,8 @@ function initStarField() {
     sparks: [],
     nextShootAt: performance.now() + 5000 + Math.random() * 7000,
     nextImpactAt: performance.now() + 8000 + Math.random() * 6000,  // an early showpiece, then rare
+    ufo: null,
+    nextUfoAt: performance.now() + 18000 + Math.random() * 15000,  // first fly-by inside half a minute
     parallaxX: 0,
     parallaxY: 0,
     targetX: 0,
@@ -1462,6 +1704,31 @@ function initStarField() {
     state.targetY = (event.clientY / window.innerHeight - 0.5) * 26;
   }, { passive: true });
 
+  // The saucer is drawn on the pointer-events:none canvas behind the content,
+  // so catching works by document-level hit testing — clicks still reach
+  // whatever element they were aimed at. The canvas only renders in dark
+  // mode, so the saucer simply never exists in light mode.
+  document.addEventListener('click', (event) => {
+    const ufo = state.ufo;
+    if (!ufo || ufo.mode !== 'fly') return;
+    if (Math.hypot(event.clientX - ufo.x, event.clientY - ufo.y) > 36) return;
+
+    ufo.mode = 'caught';
+    ufo.caughtT = 0;
+    ufo.beam = null;
+
+    let catches = 1;
+    try {
+      catches = parseInt(localStorage.getItem('ufoCatches') || '0', 10) + 1;
+      localStorage.setItem('ufoCatches', String(catches));
+    } catch (error) {
+      catches = 1;
+    }
+
+    if (UFO_ACHIEVEMENTS[catches]) showToast(UFO_ACHIEVEMENTS[catches]);
+    else showToast(UFO_MESSAGES[Math.floor(Math.random() * UFO_MESSAGES.length)]);
+  });
+
   const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
   if (darkQuery.addEventListener) darkQuery.addEventListener('change', syncTheme);
   new MutationObserver(syncTheme).observe(document.documentElement, {
@@ -1509,7 +1776,8 @@ function initScrollReveal() {
 }
 
 // ============================================================================
-// UFO EASTER EGG
+// UFO EASTER EGG (the saucer itself lives in the starfield canvas — see
+// skySpawnUfo/skyUpdateUfo above; this part is its copy and feedback)
 // ============================================================================
 
 const UFO_MESSAGES = [
@@ -1540,60 +1808,6 @@ function showToast(message) {
     toast.classList.remove('show');
     setTimeout(() => toast.remove(), 350);
   }, 4000);
-}
-
-// Spawn one UFO that flies across the screen; clicking it "abducts" it.
-function spawnUfo() {
-  if (document.querySelector('.ufo')) return;
-
-  const ufo = document.createElement('button');
-  ufo.type = 'button';
-  ufo.className = 'ufo';
-  ufo.setAttribute('aria-label', 'Catch the UFO!');
-  ufo.innerHTML = '<span aria-hidden="true">🛸</span>';
-  ufo.style.top = `${8 + Math.random() * 22}vh`;
-
-  if (Math.random() < 0.5) ufo.classList.add('ufo-rtl');
-  ufo.style.animationDuration = `${7 + Math.random() * 4}s`;
-  document.body.appendChild(ufo);
-
-  const remove = () => ufo.remove();
-  ufo.addEventListener('animationend', (event) => {
-    // Only react to the flight animation, not the wobble of the inner span.
-    if (event.target === ufo) remove();
-  });
-
-  ufo.addEventListener('click', () => {
-    if (ufo.classList.contains('caught')) return;
-    ufo.classList.add('caught');
-
-    let catches = 0;
-    try {
-      catches = parseInt(localStorage.getItem('ufoCatches') || '0', 10) + 1;
-      localStorage.setItem('ufoCatches', String(catches));
-    } catch (error) {
-      catches = 1;
-    }
-
-    if (UFO_ACHIEVEMENTS[catches]) showToast(UFO_ACHIEVEMENTS[catches]);
-    else showToast(UFO_MESSAGES[Math.floor(Math.random() * UFO_MESSAGES.length)]);
-
-    setTimeout(remove, 800);
-  });
-}
-
-// Schedule UFO fly-bys at random intervals (skipped for reduced motion).
-function initUfoEasterEgg() {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  const schedule = (min, max) => {
-    setTimeout(() => {
-      spawnUfo();
-      schedule(45, 90);
-    }, (min + Math.random() * (max - min)) * 1000);
-  };
-
-  schedule(15, 30);
 }
 
 // ============================================================================
@@ -1663,7 +1877,6 @@ window.addEventListener('DOMContentLoaded', () => {
   initSiteChat();
   initStarField();
   initScrollReveal();
-  initUfoEasterEgg();
 });
 
 registerServiceWorker();
