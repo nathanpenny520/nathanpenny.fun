@@ -38,6 +38,8 @@ Because pages live one level deep, **paths inside `pages/*.html` use `../` prefi
 
 Friendly URLs (`/about`, `/blog`, ...) are mapped to the `pages/` files by `_redirects`. `404.html` (UFO-themed) is served with HTTP 404 for any URL matching no real asset — it uses root-absolute asset paths because it renders at arbitrary depths.
 
+`.well-known/security.txt` (RFC 9116 vulnerability-disclosure file; Contact is the `notify@` relay address, never the real mailbox; `Expires` must be renewed yearly) is served from the repo root only because of the empty `.nojekyll` marker beside it — GitHub Pages runs Jekyll without that marker and Jekyll silently drops all dot-directories, so don't delete `.nojekyll`.
+
 ### PWA
 
 `manifest.json` + `sw.js` (service worker) + `images/icon-{180,192,512}.png` make the site installable and available offline. `sw.js` precaches the site shell and serves pages network-first (so deploys show up) and static assets cache-first. Bump `CACHE_VERSION` in `sw.js` when a deploy changes cached assets in a way users must see immediately.

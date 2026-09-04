@@ -1,0 +1,4 @@
+Contact: mailto:notify@nathanpenny.fun
+Expires: 2027-09-04T00:00:00.000Z
+Preferred-Languages: en, zh
+Canonical: https://nathanpenny.fun/.well-known/security.txt
