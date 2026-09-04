@@ -23,6 +23,9 @@ export const AI_TAB_HTML = `
   }
   #tabAi .ai-row input[type="password"] { flex: 1 1 220px; }
   #tabAi select { min-width: 250px; }
+  #tabAi .ai-chat-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 10px; }
+  #tabAi #aiHistSel { flex: 1 1 220px; min-width: 0; }
+  #aiChat .empty { margin: auto; text-align: center; }
   #aiChat {
     display: flex; flex-direction: column; gap: 10px;
     height: min(56vh, 460px); overflow-y: auto;
@@ -62,6 +65,12 @@ export const AI_TAB_HTML = `
     </div>
   </div>
 
+  <div class="ai-chat-bar">
+    <button id="aiNewChat" type="button" class="primary">+ New chat</button>
+    <select id="aiHistSel" aria-label="Saved conversations"></select>
+    <button id="aiDelChat" type="button" class="danger" title="Delete the selected conversation">Delete</button>
+  </div>
+
   <div id="aiChat" aria-live="polite"></div>
 
   <form id="aiForm" class="ai-form">
@@ -84,8 +93,39 @@ export const AI_TAB_HTML = `
   var input = document.getElementById("aiInput");
   var sendBtn = document.getElementById("aiSend");
   var stopBtn = document.getElementById("aiStop");
+  var newChatBtn = document.getElementById("aiNewChat");
+  var histSel = document.getElementById("aiHistSel");
+  var delChatBtn = document.getElementById("aiDelChat");
   var controller = null;
-  var history = [];
+
+  // --- conversation history (localStorage only, this browser) -------------
+  var CHATS_KEY = "np-admin-ai-chats";
+  var CUR_KEY = "np-admin-ai-chat-cur";
+  var MAX_CHATS = 50;
+  var chats = loadChats();   // [{id, title, ts, messages:[{role, content}…]}], newest first
+  var curId = null;          // id of the open conversation (null = unsent new chat)
+  var history = [];          // messages of the open conversation
+
+  function loadChats() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(CHATS_KEY) || "[]");
+      if (Array.isArray(raw)) return raw;
+    } catch (e) { /* corrupt or blocked storage */ }
+    return [];
+  }
+  function saveChats() {
+    try {
+      localStorage.setItem(CHATS_KEY, JSON.stringify(chats.slice(0, MAX_CHATS)));
+      if (curId) localStorage.setItem(CUR_KEY, curId);
+      else localStorage.removeItem(CUR_KEY);
+    } catch (e) { /* private mode etc. */ }
+  }
+  function currentChat() {
+    for (var i = 0; i < chats.length; i++) {
+      if (chats[i].id === curId) return chats[i];
+    }
+    return null;
+  }
 
   function getKey() {
     try { return localStorage.getItem(KEY_STORAGE) || ""; } catch (e) { return ""; }
@@ -102,6 +142,13 @@ export const AI_TAB_HTML = `
   }
   function scrollDown() { chatEl.scrollTop = chatEl.scrollHeight; }
 
+  // Models often open their reply with blank lines; with pre-wrap those
+  // render as an empty first line inside the bubble. Trim them for display
+  // only — the raw text is what gets stored and re-sent as context.
+  function displayText(text) {
+    return String(text).replace(/^\\n+/, "");
+  }
+
   function addBubble(role, text) {
     var div = document.createElement("div");
     div.className = "ai-msg " + role;
@@ -110,7 +157,7 @@ export const AI_TAB_HTML = `
     who.textContent = role === "user" ? "You" : "AI";
     var body = document.createElement("div");
     body.className = "ai-text";
-    body.textContent = text;
+    body.textContent = displayText(text);
     div.appendChild(who);
     div.appendChild(body);
     chatEl.appendChild(div);
@@ -164,6 +211,113 @@ export const AI_TAB_HTML = `
     sendBtn.disabled = busy;
     stopBtn.hidden = !busy;
     input.disabled = busy;
+    updateChatBar();
+  }
+
+  // --- conversation bar ---------------------------------------------------
+
+  function updateChatBar() {
+    var busy = !!controller;
+    histSel.value = curId || "";
+    newChatBtn.disabled = busy;
+    histSel.disabled = busy || !chats.length;
+    delChatBtn.disabled = busy || !currentChat();
+  }
+
+  function renderHistory() {
+    histSel.textContent = "";
+    if (!chats.length) {
+      var o = document.createElement("option");
+      o.value = "";
+      o.textContent = "No saved conversations";
+      histSel.appendChild(o);
+    } else {
+      if (!currentChat()) {
+        var o0 = document.createElement("option");
+        o0.value = "";
+        o0.textContent = "New chat (not saved yet)";
+        histSel.appendChild(o0);
+      }
+      chats.forEach(function (c) {
+        var o = document.createElement("option");
+        o.value = c.id;
+        var d = new Date(c.ts || 0);
+        o.textContent = (c.title || "Untitled") + " · " + d.getFullYear() + "-" +
+          String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+        histSel.appendChild(o);
+      });
+    }
+    updateChatBar();
+  }
+
+  function redrawChat() {
+    chatEl.textContent = "";
+    if (!history.length) {
+      var hint = document.createElement("div");
+      hint.className = "empty";
+      hint.textContent = "New conversation — messages stay in this browser.";
+      chatEl.appendChild(hint);
+      return;
+    }
+    for (var i = 0; i < history.length; i++) {
+      addBubble(history[i].role, history[i].content);
+    }
+  }
+
+  function openChat(id) {
+    for (var i = 0; i < chats.length; i++) {
+      if (chats[i].id === id) {
+        curId = id;
+        history = chats[i].messages;
+        redrawChat();
+        renderHistory();
+        saveChats();
+        return;
+      }
+    }
+  }
+
+  function newChat() {
+    curId = null;
+    history = [];
+    redrawChat();
+    renderHistory();
+    saveChats();
+    input.focus();
+  }
+
+  function deleteCurrentChat() {
+    var c = currentChat();
+    if (!c) return;
+    if (!window.confirm('Delete "' + c.title + '"? This cannot be undone.')) return;
+    chats = chats.filter(function (x) { return x.id !== curId; });
+    curId = null;
+    history = [];
+    saveChats();
+    redrawChat();
+    renderHistory();
+  }
+
+  // Store a finished exchange in the open conversation, creating it (and
+  // titling it from the first message) on the fly.
+  function persistExchange(message, acc) {
+    var chat = currentChat();
+    if (!chat) {
+      chat = {
+        id: Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6),
+        title: message.length > 42 ? message.slice(0, 42) + "…" : (message || "Untitled"),
+        ts: Date.now(),
+        messages: []
+      };
+      chats.unshift(chat);
+      curId = chat.id;
+      history = chat.messages;
+    }
+    chat.messages.push({ role: "user", content: message }, { role: "assistant", content: acc });
+    chat.ts = Date.now();
+    chats.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    saveChats();
+    renderHistory();
   }
 
   function send(message) {
@@ -175,15 +329,16 @@ export const AI_TAB_HTML = `
     addBubble("user", message);
     var bubble = addBubble("assistant", "");
     var acc = "";
-    setBusy(true);
     controller = new AbortController();
+    setBusy(true);
     fetch("/api/ai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
       body: JSON.stringify({
         model: model,
         stream: true,
-        messages: history.concat([{ role: "user", content: message }])
+        // Cap the context window, not the stored conversation.
+        messages: history.slice(-16).concat([{ role: "user", content: message }])
       }),
       signal: controller.signal
     }).then(function (res) {
@@ -211,7 +366,7 @@ export const AI_TAB_HTML = `
             try {
               var j = JSON.parse(payload);
               var delta = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
-              if (delta) { acc += delta; bubble.textContent = acc; scrollDown(); }
+              if (delta) { acc += delta; bubble.textContent = displayText(acc); scrollDown(); }
             } catch (e) {}
           }
           return pump();
@@ -219,19 +374,18 @@ export const AI_TAB_HTML = `
       }
       return pump();
     }).then(function () {
-      if (acc) history.push({ role: "user", content: message }, { role: "assistant", content: acc });
-      if (history.length > 16) history = history.slice(-16);
+      if (acc) persistExchange(message, acc);
     }).catch(function (err) {
       if (err && err.name === "AbortError") {
-        bubble.textContent = acc ? acc + "\\n[stopped]" : "[stopped]";
-        if (acc) history.push({ role: "user", content: message }, { role: "assistant", content: acc });
+        bubble.textContent = acc ? displayText(acc) + "\\n[stopped]" : "[stopped]";
+        if (acc) persistExchange(message, acc);
       } else {
         bubble.textContent = "⚠ " + (err && err.message ? err.message : "Request failed");
         bubble.className = "ai-text err";
       }
     }).then(function () {
-      setBusy(false);
       controller = null;
+      setBusy(false);
       input.focus();
     });
   }
@@ -261,10 +415,25 @@ export const AI_TAB_HTML = `
   });
   document.getElementById("aiReloadModels").addEventListener("click", loadModels);
 
+  newChatBtn.addEventListener("click", newChat);
+  histSel.addEventListener("change", function () {
+    if (histSel.value) openChat(histSel.value);
+    else if (curId) newChat(); // the "New chat (not saved yet)" placeholder row
+  });
+  delChatBtn.addEventListener("click", deleteCurrentChat);
+
   if (getKey()) {
     status("Key loaded from this browser ✓", true);
   }
   loadModels();
+
+  // Restore the last open conversation (or start a fresh unsent chat).
+  try { curId = localStorage.getItem(CUR_KEY) || null; } catch (e) { curId = null; }
+  if (curId && !currentChat()) curId = null;
+  var restored = currentChat();
+  history = restored ? restored.messages : [];
+  redrawChat();
+  renderHistory();
 })();
 </script>
 `;
