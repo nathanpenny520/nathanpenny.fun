@@ -46,5 +46,13 @@
     "description": "Interior view of the UFO.",
     "category": "photo",
     "date": "2026-06-29"
+  },
+  {
+    "id": "gallery-2026-09-04",
+    "src": "https://storage.nathanpenny.fun/img/2026/09/whizzzest-60b4ed.jpg",
+    "title": "Wanzai Whizzzest",
+    "description": "Wanzai's awesome fireworks.",
+    "category": "photo",
+    "date": "2026-09-04"
   }
 ]
