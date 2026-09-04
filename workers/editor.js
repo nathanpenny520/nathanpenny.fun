@@ -140,7 +140,7 @@ async function listPosts(env) {
 
   const res = await ghFetch(env, "/posts?ref=" + GITHUB_BRANCH);
   if (res.status === 401 || res.status === 403) {
-    return editorJson(503, { error: "GITHUB_TOKEN 被拒绝（过期或权限不足）：" + (await ghMessage(res)) });
+    return editorJson(503, { error: "GITHUB_TOKEN rejected (expired or insufficient permissions): " + (await ghMessage(res)) });
   }
   if (!res.ok) return editorJson(502, { error: await ghMessage(res) });
 
@@ -160,7 +160,7 @@ async function readPost(env, url) {
   if (noToken) return noToken;
 
   const res = await ghFetch(env, "/posts/" + encodeURIComponent(slug) + ".md?ref=" + GITHUB_BRANCH);
-  if (res.status === 404) return editorJson(404, { error: "文章不存在：" + slug });
+  if (res.status === 404) return editorJson(404, { error: "Post not found: " + slug });
   if (!res.ok) return editorJson(502, { error: await ghMessage(res) });
 
   const data = await res.json();
