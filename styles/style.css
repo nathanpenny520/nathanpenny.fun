@@ -622,7 +622,7 @@ html {
 }
 
 /* Penny mascot, hero cameo: a quiet corner resident, dark theme + desktop
-   only, never competing with the copy (docs/penny-mascot-plan.md §5.5). */
+   only, never competing with the copy. */
 .penny-hero {
   display: none;
   position: absolute;
@@ -3117,7 +3117,7 @@ footer p {
 
 /* Penny, lit by the same beam that took the page: small, tucked right under
    the UFO in the 4🛸4 line so the beam visually lands on her
-   (docs/penny-mascot-plan.md §5.1). */
+   so the beam visually lands on her. */
 .penny-beamed {
   display: block;
   width: 150px;

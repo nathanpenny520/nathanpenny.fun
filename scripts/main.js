@@ -311,7 +311,7 @@ function initAnalytics() {
 // DOMContentLoaded fires), so it is correct at any page depth.
 const AVATAR_URL = new URL('../images/NathanPenny.webp', document.currentScript.src).href;
 
-// Penny mascot (docs/penny-mascot-plan.md): the toast avatar. Script-relative
+// Penny mascot: the toast avatar. Script-relative
 // like AVATAR_URL, so it resolves at any page depth.
 const PENNY_ICON_URL = new URL('../images/assets/mascot/web/core-penny-512.webp', document.currentScript.src).href;
 
