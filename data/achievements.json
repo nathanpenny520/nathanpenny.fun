@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "id": "projects",
+    "icon": "fa-diagram-project",
+    "title": "Personal Website",
+    "items": [
+      {
+        "id": "1",
+        "title": "Personal Website",
+        "badge": "Projects",
+        "description": "In rapid development and for fun. ",
+        "links": [
+          {
+            "label": "github link",
+            "url": "https://github.com/nathanpenny520/nathanpenny.fun"
+          }
+        ],
+        "date": "2026-09"
+      }
+    ]
+  }
+]
