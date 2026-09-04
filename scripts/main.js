@@ -315,6 +315,12 @@ const AVATAR_URL = new URL('../images/NathanPenny.webp', document.currentScript.
 // like AVATAR_URL, so it resolves at any page depth.
 const PENNY_ICON_URL = new URL('../images/assets/mascot/web/core-penny-512.webp', document.currentScript.src).href;
 
+// Site root, resolved at script-eval time (document.currentScript is gone by
+// DOMContentLoaded). main.js lives at <root>/scripts/, so one level up from
+// its own URL is the site root — correct at every page depth and on the
+// GitHub Pages subpath too, where root-absolute paths would break.
+const SITE_ROOT_URL = new URL('../', (document.currentScript && document.currentScript.src) || location.href);
+
 // Convert special HTML characters to entities so user content cannot inject markup.
 function escapeHtml(text) {
   if (text == null) return '';
@@ -2217,9 +2223,54 @@ function initAchievements() {
     .catch(() => { /* unreachable or invalid data — keep the empty state */ });
 }
 
+// ============================================================================
+// FOOTER (single source of truth): every page carries an empty
+// <footer></footer> shell and this renders the real content into it — the old
+// hand-copied footers had already drifted (the homepage had MDN links, all
+// the others didn't). Links resolve against SITE_ROOT_URL, so they are
+// correct at any page depth. No JS, no footer.
+// ============================================================================
+
+function initFooter() {
+  const footer = document.querySelector('footer');
+  if (!footer) return;
+  const root = SITE_ROOT_URL.href;
+
+  const logo = document.createElement('img');
+  logo.className = 'footer-logo';
+  logo.src = root + 'NP-logo.svg';
+  logo.alt = 'Nathan Penny logo';
+
+  const line = document.createElement('p');
+  const techLink = (name, href) => {
+    const a = document.createElement('a');
+    a.href = href;
+    a.textContent = name;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    return a;
+  };
+  line.append(
+    '© 2026 Nathan Penny’s personal website | based on ',
+    techLink('HTML', 'https://developer.mozilla.org/en-US/docs/Web/HTML'),
+    ' + ',
+    techLink('CSS', 'https://developer.mozilla.org/en-US/docs/Web/CSS'),
+    ' + ',
+    techLink('JavaScript', 'https://developer.mozilla.org/en-US/docs/Web/JavaScript'),
+    ' · '
+  );
+  const privacy = document.createElement('a');
+  privacy.href = root + 'pages/privacy.html';
+  privacy.textContent = 'Privacy';
+  line.appendChild(privacy);
+
+  footer.replaceChildren(logo, line);
+}
+
 // Initialize page-specific features once the DOM is ready.
 window.addEventListener('DOMContentLoaded', () => {
   initAnalytics();
+  initFooter();
   initThemeToggle();
   initLatestPosts();
   initBlogSearch();
