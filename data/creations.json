@@ -18,5 +18,16 @@
     "src": "https://storage.nathanpenny.fun/nathanpenny-fav/videos/%5Bsubbers%5D%20Violet%20Evergarden%20-%2001%20%5BBDRip%201080p%20zh-Hans%5D.mp4",
     "poster": "../images/blog-img/2026-07-02/Violet-Evergarden.webp",
     "date": "2026-07-02"
+  },
+  {
+    "id": "creations-2026-09-04",
+    "type": "video",
+    "origin": "favorite",
+    "title": "The Nuo Dance from Bilibili",
+    "description": "Nuo Dance is an ancient Chinese ritual dance. Dancers wear vivid masks to drive away evils and pray for blessings, preserving time‑honored folk cultural heritage.",
+    "src": "https://www.bilibili.com/video/BV127L86TE24/",
+    "platform": "bilibili",
+    "poster": "https://storage.nathanpenny.fun/img/2026/09/nuo-dance-558060.webp",
+    "date": "2026-09-04"
   }
 ]
