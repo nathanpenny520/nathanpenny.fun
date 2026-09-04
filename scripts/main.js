@@ -571,10 +571,16 @@ function renderCreations(grid, featured) {
       const embed = videoEmbedUrl(item);
       let player;
       if (embed) {
+        // Bilibili: mirror the platform's own share/embed snippet exactly —
+        // extra policies (an allow= feature list, referrerpolicy, lazy
+        // loading) broke playback in the embedded player. YouTube keeps the
+        // richer (and standard) attribute set.
+        const attrs = item.platform === 'bilibili'
+          ? 'scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"'
+          : 'loading="lazy" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="no-referrer-when-downgrade"';
         player =
           '<div class="creation-embed">' +
-          `<iframe src="${escapeHtml(embed)}" title="${escapeHtml(item.title)}" loading="lazy" ` +
-          'allowfullscreen allow="fullscreen; picture-in-picture" referrerpolicy="no-referrer-when-downgrade"></iframe>' +
+          `<iframe src="${escapeHtml(embed)}" title="${escapeHtml(item.title)}" ${attrs}></iframe>` +
           '</div>';
       } else {
         const poster = item.poster ? ` poster="${escapeHtml(item.poster)}"` : '';
