@@ -18,5 +18,19 @@
         "date": "2026-09"
       }
     ]
+  },
+  {
+    "id": "publications",
+    "icon": "fa-book",
+    "title": "Publications",
+    "items": [
+      {
+        "id": "1",
+        "title": "Upcoming",
+        "badge": "",
+        "description": "upcoming in the recent future",
+        "links": []
+      }
+    ]
   }
 ]
