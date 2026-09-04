@@ -696,9 +696,11 @@ html {
 }
 
 /* Gradient headline, the Linear-style signature (solid-color fallback stays
-   via the .hero h1 rule below if clipping is unsupported) */
+   via the .hero h1 rule below if clipping is unsupported). The 200% width
+   lets hero-neon-flow slide the gradient slowly across the glyphs. */
 .hero-title {
   background: linear-gradient(92deg, var(--hero-title-a) 15%, var(--hero-title-b) 55%, var(--hero-title-c) 90%);
+  background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -718,6 +720,46 @@ html {
 
 .hero-title {
   animation-delay: 0.12s;
+}
+
+/* The title stacks the entrance and the slow neon flow in one declaration —
+   a second `animation:` shorthand would reset hero-rise. The flow starts
+   after the entrance has settled. */
+.hero-title {
+  animation: hero-rise 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) 0.12s both,
+    hero-neon-flow 9s ease-in-out 1.2s infinite alternate;
+}
+
+@keyframes hero-neon-flow {
+  from { background-position: 0% 50%; }
+  to   { background-position: 100% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-title {
+    animation: hero-rise 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) 0.12s both;
+  }
+}
+
+/* Dark mode only: the neon halo. filter:drop-shadow follows the clipped
+   gradient glyph shape — text-shadow would bleed through the transparent
+   fill and muddy the letters. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hero-title {
+    filter: drop-shadow(0 0 14px rgba(72, 209, 180, 0.30)) drop-shadow(0 0 44px rgba(122, 102, 255, 0.16));
+  }
+
+  :root:not([data-theme="light"]) .section-title {
+    filter: drop-shadow(0 0 10px rgba(72, 209, 180, 0.22));
+  }
+}
+
+:root[data-theme="dark"] .hero-title {
+  filter: drop-shadow(0 0 14px rgba(72, 209, 180, 0.30)) drop-shadow(0 0 44px rgba(122, 102, 255, 0.16));
+}
+
+:root[data-theme="dark"] .section-title {
+  filter: drop-shadow(0 0 10px rgba(72, 209, 180, 0.22));
 }
 
 .hero-subtitle {
@@ -839,6 +881,19 @@ html {
 
 .page-card:hover::after {
   opacity: 1;
+}
+
+/* Dark mode upgrades the static top sheen to follow the cursor: --mx/--my
+   are set per card by initCardGlow as the pointer sweeps the grid. Light
+   mode keeps the original top-edge sheen. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .page-card::after {
+    background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 40%), rgba(126, 244, 214, 0.13), transparent 62%);
+  }
+}
+
+:root[data-theme="dark"] .page-card::after {
+  background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 40%), rgba(126, 244, 214, 0.13), transparent 62%);
 }
 
 /* Scroll reveal (data-reveal): main.js adds .will-reveal, then .is-visible
@@ -973,6 +1028,18 @@ html {
   margin: 35px 0 15px;
   padding-bottom: 8px;
   border-bottom: 2px solid var(--color-accent-soft);
+  /* Quieter cousin of the hero gradient: heading color flowing into teal,
+     ending on the hero's third tone. The teal underline stays a border so
+     background-clip:text never touches it. */
+  background: linear-gradient(90deg, var(--color-heading) 35%, var(--color-accent-strong) 72%, var(--hero-title-c));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@supports (-webkit-text-fill-color: transparent) {
+  .section-title {
+    -webkit-text-fill-color: transparent;
+  }
 }
 
 
@@ -2902,6 +2969,35 @@ footer p {
     right: 16px;
     width: 46px;
     height: 46px;
+  }
+}
+
+/* Cursor spotlight (dark mode only). The node is created by initSpotlight in
+   main.js; it trails the mouse with a soft screen-blend light that sweeps
+   over titles and cards. z-index sits it above the content but below the
+   sticky nav (99) and the lightbox. Light mode keeps the page clean. */
+#spotlight {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  background: radial-gradient(560px circle at var(--sx, 50%) var(--sy, 35%), rgba(126, 244, 214, 0.075), transparent 65%);
+}
+
+#spotlight.on {
+  opacity: 1;
+}
+
+:root[data-theme="light"] #spotlight {
+  display: none;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) #spotlight {
+    display: none;
   }
 }
 

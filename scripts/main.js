@@ -1148,21 +1148,73 @@ function initSiteChat() {
 // the hero is pure CSS on top of it.)
 // ============================================================================
 
-// Rebuild the starfield to fill the current viewport.
+// Layered depth: per-layer scroll and mouse factors, far → near. The nebulae
+// barely answer the scroll, the star layers drift apart, and near meteors
+// visibly outrun the page — three speeds are what read as "depth".
+const SCROLL_NEBULA = 0.02;
+const STAR_SCROLL = [0.04, 0.09];   // [far stars, mid stars]
+const STAR_MOUSE = [0.6, 1.1];      // mouse-parallax strength per star layer
+const SCROLL_NEAR = 0.16;           // meteors, the nearest layer
+
+// Pre-render the far-layer nebulae to offscreen canvases: however soft their
+// edges, each one costs a single drawImage per frame. Colors are the hero
+// aurora family so the sky and the hero read as one system.
+function skyBuildNebulae(canvas) {
+  const colors = ['26, 188, 156', '122, 102, 255', '106, 176, 243'];
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+
+  return colors.map((rgb, i) => {
+    const size = 340 + i * 70;
+    const img = document.createElement('canvas');
+    img.width = size;
+    img.height = size;
+    const ctx = img.getContext('2d');
+    const half = size / 2;
+
+    let grad = ctx.createRadialGradient(half, half, 0, half, half, half);
+    grad.addColorStop(0, `rgba(${rgb}, 0.5)`);
+    grad.addColorStop(0.55, `rgba(${rgb}, 0.2)`);
+    grad.addColorStop(1, `rgba(${rgb}, 0)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+
+    // An off-center second lobe so the blob never reads as a perfect circle.
+    grad = ctx.createRadialGradient(half * 0.6, half * 1.3, 0, half * 0.6, half * 1.3, half * 0.7);
+    grad.addColorStop(0, `rgba(${rgb}, 0.28)`);
+    grad.addColorStop(1, `rgba(${rgb}, 0)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+
+    return {
+      img,
+      x: w * (0.14 + 0.34 * i),
+      y: h * (0.16 + 0.22 * ((i * 1.6) % 1)),
+      size,
+      alpha: 0.10 + i * 0.025,
+      phase: i * 2.1
+    };
+  });
+}
+
+// Rebuild the starfield to fill the current viewport. Stars split into a dim
+// far layer and a brighter mid layer (STAR_SCROLL/STAR_MOUSE) so scrolling
+// pulls them apart.
 function skyBuildStars(canvas) {
   const area = canvas.clientWidth * canvas.clientHeight;
   const count = Math.min(200, Math.max(70, Math.round(area / 5500)));
   const stars = [];
 
   for (let i = 0; i < count; i++) {
+    const mid = Math.random() < 0.4;
     stars.push({
       x: Math.random() * canvas.clientWidth,
       y: Math.random() * canvas.clientHeight,
-      r: 0.3 + Math.random() * 1.1,
-      alpha: 0.2 + Math.random() * 0.6,
+      r: mid ? 0.8 + Math.random() * 0.8 : 0.3 + Math.random() * 0.6,
+      alpha: mid ? 0.4 + Math.random() * 0.5 : 0.15 + Math.random() * 0.35,
       speed: 0.3 + Math.random() * 0.9,   // twinkle speed
       phase: Math.random() * Math.PI * 2,
-      depth: 0.3 + Math.random() * 0.7    // parallax strength
+      layer: mid ? 1 : 0
     });
   }
   return stars;
@@ -1316,8 +1368,8 @@ function skyUpdateUfo(state, now) {
     // Freeze the star's wrapped position (parallax drift over ~2s is negligible).
     ufo.beam = {
       starIndex,
-      sx: ((star.x + state.parallaxX * star.depth) % w + w) % w,
-      sy: ((star.y + state.parallaxY * star.depth - state.scrollY * 0.06 * star.depth) % h + h) % h,
+      sx: ((star.x + state.parallaxX * STAR_MOUSE[star.layer]) % w + w) % w,
+      sy: ((star.y + state.parallaxY * STAR_MOUSE[star.layer] - state.scrollY * STAR_SCROLL[star.layer]) % h + h) % h,
       t: 0,
       phase: 'down'                    // 'down' → 'lift'
     };
@@ -1463,11 +1515,21 @@ function skyDrawFrame(state, now) {
   const rgb = state.effectiveTheme() === 'dark' ? '255, 255, 255' : '44, 62, 80';
   const t = now / 1000;
 
+  // Far layer first: pre-rendered nebulae, drifting on their own slow clock
+  // and barely answering scroll and mouse.
+  for (const neb of state.nebulae) {
+    const nx = neb.x + Math.sin(t * 0.05 + neb.phase) * 18 + state.parallaxX * 0.3;
+    const ny = neb.y + Math.cos(t * 0.04 + neb.phase) * 12 + state.parallaxY * 0.3 - state.scrollY * SCROLL_NEBULA;
+    ctx.globalAlpha = neb.alpha;
+    ctx.drawImage(neb.img, nx - neb.size / 2, ny - neb.size / 2);
+  }
+  ctx.globalAlpha = 1;
+
   for (const star of state.stars) {
     const twinkle = 0.55 + 0.45 * Math.sin(t * star.speed + star.phase);
     // Wrap coordinates so parallax and scroll shifts never bare an edge.
-    const x = ((star.x + state.parallaxX * star.depth) % w + w) % w;
-    const y = ((star.y + state.parallaxY * star.depth - state.scrollY * 0.06 * star.depth) % h + h) % h;
+    const x = ((star.x + state.parallaxX * STAR_MOUSE[star.layer]) % w + w) % w;
+    const y = ((star.y + state.parallaxY * STAR_MOUSE[star.layer] - state.scrollY * STAR_SCROLL[star.layer]) % h + h) % h;
 
     ctx.fillStyle = `rgba(${rgb}, ${star.alpha * twinkle})`;
     ctx.beginPath();
@@ -1507,19 +1569,22 @@ function skyDrawFrame(state, now) {
       state.meteor = null;
       state.nextShootAt = now + 9000 + Math.random() * 11000;
     } else {
-      const alpha = Math.min(meteor.life * 3, (1 - meteor.life) * 5, 0.9);
+      // The near layer: meteors shift with scroll faster than the page does.
+      const mx = meteor.x + state.parallaxX * 1.4;
+      const my = meteor.y + state.parallaxY * 1.4 - state.scrollY * SCROLL_NEAR;
+      const alpha = Math.min(meteor.life * 3, (1 - meteor.life) * 5, 1);
       const grad = ctx.createLinearGradient(
-        meteor.x, meteor.y,
-        meteor.x - meteor.vx * 14, meteor.y - meteor.vy * 14
+        mx, my,
+        mx - meteor.vx * 14, my - meteor.vy * 14
       );
       grad.addColorStop(0, `rgba(${rgb}, ${alpha})`);
       grad.addColorStop(1, `rgba(${rgb}, 0)`);
       ctx.strokeStyle = grad;
-      ctx.lineWidth = 1.6;
+      ctx.lineWidth = 2.2;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(meteor.x, meteor.y);
-      ctx.lineTo(meteor.x - meteor.vx * 14, meteor.y - meteor.vy * 14);
+      ctx.moveTo(mx, my);
+      ctx.lineTo(mx - meteor.vx * 14, my - meteor.vy * 14);
       ctx.stroke();
     }
   }
@@ -1618,6 +1683,7 @@ function initStarField() {
     canvas,
     ctx,
     stars: [],
+    nebulae: [],
     meteor: null,
     rock: null,
     sparks: [],
@@ -1641,6 +1707,7 @@ function initStarField() {
     canvas.height = canvas.clientHeight * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     state.stars = skyBuildStars(canvas);
+    state.nebulae = skyBuildNebulae(canvas);
     // Keep still-sky modes (reduced motion) painted after a rebuild.
     if (!state.running) skyDrawFrame(state, performance.now());
   }
@@ -1737,6 +1804,83 @@ function initStarField() {
   });
 
   start();
+}
+
+// ============================================================================
+// SPOTLIGHT & CARD GLOW (dark mode only): a cursor-following soft light over
+// the page, and a local sheen inside the home cards where the cursor sweeps.
+// Both are inert on touch devices and under reduced motion.
+// ============================================================================
+
+// A fixed screen-blend layer trailing the cursor with a soft teal light. It
+// sits above the content (titles and cards catch the light as it passes) but
+// below the nav and the lightbox. CSS hides it entirely in light mode.
+function initSpotlight() {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const el = document.createElement('div');
+  el.id = 'spotlight';
+  document.body.appendChild(el);
+
+  let targetX = window.innerWidth / 2;
+  let targetY = window.innerHeight * 0.35;
+  let x = targetX;
+  let y = targetY;
+  let rafId = 0;
+  let running = false;
+
+  function frame() {
+    x += (targetX - x) * 0.12;  // easing gives the light its heavy, trailing feel
+    y += (targetY - y) * 0.12;
+    el.style.setProperty('--sx', x + 'px');
+    el.style.setProperty('--sy', y + 'px');
+    rafId = requestAnimationFrame(frame);
+  }
+  function wake() {
+    if (running) return;
+    running = true;
+    el.classList.add('on');
+    rafId = requestAnimationFrame(frame);
+  }
+  function sleep() {
+    if (!running) return;
+    running = false;
+    el.classList.remove('on');
+    cancelAnimationFrame(rafId);
+  }
+
+  document.addEventListener('mousemove', (event) => {
+    wake();
+    targetX = event.clientX;
+    targetY = event.clientY;
+  }, { passive: true });
+  document.addEventListener('mouseleave', sleep);
+
+  const syncTheme = () => {
+    el.style.opacity = effectiveTheme() === 'dark' ? '' : '0';
+  };
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  if (darkQuery.addEventListener) darkQuery.addEventListener('change', syncTheme);
+  new MutationObserver(syncTheme).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  });
+  syncTheme();
+}
+
+// Per-card coordinates for the cursor sheen (.page-card::after reads --mx/--my
+// in dark mode). One delegated listener per grid keeps it cheap.
+function initCardGlow() {
+  document.querySelectorAll('.page-cards').forEach((grid) => {
+    grid.addEventListener('mousemove', (event) => {
+      const card = event.target.closest('.page-card');
+      if (!card || !grid.contains(card)) return;
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (event.clientX - rect.left) + 'px');
+      card.style.setProperty('--my', (event.clientY - rect.top) + 'px');
+    }, { passive: true });
+  });
 }
 
 // Reveal-on-scroll for elements tagged with data-reveal. Elements stay visible
@@ -1876,6 +2020,8 @@ window.addEventListener('DOMContentLoaded', () => {
   initCodeHighlight();
   initSiteChat();
   initStarField();
+  initSpotlight();
+  initCardGlow();
   initScrollReveal();
 });
 
