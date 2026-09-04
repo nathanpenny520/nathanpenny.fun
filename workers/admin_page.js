@@ -1,13 +1,14 @@
-// Self-hosted admin page served by GET /admin in comments.js: three tabs —
-// the image uploader, the markdown 写作台 (editor tab from editor_page.js)
-// and the AI playground (ai_page.js) — all interpolated below. Styling
-// mirrors the site frontend (frosted nav + palette from styles/style.css).
-// Self-contained (inline CSS/JS, noindex); the only cross-origin asset is
-// the site logo, loaded as an <img> from nathanpenny.fun. This file is one
-// template literal, so the page's own script deliberately avoids backticks
-// and ${}.
+// Self-hosted admin page served by GET /admin in comments.js: four tabs —
+// the image uploader, the markdown 写作台 (editor tab from editor_page.js),
+// the AI playground (ai_page.js) and the analytics stats tab (stats_page.js)
+// — all interpolated below. Styling mirrors the site frontend (frosted nav +
+// palette from styles/style.css). Self-contained (inline CSS/JS, noindex);
+// the only cross-origin asset is the site logo, loaded as an <img> from
+// nathanpenny.fun. This file is one template literal, so the page's own
+// script deliberately avoids backticks and ${}.
 import { EDITOR_TAB_HTML } from "./editor_page.js";
 import { AI_TAB_HTML } from "./ai_page.js";
+import { STATS_TAB_HTML } from "./stats_page.js";
 
 export const ADMIN_PAGE_HTML = `<!doctype html>
 <html lang="en">
@@ -176,7 +177,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
     .nav-container { gap: 16px; }
     .nav-links { gap: 18px; }
   }
-  /* On tiny phones the three links + two icons need the brand text gone */
+  /* On tiny phones the four links + two icons need the brand text gone */
   @media (max-width: 520px) {
     .logo { display: none; }
   }
@@ -277,6 +278,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
       <button id="tabBtnUpload" class="nav-link active" type="button">Images</button>
       <button id="tabBtnEditor" class="nav-link" type="button">Editor</button>
       <button id="tabBtnAi" class="nav-link" type="button">AI</button>
+      <button id="tabBtnStats" class="nav-link" type="button">Stats</button>
     </div>
     <a class="nav-icon" href="https://nathanpenny.fun/" target="_blank" rel="noopener" title="Open the site" aria-label="Open the site">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><path d="M15 3h6v6"></path><path d="M10 14L21 3"></path></svg>
@@ -334,6 +336,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   </section>
   ${EDITOR_TAB_HTML}
   ${AI_TAB_HTML}
+  ${STATS_TAB_HTML}
 </main>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -344,18 +347,22 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   var tabUpload = document.getElementById("tabUpload");
   var tabEditor = document.getElementById("tabEditor");
   var tabAi = document.getElementById("tabAi");
+  var tabStats = document.getElementById("tabStats");
   var btnUpload = document.getElementById("tabBtnUpload");
   var btnEditor = document.getElementById("tabBtnEditor");
   var btnAi = document.getElementById("tabBtnAi");
+  var btnStats = document.getElementById("tabBtnStats");
 
   function showTab(which) {
     var editorActive = which === "editor";
     tabUpload.hidden = which !== "upload";
     tabEditor.hidden = !editorActive;
     tabAi.hidden = which !== "ai";
+    tabStats.hidden = which !== "stats";
     btnUpload.className = "nav-link" + (which === "upload" ? " active" : "");
     btnEditor.className = "nav-link" + (editorActive ? " active" : "");
     btnAi.className = "nav-link" + (which === "ai" ? " active" : "");
+    btnStats.className = "nav-link" + (which === "stats" ? " active" : "");
     // The editor's two-pane layout needs more width than the other tabs.
     document.querySelector("main").classList.toggle("ed-wide", editorActive);
   }
@@ -363,6 +370,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   btnUpload.addEventListener("click", function () { showTab("upload"); });
   btnEditor.addEventListener("click", function () { showTab("editor"); });
   btnAi.addEventListener("click", function () { showTab("ai"); });
+  btnStats.addEventListener("click", function () { showTab("stats"); });
 
   // Frosted-nav border/shadow once the page scrolls (site's .nav-scrolled).
   var adminNav = document.getElementById("adminNav");

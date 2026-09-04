@@ -243,6 +243,69 @@ function initMobileMenu() {
 // Cloudflare Worker endpoint that handles comment submissions.
 const API_URL = 'https://workers.nathanpenny.fun';
 
+// ============================================================================
+// FIRST-PARTY ANALYTICS (a pageview beacon to our own Worker; no cookies, no
+// third parties — see the Privacy page). One pageview fires immediately; a
+// second beacon reports how long the page stayed visible when it is hidden.
+// The Worker derives a pseudonymous visitor id from a salted IP+UA hash
+// (the IP itself is never stored), drops bots and rate-limits, so this stays
+// quiet and cheap on every page including 404s.
+// ============================================================================
+
+// The owner sets localStorage.npSelf = '1' once to mark their own browser,
+// and the dashboard can exclude those visits from every number.
+function analyticsIsSelf() {
+  try { return localStorage.getItem('npSelf') === '1' ? 1 : 0; } catch (e) { return 0; }
+}
+
+function initAnalytics() {
+  if (navigator.webdriver) return; // headless test browsers — the Worker drops them anyway
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+
+  // Session id + per-tab pageview counter live in sessionStorage: they die
+  // with the tab, which is exactly the lifetime of a "visit".
+  let sid = 'sid-fallback-' + Date.now().toString(36);
+  let depth = 1;
+  try {
+    sid = sessionStorage.getItem('npSid') || crypto.randomUUID();
+    sessionStorage.setItem('npSid', sid);
+    depth = parseInt(sessionStorage.getItem('npDepth') || '0', 10) + 1;
+    sessionStorage.setItem('npDepth', String(depth));
+  } catch (e) { /* storage blocked — this pageview still counts */ }
+
+  const payload = {
+    v: 1,
+    sid: sid,
+    depth: depth,
+    path: location.pathname,
+    ref: document.referrer || '',
+    lang: navigator.language || '',
+    tz: (Intl.DateTimeFormat().resolvedOptions() || {}).timeZone || '',
+    self: analyticsIsSelf()
+  };
+
+  const send = (data) => {
+    try {
+      // sendBeacon survives page unloads and needs no CORS response handling.
+      navigator.sendBeacon(API_URL + '/api/analytics/hit',
+        new Blob([JSON.stringify(data)], { type: 'text/plain' }));
+    } catch (e) { /* analytics must never disturb the page */ }
+  };
+  send(payload);
+
+  // Time on page: reported once, when the tab (or the page) goes away.
+  const startedAt = Date.now();
+  let durationSent = false;
+  const sendDuration = () => {
+    if (durationSent) return;
+    durationSent = true;
+    send({ v: 1, t: 'd', sid: sid, path: payload.path, d: Math.round((Date.now() - startedAt) / 1000) });
+  };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) sendDuration(); });
+  window.addEventListener('pagehide', sendDuration);
+}
+
+
 // Site avatar image for the AI chat launcher. Resolved against this script's
 // own URL at execution time (document.currentScript is null by the time
 // DOMContentLoaded fires), so it is correct at any page depth.
@@ -2002,6 +2065,7 @@ function initCodeHighlight() {
 
 // Initialize page-specific features once the DOM is ready.
 window.addEventListener('DOMContentLoaded', () => {
+  initAnalytics();
   initThemeToggle();
   initLatestPosts();
   initBlogSearch();

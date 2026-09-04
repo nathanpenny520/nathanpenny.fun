@@ -72,3 +72,81 @@ CREATE TABLE IF NOT EXISTS chat_rate (
   count INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (ip, window_start)
 );
+
+-- Tables for the first-party analytics (see workers/analytics.js). Bots are
+-- dropped at ingest, `date` is the UTC+8 day of the hit, and visitor_id is a
+-- pseudonymous salted hash of IP + UA — the IP itself is never stored.
+-- Raw rows are pruned by the nightly cron after 13 months.
+CREATE TABLE IF NOT EXISTS analytics_hits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts INTEGER NOT NULL,               -- epoch seconds of the pageview
+  date TEXT NOT NULL,                -- 'YYYY-MM-DD' in UTC+8
+  visit_id TEXT NOT NULL,            -- client session id (sessionStorage uuid)
+  visitor_id TEXT NOT NULL,          -- pseudonymous visitor hash
+  depth INTEGER NOT NULL DEFAULT 1,  -- pageview index within the session
+  path TEXT NOT NULL,
+  ref_host TEXT NOT NULL DEFAULT '', -- '' = direct/internal
+  ref_path TEXT NOT NULL DEFAULT '',
+  ref_kind TEXT NOT NULL DEFAULT 'direct', -- direct|search|social|other
+  country TEXT NOT NULL DEFAULT '',  -- request.cf.country (ISO 3166-1 alpha-2)
+  device TEXT NOT NULL DEFAULT '',   -- desktop|mobile|tablet
+  browser TEXT NOT NULL DEFAULT '',
+  os TEXT NOT NULL DEFAULT '',
+  lang TEXT NOT NULL DEFAULT '',
+  tz TEXT NOT NULL DEFAULT '',
+  duration INTEGER NOT NULL DEFAULT 0, -- seconds, backfilled by the duration beacon
+  is_self INTEGER NOT NULL DEFAULT 0  -- the owner's own visits (excludable in stats)
+);
+CREATE INDEX IF NOT EXISTS idx_analytics_hits_date ON analytics_hits (date);
+CREATE INDEX IF NOT EXISTS idx_analytics_hits_visitor ON analytics_hits (visitor_id, id);
+CREATE INDEX IF NOT EXISTS idx_analytics_hits_visit ON analytics_hits (visit_id);
+
+-- One row per browsing session (a tab), upserted on every pageview so the
+-- sessions / bounce / entry-exit views need no GROUP BY over raw hits.
+CREATE TABLE IF NOT EXISTS analytics_visits (
+  visit_id TEXT PRIMARY KEY,
+  visitor_id TEXT NOT NULL,
+  start_ts INTEGER NOT NULL,
+  last_ts INTEGER NOT NULL,
+  hits INTEGER NOT NULL DEFAULT 1,
+  entry_path TEXT NOT NULL,
+  exit_path TEXT NOT NULL,
+  ref_host TEXT NOT NULL DEFAULT '',
+  ref_kind TEXT NOT NULL DEFAULT 'direct',
+  country TEXT NOT NULL DEFAULT '',
+  device TEXT NOT NULL DEFAULT '',
+  is_self INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_analytics_visits_visitor ON analytics_visits (visitor_id, start_ts);
+
+-- One row per pseudonymous visitor: the per-people profile the stats tab's
+-- visitor list and drill-down read. sessions is maintained by the ingest
+-- batch (incremented only when the visit_id is genuinely new).
+CREATE TABLE IF NOT EXISTS analytics_visitors (
+  visitor_id TEXT PRIMARY KEY,
+  first_seen INTEGER NOT NULL,
+  last_seen INTEGER NOT NULL,
+  first_date TEXT NOT NULL,
+  last_date TEXT NOT NULL,
+  hits INTEGER NOT NULL DEFAULT 0,
+  sessions INTEGER NOT NULL DEFAULT 0,
+  last_path TEXT NOT NULL DEFAULT '',
+  last_ref TEXT NOT NULL DEFAULT '',
+  country TEXT NOT NULL DEFAULT '',
+  device TEXT NOT NULL DEFAULT '',
+  browser TEXT NOT NULL DEFAULT '',
+  os TEXT NOT NULL DEFAULT '',
+  lang TEXT NOT NULL DEFAULT '',
+  tz TEXT NOT NULL DEFAULT '',
+  is_self INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_analytics_visitors_last ON analytics_visitors (last_seen);
+
+-- Per-IP ingest limiter for POST /api/analytics/hit (same shape as
+-- comment_rate; the shared bumpRateWindow in comments.js does the counting).
+CREATE TABLE IF NOT EXISTS analytics_rate (
+  ip TEXT NOT NULL,
+  window_start INTEGER NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (ip, window_start)
+);

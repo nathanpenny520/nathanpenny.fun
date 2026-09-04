@@ -8,4 +8,5 @@
 /creations     /pages/creations     200
 /contact       /pages/contact       200
 /achievements  /pages/achievements  200
+/privacy       /pages/privacy       200
 /games         /achievements        301

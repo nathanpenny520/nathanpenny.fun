@@ -6,6 +6,11 @@
 # only gate there.
 ADMIN_BYPASS=1
 
+# Optional: salt for the analytics visitor hash (visitor_id = sha256(salt+IP+UA)).
+# Without it ingest still works with an empty salt; production sets the real
+# secret:  npx wrangler secret put ANALYTICS_SALT
+ANALYTICS_SALT=dev-salt-not-for-production
+
 # Optional: Cloudflare API token (Workers AI scope) for local testing of the
 # AI proxy's cf-* models. Also needs the CF_ACCOUNT_ID var, which is already
 # in wrangler.jsonc.

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <script>
+      // Apply the saved color theme before first paint to avoid a flash.
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#10161c" media="(prefers-color-scheme: dark)">
+    <link rel="apple-touch-icon" href="../images/icon-180.png">
+    <title>Privacy Policy | Nathan Penny's personal website</title>
+    <meta name="description" content="What nathanpenny.fun collects, why, and for how long. No ads, no data selling, no tracking cookies.">
+    <meta name="author" content="Nathan Penny">
+    <link rel="canonical" href="https://nathanpenny.fun/privacy">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Nathan Penny's personal website">
+    <meta property="og:title" content="Privacy Policy | Nathan Penny's personal website">
+    <meta property="og:description" content="What nathanpenny.fun collects, why, and for how long. No ads, no data selling, no tracking cookies.">
+    <meta property="og:url" content="https://nathanpenny.fun/privacy">
+    <meta property="og:image" content="https://nathanpenny.fun/images/og-image.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <link href="../styles/style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="../fonts/fontawesome/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="../NP-logo.svg">
+    <link rel="alternate" type="application/rss+xml" title="Nathan Penny's blog (RSS)" href="https://nathanpenny.fun/feed.xml">
+    <script src="../scripts/main.js" defer></script>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-container">
+        <a href="../index.html" class="nav-brand" aria-label="Go to homepage">
+          <img class="site-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
+          <div class="logo">Nathan Penny's personal website <span class="logo-suffix">FOR FUN</span></div>
+        </a>
+
+        <ul class="nav-list">
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="./about.html">About</a></li>
+          <li><a href="./blog.html">Blog</a></li>
+          <li><a href="./gallery.html">Gallery</a></li>
+          <li><a href="./creations.html">Creations</a></li>
+          <li><a href="./achievements.html">Achievements</a></li>
+          <li><a href="./contact.html">Contact</a></li>
+        </ul>
+        <button id="themeToggle" class="theme-toggle" type="button">
+          <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+        <button id="menuToggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+          <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
+      </div>
+    </nav>
+
+    <main class="container">
+      <h3 class="section-title">Privacy Policy</h3>
+      <div class="blog-card">
+        <p><em>Last updated: 2026-09-04.</em> This is a personal, non-commercial website. It runs no ads, sells nothing, and shares no data with advertisers. This page explains the few things it does collect and why — which is also why you see no cookie banner: nothing that requires consent is stored on your device.</p>
+      </div>
+
+      <h3 class="section-title">What this site collects</h3>
+      <div class="blog-card">
+        <p><strong>Comments (when you post one).</strong> The name and text you write are shown publicly on the site. Your email address is stored with the comment but never displayed, never used for mailing, and never shared. Comments live in a Cloudflare D1 database and are removed on request (see <em>Your choices</em> below). Before a comment is accepted, Cloudflare Turnstile runs a human check, and per-IP rate limiting blocks spam floods.</p>
+      </div>
+      <div class="blog-card">
+        <p><strong>First-party analytics (on every page).</strong> This site measures its own traffic with a small script that reports each pageview to this site's own Cloudflare Worker — no third party is involved. Each pageview records: the page path, the site that referred you (if any), an approximate country derived by Cloudflare's edge, your device type and browser/OS as derived from the user-agent string, your browser language and timezone, and how long the page stayed visible.</p>
+        <p>There are no analytics cookies and no cross-site tracking. Your IP address is <em>never stored</em>: it is combined with the user-agent string and run through a one-way salted hash to produce a pseudonymous visitor id, which lets the site tell visits apart without knowing who you are. The same browser on the same network keeps the same id; a different device, browser, or network produces a different one. A session id lives in your browser's <code>sessionStorage</code> for the current tab only and disappears when the tab closes. The site owner keeps a private dashboard of this data; analytics records are deleted automatically after 13 months.</p>
+      </div>
+      <div class="blog-card">
+        <p><strong>Google Analytics 4.</strong> A standard GA4 measurement is also loaded, but only after the page has fully loaded and the browser is idle — it never delays the page. Google sets its own cookies and processes the data under Google's policies. In some regions (for example mainland China) Google's script is unreachable and simply never loads, in which case only the first-party analytics above apply.</p>
+      </div>
+      <div class="blog-card">
+        <p><strong>Cloudflare Web Analytics &amp; hosting.</strong> The site is served through Cloudflare (and GitHub Pages), which necessarily process request data such as your IP address and user agent in transit, and Cloudflare provides a separate cookieless, privacy-friendly analytics counter. This processing is inherent to serving any website and is governed by Cloudflare's own privacy policy.</p>
+      </div>
+
+      <h3 class="section-title">Local storage</h3>
+      <div class="blog-card">
+        <p>The only things this site stores in your browser are functional: your light/dark theme preference in <code>localStorage</code>, and the session id mentioned above in <code>sessionStorage</code>. No advertising or tracking identifiers are ever stored. This functional storage is why the site works without a consent banner.</p>
+      </div>
+
+      <h3 class="section-title">What this site never does</h3>
+      <div class="blog-card">
+        <ul>
+          <li>No ads, no affiliate links, no data selling or data brokerage.</li>
+          <li>No cross-site tracking or advertising profiles.</li>
+          <li>No storing of your IP address in its own database.</li>
+          <li>No email lists — your address is never used to contact you.</li>
+        </ul>
+      </div>
+
+      <h3 class="section-title">Your choices</h3>
+      <div class="blog-card">
+        <p>Block analytics with any browser setting or extension if you prefer — the site works fully without it. To have your comment, or any stored data, deleted, email <a href="mailto:hello@nathanpenny.fun">hello@nathanpenny.fun</a> from the address you commented with. Analytics data cannot be traced back to you and expires automatically after 13 months.</p>
+      </div>
+
+      <h3 class="section-title">Changes</h3>
+      <div class="blog-card">
+        <p>If this policy changes materially, the "last updated" date above will change with it.</p>
+      </div>
+
+      <div lang="zh-Hans">
+        <h3 class="section-title">隐私政策（中文版）</h3>
+        <div class="blog-card">
+          <p><em>更新于 2026-09-04。</em> 这是一个个人非商业网站：不投放广告、不出售任何数据、不向广告商共享数据。本页说明本站收集的少量信息及其用途——这也是你看不到 Cookie 弹窗的原因：本站不会在你的设备上存储任何需要授权的内容。</p>
+        </div>
+        <div class="blog-card">
+          <p><strong>评论（仅当你发表时）。</strong>你填写的昵称和评论内容会公开展示在网站上；邮箱会随评论一起存入数据库，但绝不公开显示、不用于群发邮件、不与任何第三方共享。评论存储在 Cloudflare D1 数据库中，可随时要求删除（见下文"你的选择"）。评论提交前会经过 Cloudflare Turnstile 人机验证，并有按 IP 的频率限制来阻止垃圾信息。</p>
+        </div>
+        <div class="blog-card">
+          <p><strong>自建访问统计（每个页面）。</strong>本站用一个极小的脚本把每次页面浏览上报到本站自己的 Cloudflare Worker，全程不经过任何第三方。每次浏览会记录：页面路径、来源网站（如有）、由 Cloudflare 边缘节点推算的大致国家/地区、从 User-Agent 解析出的设备类型与浏览器/系统、浏览器语言和时区，以及页面可见时长。</p>
+          <p>统计不使用任何 Cookie，也不做跨站追踪。你的 IP 地址<em>绝不存储</em>：它只与 User-Agent 一起经过加盐单向哈希，生成一个假名的"访客标识"，让本站能区分不同访问而不必知道你是谁——同一浏览器在同一网络下标识不变，换设备、浏览器或网络则会变。会话标识只存在于当前标签页的 <code>sessionStorage</code> 里，关闭标签页即消失。站长会在私人后台查看这些数据；统计记录在 13 个月后自动删除。</p>
+        </div>
+        <div class="blog-card">
+          <p><strong>Google Analytics 4。</strong>本站同时加载了标准的 GA4 统计，但只在页面完全加载且浏览器空闲后才加载，不会拖慢页面。Google 会按其自身政策设置 Cookie 并处理数据。在部分地区（例如中国大陆）Google 的脚本无法访问、根本不会加载，此时仅上述自建统计生效。</p>
+        </div>
+        <div class="blog-card">
+          <p><strong>Cloudflare 与托管。</strong>本站通过 Cloudflare（和 GitHub Pages）提供服务，它们在传输过程中必然处理 IP 地址、User-Agent 等请求数据；Cloudflare 另提供一个无 Cookie、隐私友好的聚合统计。这些是任何网站正常运行所固有的，受 Cloudflare 自身隐私政策约束。</p>
+        </div>
+
+        <h3 class="section-title">本地存储</h3>
+        <div class="blog-card">
+          <p>本站只在你浏览器里存功能性数据：明暗主题偏好（<code>localStorage</code>）和上述会话标识（<code>sessionStorage</code>）。绝无任何广告或追踪标识。这也是本站无需授权弹窗即可正常运行的原因。</p>
+        </div>
+
+        <h3 class="section-title">本站绝不做什么</h3>
+        <div class="blog-card">
+          <ul>
+            <li>不投放广告，不放联盟链接，不出售数据、不做数据中介。</li>
+            <li>不做跨站追踪，不建立广告画像。</li>
+            <li>不在自己的数据库中存储你的 IP 地址。</li>
+            <li>不做邮件营销——你的邮箱绝不会被用来联系你。</li>
+          </ul>
+        </div>
+
+        <h3 class="section-title">你的选择</h3>
+        <div class="blog-card">
+          <p>如果你愿意，可以用任意浏览器设置或插件屏蔽统计——不影响本站的任何功能。需要删除你的评论或其他已存储的数据，请用评论时使用的邮箱致信 <a href="mailto:hello@nathanpenny.fun">hello@nathanpenny.fun</a>。统计数据无法反向关联到你本人，并会在 13 个月后自动过期删除。</p>
+        </div>
+
+        <h3 class="section-title">政策变更</h3>
+        <div class="blog-card">
+          <p>如本政策有实质性变更，上方的"更新于"日期会一并更新。</p>
+        </div>
+      </div>
+
+    </main>
+
+    <footer>
+      <img class="footer-logo" src="../NP-logo.svg" alt="Nathan Penny logo">
+      <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript · <a href="./privacy.html">Privacy</a></p>
+    </footer>
+  </body>
+</html>

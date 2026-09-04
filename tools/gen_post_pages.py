@@ -52,7 +52,7 @@ POSTS_SRC = ROOT / "posts"
 POSTS_OUT = ROOT / "blog"
 
 SITE = "https://nathanpenny.fun"
-STATIC_PATHS = ["/", "/about", "/blog", "/gallery", "/creations", "/achievements", "/contact"]
+STATIC_PATHS = ["/", "/about", "/blog", "/gallery", "/creations", "/achievements", "/contact", "/privacy"]
 PAGE_TITLE_SUFFIX = " | Nathan Penny's blog"
 
 ARTICLES_START = "<!-- posts:articles:start -->"
@@ -709,7 +709,7 @@ def render_post_page(post, posts, og_image):
 
     <footer>
       <img class="footer-logo" src="../../NP-logo.svg" alt="Nathan Penny logo">
-      <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript</p>
+      <p>&copy; 2026 Nathan Penny's personal website | based on HTML + CSS + JavaScript &middot; <a href="../../pages/privacy.html">Privacy</a></p>
     </footer>
   </body>
 </html>

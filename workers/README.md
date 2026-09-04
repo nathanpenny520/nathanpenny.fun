@@ -1,10 +1,10 @@
-# Worker Backend: comments + admin (uploader/写作台) + AI proxy
+# Worker Backend: comments + admin (uploader/写作台/stats) + AI proxy
 
 Cloudflare Worker behind `https://workers.nathanpenny.fun` (custom domain;
 the `*.workers.dev` URL also exists but admin routes reject it — see Access
-below). Feature groups: comments, the Access-protected `/admin` page (image
-uploader + markdown editor + AI playground tabs), the site avatar chat, and
-the AI proxy.
+below). Feature groups: comments, first-party analytics, the Access-protected
+`/admin` page (image uploader + markdown editor + AI playground + stats
+tabs), the site avatar chat, and the AI proxy.
 
 ## Endpoints
 
@@ -13,7 +13,8 @@ the AI proxy.
 | GET    | `/comments`                    | public                  | List comments (`email` deliberately excluded)  |
 | POST   | `/comments`                    | public                  | Create a comment (rate limit + Turnstile)      |
 | POST   | `/api/site-chat`               | public                  | Site avatar chat (per-IP rate limit, internal key) |
-| GET    | `/admin`                       | Cloudflare Access       | Admin page: 图床 + 写作台 + AI playground tabs (admin_page.js + editor_page.js + ai_page.js) |
+| POST   | `/api/analytics/hit`           | public                  | First-party analytics beacon (see below; always 204) |
+| GET    | `/admin`                       | Cloudflare Access       | Admin page: 图床 + 写作台 + AI playground + Stats tabs (admin_page.js + editor_page.js + ai_page.js + stats_page.js) |
 | POST   | `/upload`                      | Cloudflare Access       | Multipart images → R2 `img/` prefix (optional `dir` field targets a folder) |
 | GET    | `/upload?list=1[&cursor=…]`    | Cloudflare Access       | Recent uploads (newest first, flat)            |
 | GET    | `/upload?list=1&prefix=img/…/&delimiter=1` | Cloudflare Access | One level of a folder: `{folders[], objects[]}` |
@@ -25,6 +26,8 @@ the AI proxy.
 | GET    | `/admin/api/post?slug=…`       | Cloudflare Access       | Read one post (decoded UTF-8 + blob sha)       |
 | POST   | `/admin/api/post`              | Cloudflare Access       | Publish (create/update) via GitHub Contents API |
 | DELETE | `/admin/api/post?slug=…&sha=…` | Cloudflare Access       | Delete a post (CI prunes its generated page)   |
+| GET    | `/admin/api/stats?days=N&self=1` | Cloudflare Access     | Analytics dashboard data for the Stats tab (7/30/90d; `self=1` includes the owner's flagged visits) |
+| GET    | `/admin/api/visitor?id=…`      | Cloudflare Access       | One visitor's profile + sessions + page timeline |
 | POST   | `/api/ai/v1/chat/completions`  | Bearer API key          | OpenAI-compatible proxy (see AI proxy below)   |
 | GET    | `/api/ai/v1/models`            | Bearer API key          | Model catalog (the free Workers AI `cf-*` models) |
 | *      | anything else                  | —                       | 404                                            |
@@ -236,6 +239,59 @@ Guards, in order:
    Disable that key and the widget's backend turns the feature off — no
    redeploy needed. No key ever reaches the browser.
 
+## First-party analytics (自建访问统计)
+
+The site measures its own traffic end-to-end with no third party. The
+collection path: `initAnalytics()` in main.js (every page, incl. 404) fires a
+`navigator.sendBeacon` pageview to `POST /api/analytics/hit` and a second
+beacon with the time-on-page when the page becomes hidden. `analytics.js`
+ingests into D1; the admin **Stats** tab (stats_page.js) reads it back through
+`/admin/api/stats` and `/admin/api/visitor`.
+
+Privacy design (mirrored in the site's `/privacy` policy page):
+
+- **The IP is never stored.** `visitor_id` = `sha256(ANALYTICS_SALT + IP + UA)`
+  truncated to 24 hex chars — pseudonymous and stable per browser+network, so
+  the stats can follow *a* visitor without knowing who they are. No cookies,
+  no cross-site identifiers; the session id (`visit_id`) lives in the
+  visitor's own `sessionStorage`.
+- **Bots are dropped at ingest** — a UA blocklist (search crawlers, uptime
+  monitors, previewers, headless…) plus the client-reported
+  `navigator.webdriver` flag never reach the tables at all.
+- **Every failure answers 204**; junk payloads, foreign `Origin`s and
+  rate-limited floods (60/min/IP via the `analytics_rate` table, counted by
+  the shared `bumpRateWindow`) are silently dropped.
+- Day buckets are **UTC+8** (`dateOf()`), matching the audience.
+- The owner marks their own browser once with
+  `localStorage.npSelf = '1'`; those hits carry `is_self = 1` and are
+  excluded from the dashboard unless "Include my visits" is ticked.
+
+Storage (all pruned after **13 months** by the nightly cron):
+
+- `analytics_hits` — one row per pageview: path, referrer (host + path +
+  kind: direct/search/social/other), `request.cf.country`, hand-rolled
+  UA classification (device/browser/os), language/timezone, session depth,
+  duration backfill, `is_self`.
+- `analytics_visits` — one row per tab session (upserted per pageview:
+  entry/exit path, hit count, referrer) so sessions/bounce/entry-exit need no
+  raw scans.
+- `analytics_visitors` — one row per visitor id: first/last seen, total hits,
+  session count (incremented in the same ingest batch only when the
+  `visit_id` is genuinely new), latest path/referrer/device/etc.
+- `analytics_rate` — the ingest limiter window counters.
+
+The Stats tab shows KPI tiles (PV / UV / sessions / bounce / avg time on page
+/ new-visitor share), a hand-rolled SVG daily trend (crosshair + tooltip +
+keyboard access + a table view), top pages, referrer tables and per-kind
+breakdowns, device/browser/OS/language/country breakdowns, the per-visitor
+list with a sessions + timeline drill-down dialog, and the recent-pageviews
+feed. Series colors are the site teal + blue, validated for CVD safety in
+both themes (`#1abc9c/#2a78d6` light, `#16a085/#3987e5` dark).
+
+Setup: the `ANALYTICS_SALT` secret (`npx wrangler secret put ANALYTICS_SALT`,
+any long random string). Missing salt degrades to an empty one — ingest keeps
+working but with weaker visitor separation.
+
 ## D1 setup
 
 Database `nathanpenny`, bound as `env.DB` (`wrangler.jsonc`). Tables:
@@ -243,6 +299,8 @@ Database `nathanpenny`, bound as `env.DB` (`wrangler.jsonc`). Tables:
 - `comments`, `comment_rate` — comment feature (created manually 2026-07;
   the DDL now also lives in `workers/schema.sql`, dumped verbatim from prod)
 - `chat_rate` — per-IP limiter for `/api/site-chat`
+- `analytics_hits`, `analytics_visits`, `analytics_visitors`,
+  `analytics_rate` — first-party analytics (see the section above)
 - `api_keys`, `ai_usage`, `ai_logs` — AI proxy; (re)create idempotently:
 
 ```sh
@@ -263,8 +321,8 @@ never remove it from `wrangler.jsonc`. Validate config changes first with
 
 Managed outside this repo: the `workers.nathanpenny.fun` custom domain, the
 Access application + policy (Zero Trust dashboard), the secrets
-(`TURNSTILE_SECRET`, `GITHUB_TOKEN`, `CF_AI_TOKEN` — check with
-`npx wrangler secret list`), the D1 rows for API keys (including the
+(`TURNSTILE_SECRET`, `GITHUB_TOKEN`, `CF_AI_TOKEN`, `ANALYTICS_SALT` — check
+with `npx wrangler secret list`), the D1 rows for API keys (including the
 internal `site-avatar` one), and the verified email destination address
 behind the `NOTIFY` send_email binding (not configured yet). Secrets are set
 with `npx wrangler secret put <NAME>`; a missing `CF_AI_TOKEN` makes the AI
@@ -282,6 +340,9 @@ comments.js → `pruneTables()`:
 - `ai_usage` months older than 13 months
 - `comment_rate` windows older than a day (backstop for the opportunistic
   sweep already in `checkRateLimit()`)
+- `analytics_hits` / `analytics_visits` / `analytics_visitors` older than
+  13 months (the privacy policy's retention promise), and `analytics_rate`
+  windows older than a day
 
 D1's free tier enforces daily row-read limits (since 2026-09), so the
 append-only tables must not grow unbounded. Prune failures are logged,

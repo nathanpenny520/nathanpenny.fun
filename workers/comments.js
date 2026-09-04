@@ -3,6 +3,7 @@
 //   GET  /comments  list comments (email deliberately excluded)
 //   POST /comments  create a comment (per-IP rate limit + Turnstile)
 //   POST /api/site-chat  site avatar chat (per-IP rate limit, internal key)
+//   POST /api/analytics/hit  first-party pageview beacon (bot-filtered, limited)
 //   POST /api/ai/v1/chat/completions  OpenAI-compatible proxy (bearer key)
 //   GET  /api/ai/v1/models            model catalog (bearer key)
 // Cloudflare Access-protected (see access.js):
@@ -17,10 +18,13 @@
 //   GET    /admin/api/post?slug=…   read one post (editor.js)
 //   POST   /admin/api/post      publish/create/update a post (GitHub Contents API)
 //   DELETE /admin/api/post      delete a post (slug + sha query params)
+//   GET    /admin/api/stats?days=…  analytics dashboard data (analytics.js)
+//   GET    /admin/api/visitor?id=…  one visitor's sessions + timeline (analytics.js)
 
 import { ADMIN_PAGE_HTML } from "./admin_page.js";
 import { handleAi, consumeQuota, writeLog, extractUsage, upstreamUrl } from "./ai_proxy.js";
 import { handleEditor } from "./editor.js";
+import { handleHit, handleAnalyticsApi } from "./analytics.js";
 import { verifyAccess, accessDenied } from "./access.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -595,7 +599,8 @@ async function pruneInBatches(env, sql) {
 }
 
 // Long-expired comment_rate windows are also swept opportunistically on every
-// POST (see checkRateLimit); this is the backstop covering all three tables.
+// POST (see checkRateLimit); this is the backstop covering every rate-limiter
+// and analytics table (see analytics.js for what expires and when).
 async function pruneTables(env) {
   // Uses idx_ai_logs_created for the subquery; the outer delete hits the PK.
   await pruneInBatches(
@@ -610,6 +615,21 @@ async function pruneTables(env) {
   ).bind(Math.floor(Date.now() / 1000) - 86400).run();
   await env.DB.prepare(
     "DELETE FROM chat_rate WHERE window_start < ?"
+  ).bind(Math.floor(Date.now() / 1000) - 86400).run();
+
+  // First-party analytics: raw rows + session/visitor profiles expire after
+  // 13 months (privacy policy), the rate limiter after a day. The hits table
+  // is the only one big enough to need batched deletes.
+  const analyticsCutoff = Math.floor(Date.now() / 1000) - 396 * 86400; // ~13 months
+  await pruneInBatches(
+    env,
+    "DELETE FROM analytics_hits WHERE id IN (SELECT id FROM analytics_hits WHERE ts < "
+    + analyticsCutoff + " LIMIT " + PRUNE_BATCH + ")"
+  );
+  await env.DB.prepare("DELETE FROM analytics_visits WHERE last_ts < ?").bind(analyticsCutoff).run();
+  await env.DB.prepare("DELETE FROM analytics_visitors WHERE last_seen < ?").bind(analyticsCutoff).run();
+  await env.DB.prepare(
+    "DELETE FROM analytics_rate WHERE window_start < ?"
   ).bind(Math.floor(Date.now() / 1000) - 86400).run();
 }
 
@@ -651,6 +671,16 @@ export default {
       // --- Public site avatar chat (no key; per-IP limited; internal key). ---
       if (url.pathname === "/api/site-chat") {
         return handleSiteChat(request, env, ctx, corsHeaders);
+      }
+
+      // --- First-party analytics beacon (bots dropped inside; always 204). ---
+      if (url.pathname === "/api/analytics/hit") {
+        return handleHit(request, env, ctx, { bumpRateWindow });
+      }
+
+      // --- Analytics dashboard (Access-verified inside analytics.js). ---
+      if (url.pathname === "/admin/api/stats" || url.pathname === "/admin/api/visitor") {
+        return handleAnalyticsApi(request, env, url);
       }
 
       // --- Markdown editor API (editor.js). Lives under /admin/ so the edge
