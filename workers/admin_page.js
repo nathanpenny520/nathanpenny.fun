@@ -386,12 +386,25 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
     document.querySelector("main").classList.toggle("ed-wide", editorActive);
   }
 
-  btnUpload.addEventListener("click", function () { showTab("upload"); });
-  btnEditor.addEventListener("click", function () { showTab("editor"); });
-  btnContent.addEventListener("click", function () { showTab("content"); });
-  btnAi.addEventListener("click", function () { showTab("ai"); });
-  btnStats.addEventListener("click", function () { showTab("stats"); });
-  btnComments.addEventListener("click", function () { showTab("comments"); });
+  // The active tab is recorded in the URL hash so a refresh (or a reopened
+  // link like /admin#comments) lands back on the same tab.
+  var TAB_NAMES = ["upload", "editor", "content", "ai", "stats", "comments"];
+  function showTabKeep(name) {
+    showTab(name);
+    history.replaceState(null, "", "#" + name);
+  }
+  function showTabFromHash() {
+    var name = location.hash.replace("#", "");
+    if (TAB_NAMES.indexOf(name) !== -1) showTab(name);
+  }
+  btnUpload.addEventListener("click", function () { showTabKeep("upload"); });
+  btnEditor.addEventListener("click", function () { showTabKeep("editor"); });
+  btnContent.addEventListener("click", function () { showTabKeep("content"); });
+  btnAi.addEventListener("click", function () { showTabKeep("ai"); });
+  btnStats.addEventListener("click", function () { showTabKeep("stats"); });
+  btnComments.addEventListener("click", function () { showTabKeep("comments"); });
+  window.addEventListener("hashchange", showTabFromHash);
+  showTabFromHash();
 
   // Frosted-nav border/shadow once the page scrolls (site's .nav-scrolled).
   var adminNav = document.getElementById("adminNav");
