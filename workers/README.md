@@ -113,8 +113,13 @@ in git history).
   length caps, 500 entries / 256KB). Valid → committed with the message
   `<label>: update via admin`; stale sha → 409 (reload and re-apply).
 - File names are a whitelist (`DATA_FILES` in editor.js) — no arbitrary
-  repo paths. `data/achievements.json` joins the whitelist when the
-  achievements editor ships (phase 2).
+  repo paths: `gallery`, `creations`, `achievements`.
+- **Achievements** (`data/achievements.json`) is a two-level structure — an
+  array of ordered sections, each with ordered items (`id`, `title`, `badge`,
+  `date` as YYYY-MM or YYYY-MM-DD, `description`, `links[]` of absolute
+  http(s) URLs). Validated by `validateAchv()` in editor.js; rendered by
+  `initAchievements()` in main.js (GitHub links get the GitHub icon, section
+  icons default by section id); `[]` shows the page's built-in empty state.
 - Creations video entries: `platform` omitted or `file` renders the native
   `<video>` player; `bilibili` / `youtube` make `main.js videoEmbedUrl()`
   convert the watch-page URL into `player.bilibili.com` / (no-cookie)

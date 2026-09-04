@@ -63,6 +63,7 @@ export const CONTENT_TAB_HTML = `
   <div class="ct-switch">
     <button id="ctBtnGallery" class="ct-tab active" type="button">Gallery</button>
     <button id="ctBtnCreations" class="ct-tab" type="button">Creations</button>
+    <button id="ctBtnAchv" class="ct-tab" type="button">Achievements</button>
   </div>
 
   <div id="ctGallery" class="ct-layout">
@@ -160,6 +161,71 @@ export const CONTENT_TAB_HTML = `
     </div>
   </div>
 
+  <div id="ctAchv" class="ct-layout" hidden>
+    <aside class="ct-side">
+      <div class="ed-side-head">
+        <button id="achvAddSec" type="button" class="primary">+ Section</button>
+        <button id="achvReload" type="button" title="Reload from GitHub and discard local edits">↻</button>
+      </div>
+      <ul id="achvSecList"></ul>
+      <p class="empty" id="achvSecEmpty" hidden>No sections yet — add the first one (e.g. Publications).</p>
+    </aside>
+    <div class="ct-main">
+      <div class="ed-meta">
+        <div class="ed-meta-row">
+          <input id="achvSecId" class="ct-id" type="text" placeholder="section id (publications)" spellcheck="false" aria-label="Section id" list="achvIdList">
+          <datalist id="achvIdList">
+            <option value="publications"></option>
+            <option value="projects"></option>
+            <option value="awards"></option>
+            <option value="certificates"></option>
+            <option value="talks"></option>
+          </datalist>
+          <input id="achvSecIcon" class="ct-id" type="text" placeholder="icon (fa-book)" spellcheck="false" aria-label="Section icon" list="achvIconList">
+          <datalist id="achvIconList">
+            <option value="fa-book"></option>
+            <option value="fa-diagram-project"></option>
+            <option value="fa-trophy"></option>
+            <option value="fa-certificate"></option>
+            <option value="fa-person-chalkboard"></option>
+            <option value="fa-flask"></option>
+          </datalist>
+          <input id="achvSecTitle" type="text" placeholder="Section title" aria-label="Section title">
+        </div>
+      </div>
+      <div id="achvItemsArea" hidden>
+        <div class="ed-toolbar">
+          <h2 style="margin:0;font-size:14px">Items <span class="meta" id="achvItemCount"></span></h2>
+          <span class="ed-spacer"></span>
+          <button id="achvAddItem" type="button">+ Item</button>
+        </div>
+        <ul id="achvItemList"></ul>
+        <div class="ed-meta" id="achvItemForm" hidden>
+          <div class="ed-meta-row">
+            <input id="achvItemId" class="ct-id" type="text" placeholder="item id" spellcheck="false" aria-label="Item id">
+            <input id="achvItemDate" type="month" aria-label="Date">
+          </div>
+          <div class="ed-meta-row">
+            <input id="achvItemTitle" type="text" placeholder="Title" aria-label="Title">
+            <input id="achvItemBadge" type="text" placeholder="badge (journal, conference, Award…)" aria-label="Badge">
+          </div>
+          <textarea id="achvItemDesc" rows="2" placeholder="Description (optional)" aria-label="Description"></textarea>
+          <div id="achvLinks"></div>
+          <div class="ed-meta-row">
+            <button id="achvAddLink" type="button">+ Link</button>
+          </div>
+        </div>
+      </div>
+      <div class="ed-toolbar">
+        <span class="ct-formhint">Dates are month-precision (YYYY-MM). Links must be absolute http(s) URLs; GitHub links get the GitHub icon automatically on the page.</span>
+        <span class="ed-spacer"></span>
+        <button id="achvSecDelete" type="button" class="danger">Delete section</button>
+        <button id="achvSave" type="button" class="primary">Save achievements.json</button>
+      </div>
+      <p id="ctAchvStatus" class="ed-status" aria-live="polite"></p>
+    </div>
+  </div>
+
   <dialog id="ctPick">
     <h2>Pick an image</h2>
     <p class="hint">Your 100 most recent uploads — or upload a new one straight from your computer. Anything else (e.g. a music/ object) can be pasted into the field directly.</p>
@@ -197,8 +263,10 @@ export const CONTENT_TAB_HTML = `
 
     var ctGallery = document.getElementById("ctGallery");
     var ctCreations = document.getElementById("ctCreations");
+    var ctAchv = document.getElementById("ctAchv");
     var ctBtnGallery = document.getElementById("ctBtnGallery");
     var ctBtnCreations = document.getElementById("ctBtnCreations");
+    var ctBtnAchv = document.getElementById("ctBtnAchv");
 
     var toastEl = null;
     var toastTimer = null;
@@ -282,12 +350,15 @@ export const CONTENT_TAB_HTML = `
       section = which;
       ctGallery.hidden = which !== "gallery";
       ctCreations.hidden = which !== "creations";
+      ctAchv.hidden = which !== "achievements";
       ctBtnGallery.className = "ct-tab" + (which === "gallery" ? " active" : "");
       ctBtnCreations.className = "ct-tab" + (which === "creations" ? " active" : "");
+      ctBtnAchv.className = "ct-tab" + (which === "achievements" ? " active" : "");
     }
 
-    ctBtnGallery.addEventListener("click", function () { showSection("gallery"); });
-    ctBtnCreations.addEventListener("click", function () { showSection("creations"); });
+    ctBtnGallery.addEventListener("click", function () { if (okToLeave(section)) showSection("gallery"); });
+    ctBtnCreations.addEventListener("click", function () { if (okToLeave(section)) showSection("creations"); });
+    ctBtnAchv.addEventListener("click", function () { if (okToLeave(section)) showSection("achievements"); });
 
     // --- image picker (recent /upload listings) ----------------------------
 
@@ -781,6 +852,343 @@ export const CONTENT_TAB_HTML = `
       saveSection("creations", s.items);
     });
 
+    // --- achievements editor (ordered sections -> ordered items) ------------
+    // Form fields write straight into the model on input (dirty-flag only);
+    // list re-renders happen on change/blur and on structural actions, so
+    // typing never steals focus.
+
+    var ach = {
+      secList: document.getElementById("achvSecList"),
+      secEmpty: document.getElementById("achvSecEmpty"),
+      secId: document.getElementById("achvSecId"),
+      secIcon: document.getElementById("achvSecIcon"),
+      secTitle: document.getElementById("achvSecTitle"),
+      itemArea: document.getElementById("achvItemsArea"),
+      itemList: document.getElementById("achvItemList"),
+      itemCount: document.getElementById("achvItemCount"),
+      itemForm: document.getElementById("achvItemForm"),
+      itemId: document.getElementById("achvItemId"),
+      itemDate: document.getElementById("achvItemDate"),
+      itemTitle: document.getElementById("achvItemTitle"),
+      itemBadge: document.getElementById("achvItemBadge"),
+      itemDesc: document.getElementById("achvItemDesc"),
+      links: document.getElementById("achvLinks")
+    };
+    sections.achievements = {
+      sha: null, items: [], dirty: false,
+      status: document.getElementById("ctAchvStatus"),
+      list: ach.secList,
+      empty: ach.secEmpty
+    };
+    var achvSelSec = -1;
+    var achvSelItem = -1;
+
+    function achvSec() {
+      var s = sections.achievements;
+      return achvSelSec >= 0 && achvSelSec < s.items.length ? s.items[achvSelSec] : null;
+    }
+
+    function achvItem() {
+      var sec = achvSec();
+      return sec && achvSelItem >= 0 && achvSelItem < sec.items.length ? sec.items[achvSelItem] : null;
+    }
+
+    function achvMonthLabel(v) {
+      var m = /^(\\d{4})-(\\d{2})/.exec(String(v || ""));
+      if (!m) return String(v || "");
+      var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      var mi = parseInt(m[2], 10);
+      return mi >= 1 && mi <= 12 ? months[mi - 1] + " " + m[1] : String(v);
+    }
+
+    function achvRenderSections() {
+      var s = sections.achievements;
+      ach.secList.textContent = "";
+      s.empty.hidden = s.items.length > 0;
+      s.items.forEach(function (sec, i) {
+        var li = document.createElement("li");
+        if (i === achvSelSec) li.classList.add("active");
+        var main = document.createElement("div");
+        main.className = "row-main";
+        var name = document.createElement("span");
+        name.className = "name";
+        name.textContent = sec.title || "(untitled)";
+        var meta = document.createElement("span");
+        meta.className = "meta";
+        meta.textContent = (sec.items ? sec.items.length : 0) + " items";
+        main.appendChild(name);
+        main.appendChild(meta);
+        var tools = document.createElement("div");
+        tools.className = "actions";
+        tools.style.marginTop = "4px";
+        [["↑", -1], ["↓", 1]].forEach(function (pair) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "ct-move";
+          b.textContent = pair[0];
+          b.title = "Move " + (pair[1] < 0 ? "up" : "down");
+          b.addEventListener("click", function (e) {
+            e.stopPropagation();
+            achvSelSec = moveItem(s.items, i, pair[1]);
+            achvSelItem = -1;
+            s.dirty = true;
+            achvRenderAll();
+          });
+          tools.appendChild(b);
+        });
+        var del = document.createElement("button");
+        del.type = "button";
+        del.className = "ct-move danger";
+        del.textContent = "🗑";
+        del.title = "Delete section";
+        del.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (!window.confirm('Delete section "' + (sec.title || sec.id) + '" and all its items? (Removed only when you Save.)')) return;
+          s.items.splice(i, 1);
+          if (achvSelSec === i) { achvSelSec = -1; achvSelItem = -1; }
+          else if (achvSelSec > i) achvSelSec -= 1;
+          s.dirty = true;
+          achvRenderAll();
+        });
+        tools.appendChild(del);
+        li.appendChild(main);
+        li.appendChild(tools);
+        li.addEventListener("click", function () {
+          if (i === achvSelSec) return;
+          achvSelSec = i;
+          achvSelItem = -1;
+          achvRenderAll();
+        });
+        ach.secList.appendChild(li);
+      });
+    }
+
+    function achvRenderItems() {
+      var s = sections.achievements;
+      var sec = achvSec();
+      ach.itemList.textContent = "";
+      var items = sec ? sec.items : [];
+      ach.itemCount.textContent = "(" + items.length + ")";
+      items.forEach(function (it, i) {
+        var li = document.createElement("li");
+        if (i === achvSelItem) li.classList.add("active");
+        var main = document.createElement("div");
+        main.className = "row-main";
+        var name = document.createElement("span");
+        name.className = "name";
+        name.textContent = it.title || "(untitled)";
+        var meta = document.createElement("span");
+        meta.className = "meta";
+        var bits = [];
+        if (it.badge) bits.push(it.badge);
+        if (it.date) bits.push(achvMonthLabel(it.date));
+        meta.textContent = bits.join(" · ");
+        main.appendChild(name);
+        main.appendChild(meta);
+        var tools = document.createElement("div");
+        tools.className = "actions";
+        tools.style.marginTop = "4px";
+        var edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "ct-move";
+        edit.textContent = "✎";
+        edit.title = "Edit item";
+        edit.addEventListener("click", function (e) {
+          e.stopPropagation();
+          achvSelItem = i;
+          achvRenderAll();
+        });
+        tools.appendChild(edit);
+        [["↑", -1], ["↓", 1]].forEach(function (pair) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "ct-move";
+          b.textContent = pair[0];
+          b.title = "Move " + (pair[1] < 0 ? "up" : "down");
+          b.addEventListener("click", function (e) {
+            e.stopPropagation();
+            achvSelItem = moveItem(sec.items, i, pair[1]);
+            s.dirty = true;
+            achvRenderAll();
+          });
+          tools.appendChild(b);
+        });
+        var del = document.createElement("button");
+        del.type = "button";
+        del.className = "ct-move danger";
+        del.textContent = "🗑";
+        del.title = "Delete item";
+        del.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (!window.confirm('Delete item "' + (it.title || it.id) + '"? (Removed only when you Save.)')) return;
+          sec.items.splice(i, 1);
+          if (achvSelItem === i) achvSelItem = -1;
+          else if (achvSelItem > i) achvSelItem -= 1;
+          s.dirty = true;
+          achvRenderAll();
+        });
+        tools.appendChild(del);
+        li.appendChild(main);
+        li.appendChild(tools);
+        li.addEventListener("click", function () {
+          if (i === achvSelItem) return;
+          achvSelItem = i;
+          achvRenderAll();
+        });
+        ach.itemList.appendChild(li);
+      });
+    }
+
+    function achvRenderLinks() {
+      var s = sections.achievements;
+      var it = achvItem();
+      ach.links.textContent = "";
+      if (!it) return;
+      if (!it.links) it.links = [];
+      it.links.forEach(function (l, k) {
+        var row = document.createElement("div");
+        row.className = "ed-meta-row";
+        var lab = document.createElement("input");
+        lab.type = "text";
+        lab.placeholder = "label (Read it here)";
+        lab.value = l.label || "";
+        var url = document.createElement("input");
+        url.type = "text";
+        url.placeholder = "https://…";
+        url.spellcheck = false;
+        url.style.flex = "1 1 220px";
+        url.value = l.url || "";
+        var rm = document.createElement("button");
+        rm.type = "button";
+        rm.className = "danger";
+        rm.textContent = "×";
+        rm.title = "Remove link";
+        lab.addEventListener("input", function () { l.label = lab.value; s.dirty = true; });
+        url.addEventListener("input", function () { l.url = url.value.trim(); s.dirty = true; });
+        rm.addEventListener("click", function () {
+          it.links.splice(k, 1);
+          if (!it.links.length) delete it.links;
+          s.dirty = true;
+          achvRenderLinks();
+        });
+        row.appendChild(lab);
+        row.appendChild(url);
+        row.appendChild(rm);
+        ach.links.appendChild(row);
+      });
+    }
+
+    function achvFillSecForm() {
+      var sec = achvSec();
+      ach.secId.value = sec ? sec.id : "";
+      ach.secIcon.value = sec && sec.icon ? sec.icon : "";
+      ach.secTitle.value = sec ? sec.title : "";
+    }
+
+    function achvFillItemForm() {
+      var it = achvItem();
+      ach.itemForm.hidden = !it;
+      ach.itemId.value = it ? it.id : "";
+      ach.itemDate.value = it && it.date ? it.date : "";
+      ach.itemTitle.value = it ? it.title : "";
+      ach.itemBadge.value = it && it.badge ? it.badge : "";
+      ach.itemDesc.value = it && it.description ? it.description : "";
+      achvRenderLinks();
+    }
+
+    function achvRenderAll() {
+      achvRenderSections();
+      achvFillSecForm();
+      achvRenderItems();
+      achvFillItemForm();
+      ach.itemArea.hidden = !achvSec();
+    }
+
+    (function achvBindSec() {
+      var s = sections.achievements;
+      function write() {
+        var sec = achvSec();
+        if (!sec) return;
+        sec.id = ach.secId.value.trim();
+        sec.icon = ach.secIcon.value.trim();
+        sec.title = ach.secTitle.value;
+        s.dirty = true;
+      }
+      [ach.secId, ach.secIcon, ach.secTitle].forEach(function (el) {
+        el.addEventListener("input", write);
+        el.addEventListener("change", function () { write(); achvRenderSections(); });
+      });
+    })();
+
+    (function achvBindItem() {
+      var s = sections.achievements;
+      function write() {
+        var it = achvItem();
+        if (!it) return;
+        it.id = ach.itemId.value.trim();
+        it.title = ach.itemTitle.value;
+        it.badge = ach.itemBadge.value.trim();
+        it.description = ach.itemDesc.value;
+        var d = ach.itemDate.value;
+        if (d) it.date = d;
+        else delete it.date;
+        s.dirty = true;
+      }
+      [ach.itemId, ach.itemTitle, ach.itemBadge, ach.itemDesc].forEach(function (el) {
+        el.addEventListener("input", write);
+        el.addEventListener("change", function () { write(); achvRenderItems(); });
+      });
+      ach.itemDate.addEventListener("input", write);
+      ach.itemDate.addEventListener("change", function () { write(); achvRenderItems(); });
+    })();
+
+    document.getElementById("achvAddSec").addEventListener("click", function () {
+      var s = sections.achievements;
+      s.items.push({ id: uniqueId(s.items, "new-section"), icon: "", title: "", items: [] });
+      achvSelSec = s.items.length - 1;
+      achvSelItem = -1;
+      s.dirty = true;
+      achvRenderAll();
+      ach.secTitle.focus();
+      setStatus("achievements", "New section — set the title, then add items.", "");
+    });
+    document.getElementById("achvReload").addEventListener("click", function () {
+      if (okToLeave("achievements")) loadSection("achievements");
+    });
+    document.getElementById("achvAddItem").addEventListener("click", function () {
+      var s = sections.achievements;
+      var sec = achvSec();
+      if (!sec) { setStatus("achievements", "Select or create a section first.", "err"); return; }
+      sec.items.push({ id: uniqueId(sec.items, "new-item"), title: "", badge: "", description: "" });
+      achvSelItem = sec.items.length - 1;
+      s.dirty = true;
+      achvRenderAll();
+      ach.itemTitle.focus();
+    });
+    document.getElementById("achvAddLink").addEventListener("click", function () {
+      var s = sections.achievements;
+      var it = achvItem();
+      if (!it) return;
+      if (!it.links) it.links = [];
+      it.links.push({ label: "", url: "" });
+      s.dirty = true;
+      achvRenderLinks();
+    });
+    document.getElementById("achvSecDelete").addEventListener("click", function () {
+      var s = sections.achievements;
+      var sec = achvSec();
+      if (!sec) { setStatus("achievements", "Select a section first.", "err"); return; }
+      if (!window.confirm('Delete section "' + (sec.title || sec.id) + '" and all its items? (Removed only when you Save.)')) return;
+      s.items.splice(achvSelSec, 1);
+      achvSelSec = -1;
+      achvSelItem = -1;
+      s.dirty = true;
+      achvRenderAll();
+    });
+    document.getElementById("achvSave").addEventListener("click", function () {
+      saveSection("achievements", sections.achievements.items);
+    });
+
     // --- load + save ---------------------------------------------------------
 
     function loadSection(kind) {
@@ -806,9 +1214,13 @@ export const CONTENT_TAB_HTML = `
           galRenderList();
           galFillForm();
           renderCatList();
-        } else {
+        } else if (kind === "creations") {
           creRenderList();
           creFillForm();
+        } else {
+          achvSelSec = s.items.length ? 0 : -1;
+          achvSelItem = -1;
+          achvRenderAll();
         }
         setStatus(kind, "Loaded " + s.items.length + " entr" + (s.items.length === 1 ? "y" : "ies") + " (editable; Save commits to GitHub).", "ok");
       }).catch(function (err) {
@@ -823,17 +1235,19 @@ export const CONTENT_TAB_HTML = `
       var clean = items.map(function (it) {
         var o = {};
         Object.keys(it).forEach(function (k) { o[k] = it[k]; });
-        if (o.type === "song") {
-          delete o.poster;
-          delete o.platform;
-        } else {
-          delete o.cover;
-          if (o.platform === "file" || !o.platform) delete o.platform;
+        if (kind !== "achievements") {
+          if (o.type === "song") {
+            delete o.poster;
+            delete o.platform;
+          } else {
+            delete o.cover;
+            if (o.platform === "file" || !o.platform) delete o.platform;
+          }
         }
         return o;
       });
       var text = JSON.stringify(clean, null, 2) + "\\n";
-      var btn = document.getElementById(kind === "gallery" ? "galSave" : "creSave");
+      var btn = document.getElementById(kind === "gallery" ? "galSave" : (kind === "creations" ? "creSave" : "achvSave"));
       btn.disabled = true;
       setStatus(kind, "Committing to GitHub…", "");
       var payload = { file: kind, content: text };
@@ -856,9 +1270,11 @@ export const CONTENT_TAB_HTML = `
           galRenderList();
           galFillForm();
           renderCatList();
-        } else {
+        } else if (kind === "creations") {
           creRenderList();
           creFillForm();
+        } else {
+          achvRenderAll();
         }
         setStatus(kind, "Saved — the live page updates in a minute or two.", "ok");
         toast("Committed to GitHub");
@@ -870,6 +1286,7 @@ export const CONTENT_TAB_HTML = `
 
     loadSection("gallery");
     loadSection("creations");
+    loadSection("achievements");
   }
 
   // This script sits inside <main>, before the shared #toast element, so

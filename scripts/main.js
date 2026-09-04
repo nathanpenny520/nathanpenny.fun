@@ -2095,6 +2095,77 @@ function initCodeHighlight() {
   document.head.appendChild(script);
 }
 
+// ============================================================================
+// ACHIEVEMENTS PAGE (rendered from data/achievements.json — edited in the
+// admin Content tab). The static .achv-empty block inside #achvRoot is the
+// no-JS/no-data fallback: it stays until the first section exists and
+// reappears whenever the data file is emptied or unreachable.
+// ============================================================================
+
+const ACHV_SECTION_ICONS = {
+  publications: 'fa-book',
+  projects: 'fa-diagram-project',
+  awards: 'fa-trophy',
+  certificates: 'fa-certificate',
+  talks: 'fa-person-chalkboard',
+  research: 'fa-flask'
+};
+
+// "2026-09" / "2026-09-04" -> "Sep 2026" (month precision, like the template).
+function achvFormatDate(value) {
+  const m = /^(\d{4})-(\d{2})/.exec(String(value || ''));
+  if (!m) return '';
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const mi = parseInt(m[2], 10);
+  return mi >= 1 && mi <= 12 ? `${months[mi - 1]} ${m[1]}` : '';
+}
+
+function initAchievements() {
+  const root = document.getElementById('achvRoot');
+  if (!root) return;
+
+  fetch('../data/achievements.json')
+    .then(response => {
+      if (!response.ok) throw new Error('achievements data unavailable');
+      return response.json();
+    })
+    .then(sections => {
+      if (!Array.isArray(sections) || !sections.length) return; // keep the empty state
+      root.innerHTML = sections.map((section) => {
+        const icon = /^fa-[a-z0-9-]+$/.test(section.icon || '')
+          ? section.icon
+          : (ACHV_SECTION_ICONS[section.id] || 'fa-star');
+        const cards = (Array.isArray(section.items) ? section.items : []).map((item) => {
+          const meta =
+            (item.badge ? `<span class="achv-badge">${escapeHtml(item.badge)}</span>` : '') +
+            (achvFormatDate(item.date) ? `<time datetime="${escapeHtml(item.date)}">${achvFormatDate(item.date)}</time>` : '');
+          const links = (Array.isArray(item.links) ? item.links : [])
+            .filter(link => link && /^https?:\/\//i.test(link.url || ''))
+            .map(link => {
+              const isGithub = /github\.com/i.test(link.url);
+              return `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener">${escapeHtml(link.label || 'Link')} <i class="${isGithub ? 'fa-brands fa-github' : 'fa-solid fa-arrow-up-right-from-square'}" aria-hidden="true"></i></a>`;
+            })
+            .join(' &middot; ');
+          return (
+            '<article class="achv-card">' +
+            `<h3>${escapeHtml(item.title)}</h3>` +
+            (meta ? `<p class="achv-meta">${meta}</p>` : '') +
+            (item.description ? `<p class="achv-desc">${escapeHtml(item.description)}</p>` : '') +
+            (links ? `<p class="achv-links">${links}</p>` : '') +
+            '</article>'
+          );
+        }).join('\n');
+        return (
+          `<section class="achv-section" id="${escapeHtml(section.id)}">` +
+          `<h2><i class="fa-solid ${escapeHtml(icon)}" aria-hidden="true"></i> ${escapeHtml(section.title)}</h2>` +
+          `<div class="achv-list">${cards}</div>` +
+          '</section>'
+        );
+      }).join('\n');
+    })
+    .catch(() => { /* unreachable or invalid data — keep the empty state */ });
+}
+
 // Initialize page-specific features once the DOM is ready.
 window.addEventListener('DOMContentLoaded', () => {
   initAnalytics();
@@ -2114,6 +2185,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initReadingTime();
   initBackToTop();
   initCodeHighlight();
+  initAchievements();
   initSiteChat();
   initStarField();
   initSpotlight();

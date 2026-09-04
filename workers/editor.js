@@ -287,7 +287,8 @@ async function deletePost(env, url) {
 
 const DATA_FILES = {
   gallery: { path: "data/gallery.json", label: "gallery" },
-  creations: { path: "data/creations.json", label: "creations" }
+  creations: { path: "data/creations.json", label: "creations" },
+  achievements: { path: "data/achievements.json", label: "achievements" }
 };
 
 // Per-file item validation: presence, types, and sane lengths. Unknown extra
@@ -314,6 +315,47 @@ function validateItems(file, items) {
       }
       for (const k of ["cover", "poster"]) {
         if (it[k] != null && (typeof it[k] !== "string" || it[k].length > 600)) return file + "[" + i + "]: " + k + " overlong";
+      }
+    }
+  }
+  return null;
+}
+
+// Achievements: an array of ordered sections, each holding ordered items
+// (schema in docs/achievements.md). Dates are month- or day-precision;
+// links must be absolute http(s) URLs.
+function validateAchv(sections) {
+  if (!Array.isArray(sections)) return "achievements must be a JSON array";
+  if (sections.length > 20) return "achievements: too many sections (20 max)";
+  const slug = (v) => typeof v === "string" && /^[a-z0-9][a-z0-9-]{0,63}$/.test(v);
+  const opt = (v, max) => v == null || (typeof v === "string" && v.length <= max);
+  for (let i = 0; i < sections.length; i++) {
+    const s = sections[i];
+    if (!s || typeof s !== "object" || Array.isArray(s)) return "achievements[" + i + "]: not an object";
+    if (!slug(s.id)) return "achievements[" + i + "]: section id must be a lowercase slug";
+    if (typeof s.title !== "string" || !s.title.trim() || s.title.length > 80) return "achievements[" + i + "]: missing or overlong title";
+    if (s.icon != null && (typeof s.icon !== "string" || !/^[a-z0-9-]{1,40}$/.test(s.icon))) {
+      return "achievements[" + i + "]: icon must be a Font Awesome name like fa-trophy";
+    }
+    if (!Array.isArray(s.items)) return "achievements[" + i + "]: items must be an array";
+    if (s.items.length > 100) return "achievements[" + i + "]: too many items (100 max)";
+    for (let j = 0; j < s.items.length; j++) {
+      const it = s.items[j];
+      const at = "achievements[" + i + "].items[" + j + "]";
+      if (!it || typeof it !== "object" || Array.isArray(it)) return at + ": not an object";
+      if (!slug(it.id)) return at + ": item id must be a lowercase slug";
+      if (typeof it.title !== "string" || !it.title.trim() || it.title.length > 200) return at + ": missing or overlong title";
+      if (!opt(it.badge, 120)) return at + ": badge overlong";
+      if (it.date != null && (typeof it.date !== "string" || !/^\d{4}-\d{2}(-\d{2})?$/.test(it.date))) return at + ": date must be YYYY-MM or YYYY-MM-DD";
+      if (!opt(it.description, 1000)) return at + ": description overlong";
+      if (it.links != null) {
+        if (!Array.isArray(it.links) || it.links.length > 6) return at + ": links must be an array (6 max)";
+        for (let k = 0; k < it.links.length; k++) {
+          const l = it.links[k];
+          if (!l || typeof l !== "object") return at + ".links[" + k + "]: not an object";
+          if (typeof l.label !== "string" || !l.label.trim() || l.label.length > 80) return at + ".links[" + k + "]: missing or overlong label";
+          if (typeof l.url !== "string" || !/^https?:\/\//i.test(l.url) || l.url.length > 600) return at + ".links[" + k + "]: url must be absolute http(s)";
+        }
       }
     }
   }
@@ -366,7 +408,7 @@ async function saveDataFile(request, env) {
   } catch (error) {
     return editorJson(400, { error: "content is not valid JSON" });
   }
-  const invalid = validateItems(file, items);
+  const invalid = file === "achievements" ? validateAchv(items) : validateItems(file, items);
   if (invalid) return editorJson(400, { error: invalid });
 
   const noToken = requireToken(env);

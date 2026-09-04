@@ -66,58 +66,18 @@
       </section>
 
       <!--
-        HOW TO FILL THIS PAGE
-        =====================
-        Nothing here yet on purpose. When the first achievement lands, delete
-        the .achv-empty block below, uncomment the .achv-wrap template, and
-        swap the sample cards for real ones. Full step-by-step instructions
-        (both English and the field glossary) live in docs/achievements.md.
+        Rendered client-side by main.js initAchievements() from
+        data/achievements.json — edit that file in the admin Content tab
+        (workflow and schema: docs/achievements.md). The .achv-empty block
+        below is the no-JS / no-data fallback; it reappears whenever the
+        data file has no sections.
       -->
-
-      <div class="achv-empty">
-        <i class="fa-solid fa-seedling" aria-hidden="true"></i>
-        <p>Nothing to show here yet. Publications, projects and other milestones will appear on this page as they happen.</p>
+      <div id="achvRoot">
+        <div class="achv-empty">
+          <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+          <p>Nothing to show here yet. Publications, projects and other milestones will appear on this page as they happen.</p>
+        </div>
       </div>
-
-      <!--
-      <div class="achv-wrap">
-        <section class="achv-section" id="publications">
-          <h2><i class="fa-solid fa-book" aria-hidden="true"></i> Publications</h2>
-          <div class="achv-list">
-            <article class="achv-card">
-              <h3>Paper or article title goes here</h3>
-              <p class="achv-meta">
-                <span class="achv-badge">Journal / Conference name</span>
-                <time datetime="2026-09">Sep 2026</time>
-              </p>
-              <p class="achv-desc">One or two sentences on what this is and why it matters.</p>
-              <p class="achv-links">
-                <a href="https://example.org/paper" target="_blank" rel="noopener">Read it here <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section class="achv-section" id="projects">
-          <h2><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Projects</h2>
-          <div class="achv-list">
-            <article class="achv-card">
-              <h3>Project name goes here</h3>
-              <p class="achv-meta">
-                <span class="achv-badge">Side project</span>
-                <time datetime="2026-09">Sep 2026</time>
-              </p>
-              <p class="achv-desc">One or two sentences on what it does and what you built it with.</p>
-              <p class="achv-links">
-                <a href="https://example.org/demo" target="_blank" rel="noopener">Live demo <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
-                &middot;
-                <a href="https://github.com/you/repo" target="_blank" rel="noopener">Source code <i class="fa-brands fa-github" aria-hidden="true"></i></a>
-              </p>
-            </article>
-          </div>
-        </section>
-      </div>
-      -->
     </main>
 
     <footer>
