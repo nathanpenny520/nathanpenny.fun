@@ -1,8 +1,9 @@
-// Self-hosted admin page served by GET /admin in comments.js: six tabs —
+// Self-hosted admin page served by GET /admin in comments.js: seven tabs —
 // the image uploader, the markdown 写作台 (editor tab from editor_page.js),
-// the content data editors (content_page.js), the AI playground (ai_page.js),
-// the analytics stats tab (stats_page.js) and the comment-moderation tab
-// (comments_tab.js) — all interpolated below. Styling mirrors the site
+// the content data editors (content_page.js), the music library
+// (music_page.js), the AI playground (ai_page.js), the analytics stats tab
+// (stats_page.js) and the comment-moderation tab (comments_tab.js) — all
+// interpolated below. Styling mirrors the site
 // frontend (frosted nav +
 // palette from styles/style.css). Self-contained (inline CSS/JS, noindex);
 // the only cross-origin asset is the site logo, loaded as an <img> from
@@ -10,6 +11,7 @@
 // script deliberately avoids backticks and ${}.
 import { EDITOR_TAB_HTML } from "./editor_page.js";
 import { CONTENT_TAB_HTML } from "./content_page.js";
+import { MUSIC_TAB_HTML } from "./music_page.js";
 import { AI_TAB_HTML } from "./ai_page.js";
 import { STATS_TAB_HTML } from "./stats_page.js";
 import { COMMENTS_TAB_HTML } from "./comments_tab.js";
@@ -296,6 +298,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
       <button id="tabBtnUpload" class="nav-link active" type="button">Images</button>
       <button id="tabBtnEditor" class="nav-link" type="button">Editor</button>
       <button id="tabBtnContent" class="nav-link" type="button">Content</button>
+      <button id="tabBtnMusic" class="nav-link" type="button">Music</button>
       <button id="tabBtnAi" class="nav-link" type="button">AI</button>
       <button id="tabBtnStats" class="nav-link" type="button">Stats</button>
       <button id="tabBtnComments" class="nav-link" type="button">Comments</button>
@@ -356,6 +359,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   </section>
   ${EDITOR_TAB_HTML}
   ${CONTENT_TAB_HTML}
+  ${MUSIC_TAB_HTML}
   ${AI_TAB_HTML}
   ${STATS_TAB_HTML}
   ${COMMENTS_TAB_HTML}
@@ -369,12 +373,14 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   var tabUpload = document.getElementById("tabUpload");
   var tabEditor = document.getElementById("tabEditor");
   var tabContent = document.getElementById("tabContent");
+  var tabMusic = document.getElementById("tabMusic");
   var tabAi = document.getElementById("tabAi");
   var tabStats = document.getElementById("tabStats");
   var tabComments = document.getElementById("tabComments");
   var btnUpload = document.getElementById("tabBtnUpload");
   var btnEditor = document.getElementById("tabBtnEditor");
   var btnContent = document.getElementById("tabBtnContent");
+  var btnMusic = document.getElementById("tabBtnMusic");
   var btnAi = document.getElementById("tabBtnAi");
   var btnStats = document.getElementById("tabBtnStats");
   var btnComments = document.getElementById("tabBtnComments");
@@ -384,12 +390,14 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
     tabUpload.hidden = which !== "upload";
     tabEditor.hidden = which !== "editor";
     tabContent.hidden = which !== "content";
+    tabMusic.hidden = which !== "music";
     tabAi.hidden = which !== "ai";
     tabStats.hidden = which !== "stats";
     tabComments.hidden = which !== "comments";
     btnUpload.className = "nav-link" + (which === "upload" ? " active" : "");
     btnEditor.className = "nav-link" + (which === "editor" ? " active" : "");
     btnContent.className = "nav-link" + (which === "content" ? " active" : "");
+    btnMusic.className = "nav-link" + (which === "music" ? " active" : "");
     btnAi.className = "nav-link" + (which === "ai" ? " active" : "");
     btnStats.className = "nav-link" + (which === "stats" ? " active" : "");
     btnComments.className = "nav-link" + (which === "comments" ? " active" : "");
@@ -399,7 +407,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
 
   // The active tab is recorded in the URL hash so a refresh (or a reopened
   // link like /admin#comments) lands back on the same tab.
-  var TAB_NAMES = ["upload", "editor", "content", "ai", "stats", "comments"];
+  var TAB_NAMES = ["upload", "editor", "content", "music", "ai", "stats", "comments"];
   function showTabKeep(name) {
     showTab(name);
     history.replaceState(null, "", "#" + name);
@@ -414,6 +422,7 @@ export const ADMIN_PAGE_HTML = `<!doctype html>
   btnUpload.addEventListener("click", function () { showTabKeep("upload"); });
   btnEditor.addEventListener("click", function () { showTabKeep("editor"); });
   btnContent.addEventListener("click", function () { showTabKeep("content"); });
+  btnMusic.addEventListener("click", function () { showTabKeep("music"); });
   btnAi.addEventListener("click", function () { showTabKeep("ai"); });
   btnStats.addEventListener("click", function () { showTabKeep("stats"); });
   btnComments.addEventListener("click", function () { showTabKeep("comments"); });

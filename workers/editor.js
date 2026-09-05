@@ -30,8 +30,9 @@ function editorJson(status, payload) {
 }
 
 // btoa() throws on non-latin1 text (all Chinese posts) and huge argument
-// lists, so encode UTF-8 bytes in 0x8000-char chunks.
-function base64EncodeUtf8(text) {
+// lists, so encode UTF-8 bytes in 0x8000-char chunks. Shared with music.js
+// (the music-library JSON commit).
+export function base64EncodeUtf8(text) {
   const bytes = new TextEncoder().encode(text);
   let bin = "";
   for (let i = 0; i < bytes.length; i += 0x8000) {

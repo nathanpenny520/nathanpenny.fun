@@ -5,8 +5,9 @@ the `*.workers.dev` URL also exists but admin routes reject it — see Access
 below). Feature groups: comments (+ moderation), 写作台 drafts with scheduled
 publishing, content data editors (gallery/creations JSON), first-party
 analytics, the Access-protected
-`/admin` page (image uploader + markdown editor + content editors + AI
-playground + stats + comments tabs), the site avatar chat, and the AI proxy.
+`/admin` page (image uploader + markdown editor + content editors + music
+library + AI playground + stats + comments tabs), the site avatar chat, and
+the AI proxy.
 
 ## Endpoints
 
@@ -16,7 +17,7 @@ playground + stats + comments tabs), the site avatar chat, and the AI proxy.
 | POST   | `/comments`                    | public                  | Create a comment or reply (optional `parent` id — must reference a top-level comment; rate limit + Turnstile) |
 | POST   | `/api/site-chat`               | public                  | Site avatar chat (per-IP rate limit, internal key) |
 | POST   | `/api/analytics/hit`           | public                  | First-party analytics beacon (see below; always 204) |
-| GET    | `/admin`                       | Cloudflare Access       | Admin page: 图床 + 写作台 + AI playground + Stats tabs (admin_page.js + editor_page.js + ai_page.js + stats_page.js) |
+| GET    | `/admin`                       | Cloudflare Access       | Admin page: 图床 + 写作台 + Content + Music + AI playground + Stats + Comments tabs |
 | POST   | `/upload`                      | Cloudflare Access       | Multipart images → R2 `img/` prefix (optional `dir` field targets a folder) |
 | GET    | `/upload?list=1[&cursor=…]`    | Cloudflare Access       | Recent uploads (newest first, flat)            |
 | GET    | `/upload?list=1&prefix=img/…/&delimiter=1` | Cloudflare Access | One level of a folder: `{folders[], objects[]}` |
@@ -35,6 +36,12 @@ playground + stats + comments tabs), the site avatar chat, and the AI proxy.
 | GET/POST/DELETE | `/admin/api/ban[s]`   | Cloudflare Access       | The `banned_ips` blocklist `POST /comments` checks first |
 | GET/POST/DELETE | `/admin/api/draft[s]` | Cloudflare Access       | 写作台 drafts in D1, optional `publish_at` schedule (drafts.js) |
 | GET/POST | `/admin/api/data?file=…`      | Cloudflare Access       | Whitelisted repo JSON files (`gallery`, `creations`): read `{sha, content}` / validated commit via the Contents API |
+| GET    | `/admin/api/music/tree`        | Cloudflare Access       | Music tab: R2 `music/` listing annotated with published flags from the committed JSON (music.js) |
+| POST   | `/admin/api/music/upload`      | Cloudflare Access       | Multipart audio (`files[]` + parallel `artist[]`/`album[]`; ext allowlist, 64MB cap, magic-byte sniff) → R2 `music/<Artist>/<Album>/` |
+| DELETE | `/admin/api/music?file=…`      | Cloudflare Access       | Delete one audio object (`music/` prefix only; the public JSON drops it on the next sync) |
+| POST   | `/admin/api/music/plan`        | Cloudflare Access       | Dry-run of the library sync — added/removed report, no writes |
+| POST   | `/admin/api/music/cover`       | Cloudflare Access       | iTunes cover lookup for ONE song → commit the jpg + cache in R2 `music/.covers.json` |
+| POST   | `/admin/api/music/commit`      | Cloudflare Access       | Rebuild `data/music-library.json` from R2 + cached covers, commit via the Contents API |
 | POST   | `/api/ai/v1/chat/completions`  | Bearer API key          | OpenAI-compatible proxy (see AI proxy below)   |
 | GET    | `/api/ai/v1/models`            | Bearer API key          | Model catalog (the free Workers AI `cf-*` models) |
 | *      | anything else                  | —                       | 404                                            |
@@ -128,6 +135,45 @@ in git history).
   The UI extracts and previews the ID as you type. Cross-origin players
   cannot pause the site's audio mini-player (accepted limitation).
 
+## Music library (音乐库)
+
+The Creations-page music library is fully browser-managed through the admin
+**Music** tab (music_page.js) + music.js — the local pipeline
+(`tools/gen_music_library.py` + `tools/upload_music_r2.sh`) it replaced was
+deleted in 2026-09. The Python tool's string rules survive as byte-parity
+ports inside music.js (`r2Key`, `slugify`, `titleOf`, `encodeRelPath`,
+2-space JSON layout), verified against the original on a corpus with the
+`...Baby One More Time` dot-fold case, Chinese names and `quote()` edge
+characters.
+
+- **Storage**: audio lives only in the R2 bucket under
+  `music/<Artist>/<Album>/` (mp3/flac/m4a, 64MB cap, magic-byte sniff) and
+  is served by storage.nathanpenny.fun; the repo never carries audio.
+  Object keys fold any run of 2+ dots into `…` (`r2Key`) — the storage
+  domain serves keys as URL paths and the WAF 403s `...`. The SAME mapping
+  builds the JSON `src` URLs, so key and URL can never drift apart (the
+  failure mode the two-file pipeline risked).
+- **Upload**: drag an artist/album folder (entries API keeps the relative
+  layout; leading root segment stripped) or loose files; per-row editable
+  Artist/Album defaults; one file per request via XHR with progress.
+- **Sync & publish** (`plan` → `cover` loop → `commit`, all client-driven so
+  subrequest counts stay tiny and an interrupted sync resumes):
+  1. `POST /admin/api/music/plan` — full R2 listing vs the committed JSON;
+     existing entries (matched by `src`) are reused verbatim so ids and
+     covers never churn; new songs get title/id from the
+     `Artist/Album/<Title>-<Album>-<Artist>.ext` layout.
+  2. `POST /admin/api/music/cover` per new song — conservative iTunes album
+     match (artist AND album must overlap after normalization; a wrong
+     cover is worse than no cover); the jpg is committed to
+     `images/music-covers/<slug>-<sha8>.jpg` and the lookup cached in R2
+     `music/.covers.json` (hidden from listings).
+  3. `POST /admin/api/music/commit` — rebuild the whole catalog, skip the
+     commit when byte-identical, else PUT `data/music-library.json` through
+     the Contents API (sha conflict → 409, press Sync again). Live in a
+     minute or two; CI never regenerates this JSON.
+- Deleting audio from the tab only deletes the R2 object — the public JSON
+  drops the entry on the next Sync (`removedCount` in the plan report).
+
 ## Image uploader (图床)
 
 - Storage: the shared R2 bucket `nathanpenny-fun` (bound as `env.R2`),
@@ -139,9 +185,10 @@ in git history).
 - Reading is served by the bucket's public custom domain
   `storage.nathanpenny.fun` — no Worker involvement on reads.
 - Slugification removes all dots, which structurally avoids the WAF rule
-  that 403s URL paths containing `...` (same lesson as
-  `tools/upload_music_r2.sh`). The same rule is enforced on folder names
-  (`normalizeFolderPath`: ASCII slug segments only, no dots, no `..`).
+  that 403s URL paths containing `...` (the music library's `r2Key()` in
+  music.js instead folds such runs into `…`). The same rule is enforced on
+  folder names (`normalizeFolderPath`: ASCII slug segments only, no dots,
+  no `..`).
 - "Folders" are R2 key prefixes. Creating one writes a zero-byte `.keep`
   marker object (listings hide it); deleting one cursor-lists every key
   under the prefix and batch-deletes 1000 per call. Moving/renaming has no

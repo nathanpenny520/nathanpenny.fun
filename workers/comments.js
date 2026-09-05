@@ -20,6 +20,12 @@
 //   DELETE /admin/api/post      delete a post (slug + sha query params)
 //   GET    /admin/api/stats?days=…  analytics dashboard data (analytics.js)
 //   GET    /admin/api/visitor?id=…  one visitor's sessions + timeline (analytics.js)
+//   GET    /admin/api/music/tree      music library tab: R2 listing + published flags (music.js)
+//   POST   /admin/api/music/upload    multipart audio -> R2 music/Artist/Album/ (music.js)
+//   DELETE /admin/api/music?file=…    remove one audio object (music.js)
+//   POST   /admin/api/music/plan      dry-run of the library sync (music.js)
+//   POST   /admin/api/music/cover     iTunes cover lookup + commit for one song (music.js)
+//   POST   /admin/api/music/commit    rebuild + commit data/music-library.json (music.js)
 //   GET/DELETE /admin/api/comment[s]  moderation list + delete (moderation.js)
 //   GET/POST/DELETE /admin/api/ban[s]  banned-sender blocklist (moderation.js)
 //   GET/POST/DELETE /admin/api/draft[s]  写作台 drafts in D1 (drafts.js)
@@ -30,6 +36,7 @@ import { handleEditor } from "./editor.js";
 import { handleHit, handleAnalyticsApi } from "./analytics.js";
 import { handleModeration } from "./moderation.js";
 import { handleDrafts, publishDueDrafts } from "./drafts.js";
+import { handleMusic } from "./music.js";
 import { verifyAccess, accessDenied } from "./access.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -364,7 +371,7 @@ function sendNotifyEmail(env, name, content, isReply) {
 
 // Allowed upload types: extension -> MIME. Keys land under img/YYYY/MM/ as an
 // ASCII slug + 6 hex chars, which also makes the WAF `...` path trap (see
-// tools/upload_music_r2.sh) structurally impossible: slugify removes dots.
+// r2Key in music.js) structurally impossible: slugify removes dots.
 const IMAGE_TYPES = {
   png: "image/png",
   jpg: "image/jpeg",
@@ -405,8 +412,8 @@ function imageKeyFor(filename, ext, dir) {
 }
 
 // "Folders" in R2 are key prefixes. Folder segments are strict ASCII slugs —
-// dots are banned outright (the WAF `...` path trap, see
-// tools/upload_music_r2.sh) and slugs keep the public URLs clean and short.
+// dots are banned outright (the WAF `...` path trap, see r2Key in music.js)
+// and slugs keep the public URLs clean and short.
 const FOLDER_SEGMENT_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
 // Normalize/validate a folder path ("img/foo" or "img/foo/" -> "img/foo/").
@@ -782,6 +789,14 @@ export default {
         url.pathname === "/admin/api/data"
       ) {
         return handleEditor(request, env, ctx, url);
+      }
+
+      // --- Music library tab (music.js): R2 uploads + JSON sync. Same
+      // /admin/ subpath logic so Access covers it. ---
+      if (
+        url.pathname === "/admin/api/music" || url.pathname.startsWith("/admin/api/music/")
+      ) {
+        return handleMusic(request, env, url);
       }
 
       // --- Comment moderation + 写作台 drafts (Access-verified inside). ---
