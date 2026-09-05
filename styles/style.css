@@ -3307,9 +3307,10 @@ footer p {
 
 /* ==========================================================================
    ACHIEVEMENTS PAGE
-   Cards live in .achv-section > .achv-list inside .achv-wrap. A ready-made
-   template is commented inside pages/achievements.html — read
-   docs/achievements.md before adding the first one.
+   Cards live in .achv-section > .achv-list — a compact auto-fill grid
+   capped at 780px. A ready-made template is commented inside
+   pages/achievements.html — read docs/achievements.md before adding the
+   first one.
    ========================================================================== */
 
 .achv-empty {
@@ -3334,13 +3335,8 @@ footer p {
   font-size: 15px;
 }
 
-.achv-wrap {
-  max-width: 760px;
-  margin: 0 auto 40px;
-}
-
 .achv-section {
-  margin-bottom: 36px;
+  margin-bottom: 28px;
 }
 
 .achv-section:last-child {
@@ -3350,63 +3346,83 @@ footer p {
 .achv-section h2 {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  font-size: 24px;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 19px;
   color: var(--color-heading);
 }
 
 .achv-section h2 i {
-  font-size: 20px;
+  font-size: 16px;
   color: var(--color-accent);
 }
 
+/* Compact auto-fill card grid, capped to the blog-list measure: a section
+   with one small item must not render as a full-width 1100px card that is
+   mostly empty air. Two columns on desktop, one under ~700px viewports. */
 .achv-list {
   display: grid;
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+  max-width: 780px;
 }
 
 .achv-card {
+  display: flex;
+  flex-direction: column;
   background: var(--color-surface);
-  padding: 18px 20px;
+  padding: 13px 16px;
   border-radius: 10px;
   box-shadow: var(--shadow-card);
 }
 
-.achv-card h3 {
-  margin-bottom: 8px;
-  font-size: 18px;
+/* One header row: title (+ optional badge chip) left, date pinned right —
+   replaces the old title line plus a separate meta line. */
+.achv-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.achv-title {
+  min-width: 0;
+  font-size: 15.5px;
+  font-weight: 600;
   color: var(--color-heading);
 }
 
-.achv-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-size: 13px;
-  color: var(--color-text-muted);
+.achv-head time {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--color-text-faint);
+  white-space: nowrap;
 }
 
 .achv-badge {
   display: inline-block;
-  padding: 2px 10px;
+  margin-left: 6px;
+  padding: 1px 8px;
   border-radius: 999px;
   background: var(--color-divider);
   color: var(--color-text-soft);
+  font-size: 11.5px;
   font-weight: 600;
+  vertical-align: 1px;
 }
 
 .achv-desc {
-  margin-bottom: 10px;
-  font-size: 14px;
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  line-height: 1.6;
   color: var(--color-text-muted);
 }
 
 .achv-links {
-  margin-bottom: 0;
-  font-size: 14px;
+  margin: auto 0 0;
+  padding-top: 2px;
+  font-size: 13.5px;
 }
 
 .achv-links a {

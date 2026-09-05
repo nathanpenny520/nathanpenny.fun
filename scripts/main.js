@@ -2247,9 +2247,7 @@ function initAchievements() {
           ? section.icon
           : (ACHV_SECTION_ICONS[section.id] || 'fa-star');
         const cards = (Array.isArray(section.items) ? section.items : []).map((item) => {
-          const meta =
-            (item.badge ? `<span class="achv-badge">${escapeHtml(item.badge)}</span>` : '') +
-            (achvFormatDate(item.date) ? `<time datetime="${escapeHtml(item.date)}">${achvFormatDate(item.date)}</time>` : '');
+          const date = achvFormatDate(item.date);
           const links = (Array.isArray(item.links) ? item.links : [])
             .filter(link => link && /^https?:\/\//i.test(link.url || ''))
             .map(link => {
@@ -2259,8 +2257,10 @@ function initAchievements() {
             .join(' &middot; ');
           return (
             '<article class="achv-card">' +
-            `<h3>${escapeHtml(item.title)}</h3>` +
-            (meta ? `<p class="achv-meta">${meta}</p>` : '') +
+            '<div class="achv-head">' +
+            `<span class="achv-title">${escapeHtml(item.title)}${item.badge ? ` <span class="achv-badge">${escapeHtml(item.badge)}</span>` : ''}</span>` +
+            (date ? `<time datetime="${escapeHtml(item.date)}">${date}</time>` : '') +
+            '</div>' +
             (item.description ? `<p class="achv-desc">${escapeHtml(item.description)}</p>` : '') +
             (links ? `<p class="achv-links">${links}</p>` : '') +
             '</article>'
