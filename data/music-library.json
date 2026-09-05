@@ -519,7 +519,7 @@
     "artist": "Jus Allah",
     "album": "Unknown Album",
     "src": "https://storage.nathanpenny.fun/music/Jus%20Allah/Unknown%20Album/Betrayal-Unknown%20Album-Jus%20Allah.mp3",
-    "cover": null
+    "cover": "../images/music-covers/jus-allah-unknown-album-betrayal-91a6cb09.jpg"
   },
   {
     "id": "justin-bieber-daniel-caesar-giveon-justice-peaches",
@@ -1005,7 +1005,7 @@
     "artist": "Tang Hongfei & Tian Yuan",
     "album": "Unknown Album",
     "src": "https://storage.nathanpenny.fun/music/Tang%20Hongfei%20%26%20Tian%20Yuan/Unknown%20Album/Every%20Breath%20You%20Take-Unknown%20Album-Tang%20Hongfei%20%26%20Tian%20Yuan.mp3",
-    "cover": null
+    "cover": "../images/music-covers/tang-hongfei-tian-yuan-unknown-album-every-breath-you-take-c1965894.jpg"
   },
   {
     "id": "taylor-swift-fearless-love-story",
@@ -1140,7 +1140,7 @@
     "artist": "Unknown Artist (Female Cover)",
     "album": "Unknown Album",
     "src": "https://storage.nathanpenny.fun/music/Unknown%20Artist%20%28Female%20Cover%29/Unknown%20Album/Hotel%20California-Unknown%20Album-Unknown%20Artist%20%28Female%20Cover%29.mp3",
-    "cover": null
+    "cover": "../images/music-covers/unknown-artist-female-cover--unknown-album-hotel-california-70e67196.jpg"
   },
   {
     "id": "usa-for-africa-unknown-album-charity-single--we-are-the-world",
@@ -1251,6 +1251,276 @@
     "cover": "../images/music-covers/whitney-houston-mariah-carey-the-prince-of-egypt-original-soundtrack--when-you-believe-e5861b78.jpg"
   },
   {
+    "id": "周杰伦-unknown-album-默-live",
+    "type": "song",
+    "title": "默 (Live)",
+    "artist": "周杰伦",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/Unknown%20Album/%E9%BB%98%20%28Live%29-Unknown%20Album-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-unknown-album-默-live-425a054d.jpg"
+  },
+  {
+    "id": "周杰伦-七里香-搁浅",
+    "type": "song",
+    "title": "搁浅",
+    "artist": "周杰伦",
+    "album": "七里香",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/%E4%B8%83%E9%87%8C%E9%A6%99/%E6%90%81%E6%B5%85-%E4%B8%83%E9%87%8C%E9%A6%99-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-七里香-搁浅-6172a993.jpg"
+  },
+  {
+    "id": "周杰伦-依然范特西-退后",
+    "type": "song",
+    "title": "退后",
+    "artist": "周杰伦",
+    "album": "依然范特西",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/%E4%BE%9D%E7%84%B6%E8%8C%83%E7%89%B9%E8%A5%BF/%E9%80%80%E5%90%8E-%E4%BE%9D%E7%84%B6%E8%8C%83%E7%89%B9%E8%A5%BF-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-依然范特西-退后-1bb9748d.jpg"
+  },
+  {
+    "id": "周杰伦-十一月的萧邦-发如雪",
+    "type": "song",
+    "title": "发如雪",
+    "artist": "周杰伦",
+    "album": "十一月的萧邦",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/%E5%8D%81%E4%B8%80%E6%9C%88%E7%9A%84%E8%90%A7%E9%82%A6/%E5%8F%91%E5%A6%82%E9%9B%AA-%E5%8D%81%E4%B8%80%E6%9C%88%E7%9A%84%E8%90%A7%E9%82%A6-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-十一月的萧邦-发如雪-d6855807.jpg"
+  },
+  {
+    "id": "周杰伦-十一月的萧邦-枫",
+    "type": "song",
+    "title": "枫",
+    "artist": "周杰伦",
+    "album": "十一月的萧邦",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/%E5%8D%81%E4%B8%80%E6%9C%88%E7%9A%84%E8%90%A7%E9%82%A6/%E6%9E%AB-%E5%8D%81%E4%B8%80%E6%9C%88%E7%9A%84%E8%90%A7%E9%82%A6-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-十一月的萧邦-枫-9a139244.jpg"
+  },
+  {
+    "id": "周杰伦-十二新作-红尘客栈",
+    "type": "song",
+    "title": "红尘客栈",
+    "artist": "周杰伦",
+    "album": "十二新作",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/%E5%8D%81%E4%BA%8C%E6%96%B0%E4%BD%9C/%E7%BA%A2%E5%B0%98%E5%AE%A2%E6%A0%88-%E5%8D%81%E4%BA%8C%E6%96%B0%E4%BD%9C-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-十二新作-红尘客栈-0be7862e.jpg"
+  },
+  {
+    "id": "周杰伦-叶惠美-晴天",
+    "type": "song",
+    "title": "晴天",
+    "artist": "周杰伦",
+    "album": "叶惠美",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/%E5%8F%B6%E6%83%A0%E7%BE%8E/%E6%99%B4%E5%A4%A9-%E5%8F%B6%E6%83%A0%E7%BE%8E-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-叶惠美-晴天-2d8ff761.jpg"
+  },
+  {
+    "id": "周杰伦-跨时代-烟花易冷",
+    "type": "song",
+    "title": "烟花易冷",
+    "artist": "周杰伦",
+    "album": "跨时代",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/%E8%B7%A8%E6%97%B6%E4%BB%A3/%E7%83%9F%E8%8A%B1%E6%98%93%E5%86%B7-%E8%B7%A8%E6%97%B6%E4%BB%A3-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-跨时代-烟花易冷-c1b2819f.jpg"
+  },
+  {
+    "id": "周杰伦-魔杰座-稻香",
+    "type": "song",
+    "title": "稻香",
+    "artist": "周杰伦",
+    "album": "魔杰座",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/%E9%AD%94%E6%9D%B0%E5%BA%A7/%E7%A8%BB%E9%A6%99-%E9%AD%94%E6%9D%B0%E5%BA%A7-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-魔杰座-稻香-c61180a2.jpg"
+  },
+  {
+    "id": "周杰伦-魔杰座-花海",
+    "type": "song",
+    "title": "花海",
+    "artist": "周杰伦",
+    "album": "魔杰座",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/%E9%AD%94%E6%9D%B0%E5%BA%A7/%E8%8A%B1%E6%B5%B7-%E9%AD%94%E6%9D%B0%E5%BA%A7-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-魔杰座-花海-73947e9f.jpg"
+  },
+  {
+    "id": "周杰伦-黄金甲-菊花台-周杰伦钢琴演奏",
+    "type": "song",
+    "title": "菊花台 (周杰伦钢琴演奏)",
+    "artist": "周杰伦",
+    "album": "黄金甲",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%9D%B0%E4%BC%A6/%E9%BB%84%E9%87%91%E7%94%B2/%E8%8F%8A%E8%8A%B1%E5%8F%B0%20%28%E5%91%A8%E6%9D%B0%E4%BC%A6%E9%92%A2%E7%90%B4%E6%BC%94%E5%A5%8F%29-%E9%BB%84%E9%87%91%E7%94%B2-%E5%91%A8%E6%9D%B0%E4%BC%A6.mp3",
+    "cover": "../images/music-covers/周杰伦-黄金甲-菊花台-周杰伦钢琴演奏-47412528.jpg"
+  },
+  {
+    "id": "大壮-我还是没改变-单曲--我还是没改变",
+    "type": "song",
+    "title": "我还是没改变",
+    "artist": "大壮",
+    "album": "我还是没改变 (单曲)",
+    "src": "https://storage.nathanpenny.fun/music/%E5%A4%A7%E5%A3%AE/%E6%88%91%E8%BF%98%E6%98%AF%E6%B2%A1%E6%94%B9%E5%8F%98%20%28%E5%8D%95%E6%9B%B2%29/%E6%88%91%E8%BF%98%E6%98%AF%E6%B2%A1%E6%94%B9%E5%8F%98-%E6%88%91%E8%BF%98%E6%98%AF%E6%B2%A1%E6%94%B9%E5%8F%98%20%28%E5%8D%95%E6%9B%B2%29-%E5%A4%A7%E5%A3%AE.mp3",
+    "cover": "../images/music-covers/大壮-我还是没改变-单曲--我还是没改变-33faadfa.jpg"
+  },
+  {
+    "id": "大壮-谁不是在流浪-单曲--谁不是在流浪",
+    "type": "song",
+    "title": "谁不是在流浪",
+    "artist": "大壮",
+    "album": "谁不是在流浪 (单曲)",
+    "src": "https://storage.nathanpenny.fun/music/%E5%A4%A7%E5%A3%AE/%E8%B0%81%E4%B8%8D%E6%98%AF%E5%9C%A8%E6%B5%81%E6%B5%AA%20%28%E5%8D%95%E6%9B%B2%29/%E8%B0%81%E4%B8%8D%E6%98%AF%E5%9C%A8%E6%B5%81%E6%B5%AA-%E8%B0%81%E4%B8%8D%E6%98%AF%E5%9C%A8%E6%B5%81%E6%B5%AA%20%28%E5%8D%95%E6%9B%B2%29-%E5%A4%A7%E5%A3%AE.mp3",
+    "cover": "../images/music-covers/大壮-谁不是在流浪-单曲--谁不是在流浪-a3a8d5a3.jpg"
+  },
+  {
+    "id": "大壮-过了那个年纪-单曲--过了那个年纪",
+    "type": "song",
+    "title": "过了那个年纪",
+    "artist": "大壮",
+    "album": "过了那个年纪 (单曲)",
+    "src": "https://storage.nathanpenny.fun/music/%E5%A4%A7%E5%A3%AE/%E8%BF%87%E4%BA%86%E9%82%A3%E4%B8%AA%E5%B9%B4%E7%BA%AA%20%28%E5%8D%95%E6%9B%B2%29/%E8%BF%87%E4%BA%86%E9%82%A3%E4%B8%AA%E5%B9%B4%E7%BA%AA-%E8%BF%87%E4%BA%86%E9%82%A3%E4%B8%AA%E5%B9%B4%E7%BA%AA%20%28%E5%8D%95%E6%9B%B2%29-%E5%A4%A7%E5%A3%AE.mp3",
+    "cover": "../images/music-covers/大壮-过了那个年纪-单曲--过了那个年纪-9db2b547.jpg"
+  },
+  {
+    "id": "宇西-unknown-album-安和桥",
+    "type": "song",
+    "title": "安和桥",
+    "artist": "宇西",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/%E5%AE%87%E8%A5%BF/Unknown%20Album/%E5%AE%89%E5%92%8C%E6%A1%A5-Unknown%20Album-%E5%AE%87%E8%A5%BF.mp3",
+    "cover": "../images/music-covers/宇西-unknown-album-安和桥-577c554a.jpg"
+  },
+  {
+    "id": "宋冬野-安和桥北-安和桥",
+    "type": "song",
+    "title": "安和桥",
+    "artist": "宋冬野",
+    "album": "安和桥北",
+    "src": "https://storage.nathanpenny.fun/music/%E5%AE%8B%E5%86%AC%E9%87%8E/%E5%AE%89%E5%92%8C%E6%A1%A5%E5%8C%97/%E5%AE%89%E5%92%8C%E6%A1%A5-%E5%AE%89%E5%92%8C%E6%A1%A5%E5%8C%97-%E5%AE%8B%E5%86%AC%E9%87%8E.mp3",
+    "cover": "../images/music-covers/宋冬野-安和桥北-安和桥-b2e897d5.jpg"
+  },
+  {
+    "id": "张杰-one-chance-张杰新歌-精选-逆战",
+    "type": "song",
+    "title": "逆战",
+    "artist": "张杰",
+    "album": "One Chance 张杰新歌+精选",
+    "src": "https://storage.nathanpenny.fun/music/%E5%BC%A0%E6%9D%B0/One%20Chance%20%E5%BC%A0%E6%9D%B0%E6%96%B0%E6%AD%8C%2B%E7%B2%BE%E9%80%89/%E9%80%86%E6%88%98-One%20Chance%20%E5%BC%A0%E6%9D%B0%E6%96%B0%E6%AD%8C%2B%E7%B2%BE%E9%80%89-%E5%BC%A0%E6%9D%B0.mp3",
+    "cover": "../images/music-covers/张杰-one-chance-张杰新歌-精选-逆战-19e5f80d.jpg"
+  },
+  {
+    "id": "张杰-明天过后-天下",
+    "type": "song",
+    "title": "天下",
+    "artist": "张杰",
+    "album": "明天过后",
+    "src": "https://storage.nathanpenny.fun/music/%E5%BC%A0%E6%9D%B0/%E6%98%8E%E5%A4%A9%E8%BF%87%E5%90%8E/%E5%A4%A9%E4%B8%8B-%E6%98%8E%E5%A4%A9%E8%BF%87%E5%90%8E-%E5%BC%A0%E6%9D%B0.mp3",
+    "cover": "../images/music-covers/张杰-明天过后-天下-137b560d.jpg"
+  },
+  {
+    "id": "张碧晨-花千骨-电视剧原声带-年轮",
+    "type": "song",
+    "title": "年轮",
+    "artist": "张碧晨",
+    "album": "花千骨 电视剧原声带",
+    "src": "https://storage.nathanpenny.fun/music/%E5%BC%A0%E7%A2%A7%E6%99%A8/%E8%8A%B1%E5%8D%83%E9%AA%A8%20%E7%94%B5%E8%A7%86%E5%89%A7%E5%8E%9F%E5%A3%B0%E5%B8%A6/%E5%B9%B4%E8%BD%AE-%E8%8A%B1%E5%8D%83%E9%AA%A8%20%E7%94%B5%E8%A7%86%E5%89%A7%E5%8E%9F%E5%A3%B0%E5%B8%A6-%E5%BC%A0%E7%A2%A7%E6%99%A8.mp3",
+    "cover": "../images/music-covers/张碧晨-花千骨-电视剧原声带-年轮-71585a9b.jpg"
+  },
+  {
+    "id": "李宗盛-unknown-album-为你我受冷风吹-live",
+    "type": "song",
+    "title": "为你我受冷风吹 (Live)",
+    "artist": "李宗盛",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%8E%E5%AE%97%E7%9B%9B/Unknown%20Album/%E4%B8%BA%E4%BD%A0%E6%88%91%E5%8F%97%E5%86%B7%E9%A3%8E%E5%90%B9%20%28Live%29-Unknown%20Album-%E6%9D%8E%E5%AE%97%E7%9B%9B.mp3",
+    "cover": "../images/music-covers/李宗盛-unknown-album-为你我受冷风吹-live-6f9d7b64.jpg"
+  },
+  {
+    "id": "李宗盛-unknown-album-我是一只小小鸟",
+    "type": "song",
+    "title": "我是一只小小鸟",
+    "artist": "李宗盛",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%8E%E5%AE%97%E7%9B%9B/Unknown%20Album/%E6%88%91%E6%98%AF%E4%B8%80%E5%8F%AA%E5%B0%8F%E5%B0%8F%E9%B8%9F-Unknown%20Album-%E6%9D%8E%E5%AE%97%E7%9B%9B.flac",
+    "cover": "../images/music-covers/李宗盛-unknown-album-我是一只小小鸟-73043478.jpg"
+  },
+  {
+    "id": "李宗盛-unknown-album-我是真的爱你",
+    "type": "song",
+    "title": "我是真的爱你",
+    "artist": "李宗盛",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%8E%E5%AE%97%E7%9B%9B/Unknown%20Album/%E6%88%91%E6%98%AF%E7%9C%9F%E7%9A%84%E7%88%B1%E4%BD%A0-Unknown%20Album-%E6%9D%8E%E5%AE%97%E7%9B%9B.flac",
+    "cover": "../images/music-covers/李宗盛-unknown-album-我是真的爱你-e14aa809.jpg"
+  },
+  {
+    "id": "李宗盛-unknown-album-爱的代价",
+    "type": "song",
+    "title": "爱的代价",
+    "artist": "李宗盛",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%8E%E5%AE%97%E7%9B%9B/Unknown%20Album/%E7%88%B1%E7%9A%84%E4%BB%A3%E4%BB%B7-Unknown%20Album-%E6%9D%8E%E5%AE%97%E7%9B%9B.flac",
+    "cover": "../images/music-covers/李宗盛-unknown-album-爱的代价-a3a85dd9.jpg"
+  },
+  {
+    "id": "李宗盛-unknown-album-领悟-live",
+    "type": "song",
+    "title": "领悟 (Live)",
+    "artist": "李宗盛",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%8E%E5%AE%97%E7%9B%9B/Unknown%20Album/%E9%A2%86%E6%82%9F%20%28Live%29-Unknown%20Album-%E6%9D%8E%E5%AE%97%E7%9B%9B.flac",
+    "cover": "../images/music-covers/李宗盛-unknown-album-领悟-live-ced90e39.jpg"
+  },
+  {
+    "id": "李宗盛-unknown-album-飘洋过海来看你-live",
+    "type": "song",
+    "title": "飘洋过海来看你 (Live)",
+    "artist": "李宗盛",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%8E%E5%AE%97%E7%9B%9B/Unknown%20Album/%E9%A3%98%E6%B4%8B%E8%BF%87%E6%B5%B7%E6%9D%A5%E7%9C%8B%E4%BD%A0%20%28Live%29-Unknown%20Album-%E6%9D%8E%E5%AE%97%E7%9B%9B.flac",
+    "cover": "../images/music-covers/李宗盛-unknown-album-飘洋过海来看你-live-856cbd3f.jpg"
+  },
+  {
+    "id": "李宗盛-作品李宗盛-鬼迷心窍",
+    "type": "song",
+    "title": "鬼迷心窍",
+    "artist": "李宗盛",
+    "album": "作品李宗盛",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%8E%E5%AE%97%E7%9B%9B/%E4%BD%9C%E5%93%81%E6%9D%8E%E5%AE%97%E7%9B%9B/%E9%AC%BC%E8%BF%B7%E5%BF%83%E7%AA%8D-%E4%BD%9C%E5%93%81%E6%9D%8E%E5%AE%97%E7%9B%9B-%E6%9D%8E%E5%AE%97%E7%9B%9B.flac",
+    "cover": "../images/music-covers/李宗盛-作品李宗盛-鬼迷心窍-ca3b0729.jpg"
+  },
+  {
+    "id": "李宗盛-南下专线-给自己的歌",
+    "type": "song",
+    "title": "给自己的歌",
+    "artist": "李宗盛",
+    "album": "南下专线",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%8E%E5%AE%97%E7%9B%9B/%E5%8D%97%E4%B8%8B%E4%B8%93%E7%BA%BF/%E7%BB%99%E8%87%AA%E5%B7%B1%E7%9A%84%E6%AD%8C-%E5%8D%97%E4%B8%8B%E4%B8%93%E7%BA%BF-%E6%9D%8E%E5%AE%97%E7%9B%9B.flac",
+    "cover": "../images/music-covers/李宗盛-南下专线-给自己的歌-8a2405e1.jpg"
+  },
+  {
+    "id": "李宗盛-山丘-单曲--山丘",
+    "type": "song",
+    "title": "山丘",
+    "artist": "李宗盛",
+    "album": "山丘 (单曲)",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%8E%E5%AE%97%E7%9B%9B/%E5%B1%B1%E4%B8%98%20%28%E5%8D%95%E6%9B%B2%29/%E5%B1%B1%E4%B8%98-%E5%B1%B1%E4%B8%98%20%28%E5%8D%95%E6%9B%B2%29-%E6%9D%8E%E5%AE%97%E7%9B%9B.flac",
+    "cover": "../images/music-covers/李宗盛-山丘-单曲--山丘-0f57b6a9.jpg"
+  },
+  {
+    "id": "李宗盛-林忆莲-霸王别姬-电影原声带--当爱已成往事",
+    "type": "song",
+    "title": "当爱已成往事",
+    "artist": "李宗盛 & 林忆莲",
+    "album": "霸王别姬 (电影原声带)",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%8E%E5%AE%97%E7%9B%9B%20%26%20%E6%9E%97%E5%BF%86%E8%8E%B2/%E9%9C%B8%E7%8E%8B%E5%88%AB%E5%A7%AC%20%28%E7%94%B5%E5%BD%B1%E5%8E%9F%E5%A3%B0%E5%B8%A6%29/%E5%BD%93%E7%88%B1%E5%B7%B2%E6%88%90%E5%BE%80%E4%BA%8B-%E9%9C%B8%E7%8E%8B%E5%88%AB%E5%A7%AC%20%28%E7%94%B5%E5%BD%B1%E5%8E%9F%E5%A3%B0%E5%B8%A6%29-%E6%9D%8E%E5%AE%97%E7%9B%9B%20%26%20%E6%9E%97%E5%BF%86%E8%8E%B2.flac",
+    "cover": "../images/music-covers/李宗盛-林忆莲-霸王别姬-电影原声带--当爱已成往事-692aaf27.jpg"
+  },
+  {
+    "id": "杨宗纬-为歌而赞第二季-第1期-我想要",
+    "type": "song",
+    "title": "我想要",
+    "artist": "杨宗纬",
+    "album": "为歌而赞第二季 第1期",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%A8%E5%AE%97%E7%BA%AC/%E4%B8%BA%E6%AD%8C%E8%80%8C%E8%B5%9E%E7%AC%AC%E4%BA%8C%E5%AD%A3%20%E7%AC%AC1%E6%9C%9F/%E6%88%91%E6%83%B3%E8%A6%81-%E4%B8%BA%E6%AD%8C%E8%80%8C%E8%B5%9E%E7%AC%AC%E4%BA%8C%E5%AD%A3%20%E7%AC%AC1%E6%9C%9F-%E6%9D%A8%E5%AE%97%E7%BA%AC.mp3",
+    "cover": "../images/music-covers/杨宗纬-为歌而赞第二季-第1期-我想要-f597d624.jpg"
+  },
+  {
     "id": "杨宗纬-初-爱-其实都没有",
     "type": "song",
     "title": "其实都没有",
@@ -1258,5 +1528,158 @@
     "album": "初·爱",
     "src": "https://storage.nathanpenny.fun/music/%E6%9D%A8%E5%AE%97%E7%BA%AC/%E5%88%9D%C2%B7%E7%88%B1/%E5%85%B6%E5%AE%9E%E9%83%BD%E6%B2%A1%E6%9C%89-%E5%88%9D%C2%B7%E7%88%B1-%E6%9D%A8%E5%AE%97%E7%BA%AC.mp3",
     "cover": "../images/music-covers/杨宗纬-初-爱-其实都没有-580a115e.jpg"
+  },
+  {
+    "id": "杨宗纬-初-爱-初爱",
+    "type": "song",
+    "title": "初爱",
+    "artist": "杨宗纬",
+    "album": "初·爱",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%A8%E5%AE%97%E7%BA%AC/%E5%88%9D%C2%B7%E7%88%B1/%E5%88%9D%E7%88%B1-%E5%88%9D%C2%B7%E7%88%B1-%E6%9D%A8%E5%AE%97%E7%BA%AC.mp3",
+    "cover": "../images/music-covers/杨宗纬-初-爱-初爱-a7696637.jpg"
+  },
+  {
+    "id": "杨宗纬-原色-光影",
+    "type": "song",
+    "title": "光影",
+    "artist": "杨宗纬",
+    "album": "原色",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%A8%E5%AE%97%E7%BA%AC/%E5%8E%9F%E8%89%B2/%E5%85%89%E5%BD%B1-%E5%8E%9F%E8%89%B2-%E6%9D%A8%E5%AE%97%E7%BA%AC.mp3",
+    "cover": "../images/music-covers/杨宗纬-原色-光影-1f81d3ae.jpg"
+  },
+  {
+    "id": "杨宗纬-原色-那个男人",
+    "type": "song",
+    "title": "那个男人",
+    "artist": "杨宗纬",
+    "album": "原色",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%A8%E5%AE%97%E7%BA%AC/%E5%8E%9F%E8%89%B2/%E9%82%A3%E4%B8%AA%E7%94%B7%E4%BA%BA-%E5%8E%9F%E8%89%B2-%E6%9D%A8%E5%AE%97%E7%BA%AC.mp3",
+    "cover": "../images/music-covers/杨宗纬-原色-那个男人-8a5f47c9.jpg"
+  },
+  {
+    "id": "杨宗纬-我是歌手第一季-第5期-空白格",
+    "type": "song",
+    "title": "空白格",
+    "artist": "杨宗纬",
+    "album": "我是歌手第一季 第5期",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%A8%E5%AE%97%E7%BA%AC/%E6%88%91%E6%98%AF%E6%AD%8C%E6%89%8B%E7%AC%AC%E4%B8%80%E5%AD%A3%20%E7%AC%AC5%E6%9C%9F/%E7%A9%BA%E7%99%BD%E6%A0%BC-%E6%88%91%E6%98%AF%E6%AD%8C%E6%89%8B%E7%AC%AC%E4%B8%80%E5%AD%A3%20%E7%AC%AC5%E6%9C%9F-%E6%9D%A8%E5%AE%97%E7%BA%AC.mp3",
+    "cover": "../images/music-covers/杨宗纬-我是歌手第一季-第5期-空白格-060cdb91.jpg"
+  },
+  {
+    "id": "杨宗纬-鸽子-洋葱",
+    "type": "song",
+    "title": "洋葱",
+    "artist": "杨宗纬",
+    "album": "鸽子",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%A8%E5%AE%97%E7%BA%AC/%E9%B8%BD%E5%AD%90/%E6%B4%8B%E8%91%B1-%E9%B8%BD%E5%AD%90-%E6%9D%A8%E5%AE%97%E7%BA%AC.mp3",
+    "cover": "../images/music-covers/杨宗纬-鸽子-洋葱-3db657ef.jpg"
+  },
+  {
+    "id": "杨宗纬-鸽子-鸽子",
+    "type": "song",
+    "title": "鸽子",
+    "artist": "杨宗纬",
+    "album": "鸽子",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%A8%E5%AE%97%E7%BA%AC/%E9%B8%BD%E5%AD%90/%E9%B8%BD%E5%AD%90-%E9%B8%BD%E5%AD%90-%E6%9D%A8%E5%AE%97%E7%BA%AC.mp3",
+    "cover": "../images/music-covers/杨宗纬-鸽子-鸽子-a84c5a8a.jpg"
+  },
+  {
+    "id": "杨宗纬-张碧晨-凉凉-单曲--凉凉",
+    "type": "song",
+    "title": "凉凉",
+    "artist": "杨宗纬 & 张碧晨",
+    "album": "凉凉 (单曲)",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9D%A8%E5%AE%97%E7%BA%AC%20%26%20%E5%BC%A0%E7%A2%A7%E6%99%A8/%E5%87%89%E5%87%89%20%28%E5%8D%95%E6%9B%B2%29/%E5%87%89%E5%87%89-%E5%87%89%E5%87%89%20%28%E5%8D%95%E6%9B%B2%29-%E6%9D%A8%E5%AE%97%E7%BA%AC%20%26%20%E5%BC%A0%E7%A2%A7%E6%99%A8.mp3",
+    "cover": "../images/music-covers/杨宗纬-张碧晨-凉凉-单曲--凉凉-9aacf768.jpg"
+  },
+  {
+    "id": "林志炫-unknown-album-烟花易冷-live",
+    "type": "song",
+    "title": "烟花易冷 (Live)",
+    "artist": "林志炫",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/%E6%9E%97%E5%BF%97%E7%82%AB/Unknown%20Album/%E7%83%9F%E8%8A%B1%E6%98%93%E5%86%B7%20%28Live%29-Unknown%20Album-%E6%9E%97%E5%BF%97%E7%82%AB.mp3",
+    "cover": "../images/music-covers/林志炫-unknown-album-烟花易冷-live-04a976de.jpg"
+  },
+  {
+    "id": "王力宏-唯一-唯一",
+    "type": "song",
+    "title": "唯一",
+    "artist": "王力宏",
+    "album": "唯一",
+    "src": "https://storage.nathanpenny.fun/music/%E7%8E%8B%E5%8A%9B%E5%AE%8F/%E5%94%AF%E4%B8%80/%E5%94%AF%E4%B8%80-%E5%94%AF%E4%B8%80-%E7%8E%8B%E5%8A%9B%E5%AE%8F.mp3",
+    "cover": "../images/music-covers/王力宏-唯一-唯一-66aa9782.jpg"
+  },
+  {
+    "id": "王力宏-心中的日月-爱错",
+    "type": "song",
+    "title": "爱错",
+    "artist": "王力宏",
+    "album": "心中的日月",
+    "src": "https://storage.nathanpenny.fun/music/%E7%8E%8B%E5%8A%9B%E5%AE%8F/%E5%BF%83%E4%B8%AD%E7%9A%84%E6%97%A5%E6%9C%88/%E7%88%B1%E9%94%99-%E5%BF%83%E4%B8%AD%E7%9A%84%E6%97%A5%E6%9C%88-%E7%8E%8B%E5%8A%9B%E5%AE%8F.mp3",
+    "cover": "../images/music-covers/王力宏-心中的日月-爱错-d60999c7.jpg"
+  },
+  {
+    "id": "胡彦斌-覅忒好-你要的全拿走",
+    "type": "song",
+    "title": "你要的全拿走",
+    "artist": "胡彦斌",
+    "album": "覅忒好",
+    "src": "https://storage.nathanpenny.fun/music/%E8%83%A1%E5%BD%A6%E6%96%8C/%E8%A6%85%E5%BF%92%E5%A5%BD/%E4%BD%A0%E8%A6%81%E7%9A%84%E5%85%A8%E6%8B%BF%E8%B5%B0-%E8%A6%85%E5%BF%92%E5%A5%BD-%E8%83%A1%E5%BD%A6%E6%96%8C.mp3",
+    "cover": "../images/music-covers/胡彦斌-覅忒好-你要的全拿走-dd60ae79.jpg"
+  },
+  {
+    "id": "许嵩-半城烟沙-半城烟沙",
+    "type": "song",
+    "title": "半城烟沙",
+    "artist": "许嵩",
+    "album": "半城烟沙",
+    "src": "https://storage.nathanpenny.fun/music/%E8%AE%B8%E5%B5%A9/%E5%8D%8A%E5%9F%8E%E7%83%9F%E6%B2%99/%E5%8D%8A%E5%9F%8E%E7%83%9F%E6%B2%99-%E5%8D%8A%E5%9F%8E%E7%83%9F%E6%B2%99-%E8%AE%B8%E5%B5%A9.mp3",
+    "cover": "../images/music-covers/许嵩-半城烟沙-半城烟沙-5efc769a.jpg"
+  },
+  {
+    "id": "许嵩-寻雾启示-庐州月",
+    "type": "song",
+    "title": "庐州月",
+    "artist": "许嵩",
+    "album": "寻雾启示",
+    "src": "https://storage.nathanpenny.fun/music/%E8%AE%B8%E5%B5%A9/%E5%AF%BB%E9%9B%BE%E5%90%AF%E7%A4%BA/%E5%BA%90%E5%B7%9E%E6%9C%88-%E5%AF%BB%E9%9B%BE%E5%90%AF%E7%A4%BA-%E8%AE%B8%E5%B5%A9.mp3",
+    "cover": "../images/music-covers/许嵩-寻雾启示-庐州月-145a25db.jpg"
+  },
+  {
+    "id": "许嵩-寻雾启示-灰色头像",
+    "type": "song",
+    "title": "灰色头像",
+    "artist": "许嵩",
+    "album": "寻雾启示",
+    "src": "https://storage.nathanpenny.fun/music/%E8%AE%B8%E5%B5%A9/%E5%AF%BB%E9%9B%BE%E5%90%AF%E7%A4%BA/%E7%81%B0%E8%89%B2%E5%A4%B4%E5%83%8F-%E5%AF%BB%E9%9B%BE%E5%90%AF%E7%A4%BA-%E8%AE%B8%E5%B5%A9.mp3",
+    "cover": "../images/music-covers/许嵩-寻雾启示-灰色头像-28b11d28.jpg"
+  },
+  {
+    "id": "许嵩-自定义-清明雨上",
+    "type": "song",
+    "title": "清明雨上",
+    "artist": "许嵩",
+    "album": "自定义",
+    "src": "https://storage.nathanpenny.fun/music/%E8%AE%B8%E5%B5%A9/%E8%87%AA%E5%AE%9A%E4%B9%89/%E6%B8%85%E6%98%8E%E9%9B%A8%E4%B8%8A-%E8%87%AA%E5%AE%9A%E4%B9%89-%E8%AE%B8%E5%B5%A9.mp3",
+    "cover": "../images/music-covers/许嵩-自定义-清明雨上-cbaaf473.jpg"
+  },
+  {
+    "id": "许嵩-苏格拉没有底-千百度",
+    "type": "song",
+    "title": "千百度",
+    "artist": "许嵩",
+    "album": "苏格拉没有底",
+    "src": "https://storage.nathanpenny.fun/music/%E8%AE%B8%E5%B5%A9/%E8%8B%8F%E6%A0%BC%E6%8B%89%E6%B2%A1%E6%9C%89%E5%BA%95/%E5%8D%83%E7%99%BE%E5%BA%A6-%E8%8B%8F%E6%A0%BC%E6%8B%89%E6%B2%A1%E6%9C%89%E5%BA%95-%E8%AE%B8%E5%B5%A9.mp3",
+    "cover": "../images/music-covers/许嵩-苏格拉没有底-千百度-b9230684.jpg"
+  },
+  {
+    "id": "陆虎-延禧攻略ost-雪落下的声音",
+    "type": "song",
+    "title": "雪落下的声音",
+    "artist": "陆虎",
+    "album": "延禧攻略OST",
+    "src": "https://storage.nathanpenny.fun/music/%E9%99%86%E8%99%8E/%E5%BB%B6%E7%A6%A7%E6%94%BB%E7%95%A5OST/%E9%9B%AA%E8%90%BD%E4%B8%8B%E7%9A%84%E5%A3%B0%E9%9F%B3-%E5%BB%B6%E7%A6%A7%E6%94%BB%E7%95%A5OST-%E9%99%86%E8%99%8E.mp3",
+    "cover": "../images/music-covers/陆虎-延禧攻略ost-雪落下的声音-a46daaa8.jpg"
   }
 ]
