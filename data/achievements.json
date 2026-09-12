@@ -29,6 +29,19 @@
           }
         ],
         "date": "2026-09"
+      },
+      {
+        "id": "3",
+        "title": "Nmail",
+        "badge": "",
+        "description": "📬 AI-powered local-first email client — auto-classification, noise filtering, smart drafts & daily digests. Your data never leaves your machine. Can work fully offline with Ollama. FastAPI + React, MIT.\nvisit https://nmail.whizzzest.com/ for more details.",
+        "links": [
+          {
+            "label": "github",
+            "url": "https://github.com/nathanpenny520/Nmail"
+          }
+        ],
+        "date": "2026-09"
       }
     ]
   },
