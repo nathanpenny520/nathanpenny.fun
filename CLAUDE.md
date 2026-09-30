@@ -1,140 +1,427 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for AI agents (and humans) working in this repository. [AGENTS.md](AGENTS.md)
+is a pointer to this file. The doc of record for the Worker backend is
+[workers/README.md](workers/README.md) — this file deliberately does **not**
+duplicate its per-endpoint detail, because duplicated docs drift (that is
+exactly what happened to the old AGENTS.md).
 
 ## Overview
 
-A hand-rolled static personal website + blog (`nathanpenny.fun`) with no build step, no package.json, and no framework. Frontend is plain HTML/CSS/vanilla JS; the only backend is a Cloudflare Worker (`workers/comments.js`) backed by a Cloudflare D1 SQLite database for the comments. All site text/content is authored directly in the HTML files.
+A hand-rolled static personal website + blog (`nathanpenny.fun`). There is no
+build step, no bundler, no `package.json`, no framework, and no test suite:
+pages are plain HTML, styling is one stylesheet, and `scripts/main.js` is a
+single shared script loaded on every page. The only backend is one Cloudflare
+Worker (`workers/comments.js`) with a D1 database and an R2 bucket.
+
+Where content lives: page copy is authored directly in the HTML, list content
+in the `data/*.json` files, and posts as Markdown in `posts/`.
 
 ## Commands
 
-There is no build, lint, or test tooling — nothing to install.
+Nothing to install.
 
-- **Preview locally**: serve the repo root with any static file server, e.g. `python -m http.server 8080` (port 8080 is the dev origin allowed by the Worker's CORS list, so the visitor/comment features work locally too).
-- **Publish a post online (写作台)**: `https://workers.nathanpenny.fun/admin` (Cloudflare Access) → 写作台 tab → write → 发布 — the Worker commits `posts/<slug>.md` to main via the GitHub Contents API and CI regenerates the pages (~1 min). Also handles opening/editing/deleting existing posts; frontmatter is validated against the generator's rules before publishing.
-- **Upload images for posts**: `https://workers.nathanpenny.fun/admin` (Cloudflare Access email OTP) → drag/paste → copy the markdown snippet → paste into the `.md` (remote URLs automatically get the `blog-img` class in the generator); the 写作台 tab can also upload + insert image markdown directly.
-- **Issue an AI API key**: `python3 tools/ai_key.py <name> [monthly_limit]`, then apply the printed SQL via `npx wrangler d1 execute nathanpenny --remote --command "<sql>"`.
-- **Regenerate blog post pages**: `python3 tools/gen_post_pages.py` (see Blog content below).
-- **Update the music library (音乐库)**: `https://workers.nathanpenny.fun/admin` (Cloudflare Access) → Music tab → drag the artist/album folder (or loose files) → Upload → Sync & publish — audio lands in R2 `music/`, new songs get an iTunes cover lookup, and the sync commits `data/music-library.json` (live in a minute or two). No local tooling involved.
-- **Deploy the site**: `git push origin main` — the host (GitHub Pages and/or the main domain) picks up the pushed files. Images, HTML, CSS, and JSON are pushed as-is.
-- **Deploy the Worker**: `cd workers && npx wrangler deploy` (config in `workers/wrangler.jsonc`, see `workers/README.md`); it is NOT part of the git-deployed static site.
+- **Preview locally**: `python -m http.server 8080` from the repo root. Port
+  8080 is allowlisted in the Worker's CORS list, so comments and analytics work
+  locally too.
+- **Publish a post (写作台)**: `https://workers.nathanpenny.fun/admin`
+  (Cloudflare Access) → Editor tab → **Publish** (Cmd/Ctrl+S). The Worker commits
+  `posts/<slug>.md` through the GitHub Contents API and CI regenerates the
+  pages (~1 min). The same tab opens/edits/deletes existing posts, saves D1
+  drafts (optionally scheduled), and imports `.md` files.
+- **Upload images**: admin → Images tab → drag/drop/paste, then copy the
+  markdown snippet. Objects land in R2 and are served from
+  `storage.nathanpenny.fun`. The Editor tab can upload + insert markdown
+  directly.
+- **Update the music library (音乐库)**: admin → Music tab → drag an
+  `Artist/Album/` folder (or loose files) → Upload → Sync & publish. Audio goes
+  to R2 `music/`, covers are looked up on iTunes and committed under
+  `images/music-covers/`, and `data/music-library.json` is rebuilt and
+  committed. No local tooling is involved.
+- **Regenerate the blog pages**: `python3 tools/gen_post_pages.py` — this is
+  what CI runs.
+- **Issue an AI API key**: `python3 tools/ai_key.py <name> [monthly_limit]`,
+  then apply the SQL it prints with
+  `npx wrangler d1 execute nathanpenny --remote --command "<sql>"`. The script
+  prints the statement; it does not apply it.
+- **Check the admin tabs' inline scripts**: `node tools/check_admin_scripts.mjs`
+  — run this after touching any `workers/*_page.js` tab file (see the
+  inline-script rule below).
+- **Deploy the site**: `git push origin main` — static files are served as-is.
+  There is no `CNAME` file, so domain/host wiring lives in a dashboard.
+- **Deploy the Worker**: `cd workers && npx wrangler deploy` (config in
+  `workers/wrangler.jsonc`). The Worker is **not** part of the git-deployed
+  static site.
 
-## Architecture
+## Repo layout
 
-### Static pages
+```
+index.html, 404.html         hand-maintained pages
+pages/*.html                 the other 7 hand-maintained pages
+blog/<slug>/index.html       GENERATED single-post pages (never edit)
+posts/*.md                   post sources (the only blog input)
+scripts/main.js              the one shared script
+scripts/vendor/              highlight.min.js (vendored, lazily injected)
+styles/style.css             the one site stylesheet
+data/*.json                  gallery / creations / achievements / music library
+images/ fonts/ audio/ pdfs/ docs/    assets
+workers/                     the Cloudflare Worker (see workers/README.md)
+tools/                       gen_post_pages.py, ai_key.py, check_admin_scripts.mjs
+```
 
-Eight pages share an identical, hand-copied `nav` block (there is no templating). The **footer** is the exception: every page (plus `404.html` and the generator's post template) carries only an empty `<footer></footer>` shell — the content is rendered by `initFooter()` in `scripts/main.js`, the single source of truth (edit footer content there, not in the pages):
+## Static pages
 
-- `index.html` — home
-- `pages/about.html` — profile and CV download
-- `pages/blog.html` — single-column post list: heading, search bar (`#blogSearch`, with clear button + match-count line), then one summary card per post (no sidebar; the sticky-sidebar TOC lives only on the single-post pages)
-- `pages/gallery.html` — image grid + lightbox
-- `pages/creations.html` — featured songs/videos + a searchable music library with a bottom audio mini-player
-- `pages/achievements.html` — the achievements page, rendered by `initAchievements()` from `data/achievements.json` (edited in the admin Content tab; schema in `docs/achievements.md`; an empty data file shows the built-in empty state)
-- `pages/contact.html` — social links, comment form, threaded discussion (one level of replies rendered by `main.js`, reply target shown as a chip above the form)
-- `pages/privacy.html` — English-only privacy policy linked from every footer; documents the first-party analytics, the comment data, GA, the deliberate no-cookie-banner stance, and the open-source repo link
+Eight hand-maintained pages carry the same `nav` markup, copied by hand (there
+is no templating): `index.html`, and
+`pages/{about,blog,gallery,creations,achievements,contact,privacy}.html`. The
+copies are not byte-identical — only the `./` vs `../` prefixes and the
+`aria-current="page"` link differ. `404.html` and the generator's post template
+carry the same nav too.
 
-Because pages live one level deep, **paths inside `pages/*.html` use `../` prefixes** for CSS, JS, images, and logo; `index.html` uses plain `./`. When adding a new page, copy the nav from an existing page, fix the `../` prefixes, and give it an empty `<footer></footer>` shell.
+**The footer is the exception.** Every page carries only an empty
+`<footer></footer>` shell; `initFooter()` in `scripts/main.js` renders its
+content (logo, "© 2026 … HTML + CSS + JavaScript · Privacy"). Edit the footer
+there, never in the pages.
 
-Friendly URLs (`/about`, `/blog`, ...) are mapped to the `pages/` files by `_redirects`. `404.html` (UFO-themed) is served with HTTP 404 for any URL matching no real asset — it uses root-absolute asset paths because it renders at arbitrary depths.
+Page notes:
 
-`.well-known/security.txt` (RFC 9116 vulnerability-disclosure file; Contact is the `notify@` relay address, never the real mailbox; `Expires` must be renewed yearly) is served from the repo root only because of the empty `.nojekyll` marker beside it — GitHub Pages runs Jekyll without that marker and Jekyll silently drops all dot-directories, so don't delete `.nojekyll`.
+- `pages/blog.html` — single-column post list: heading, search bar
+  (`#blogSearch`, with clear button + match-count line), then one summary card
+  per post. No sidebar; the sticky TOC lives only on single-post pages.
+- `pages/achievements.html` — rendered by `initAchievements()` from
+  `data/achievements.json` (schema in [docs/achievements.md](docs/achievements.md));
+  an empty data file shows the built-in empty state.
+- `pages/contact.html` — social links, comment form, and the threaded
+  discussion (one level of replies, with the reply target shown as a chip).
+- `pages/privacy.html` — English-only privacy policy linked from every footer.
+  Keep it truthful: it documents the first-party analytics, the comment data,
+  GA4, and the deliberate no-cookie-banner stance.
 
-### PWA
+Because `pages/*.html` live one level deep, their asset paths use `../`;
+`index.html` uses `./`. When adding a page, copy the nav from an existing page,
+fix the prefixes, and give it an empty `<footer></footer>` shell.
 
-`manifest.json` + `sw.js` (service worker) + `images/icon-{180,192,512}.png` make the site installable and available offline. `sw.js` precaches the site shell and serves pages network-first (so deploys show up) and static assets cache-first. Bump `CACHE_VERSION` in `sw.js` when a deploy changes cached assets in a way users must see immediately.
+### URLs and root files
 
-### Stylesheets
+`_redirects` maps the friendly URLs (`/about`, `/blog`, …) onto `pages/*.html`
+as **200 rewrites** — targets deliberately omit `.html` so Cloudflare Pages'
+Prettify can't 308 them into `/pages/<name>`. It also carries a `/blog/`
+trailing-slash twin and a legacy `/games → /achievements 301`.
 
-`styles/style.css` is the site's own stylesheet, organized top-to-bottom by page into sections marked with banner comments: `GLOBAL BASICS & RESETS`, `LAYOUT`, `HEADER & NAVIGATION`, `ABOUT PAGE`, `BLOG PAGE`, `GALLERY PAGE`, `CREATIONS PAGE`, `CONTACT PAGE`, `COMMENTS`, `FOOTER`, `WIDGETS: PROGRESS BAR, BACK TO TOP, UFO EASTER EGG, TOAST`, `404 PAGE`, `ACHIEVEMENTS PAGE`. All colors are CSS custom properties defined in `:root`; the dark palette lives in TWO sync'd blocks — `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])` (auto) and `:root[data-theme="dark"]` (manual toggle) — keep them in sync when changing colors. Add new styles under the matching section banner rather than at the end of the file.
+`404.html` is UFO-themed and served with HTTP 404 for any URL matching no real
+asset; it uses root-absolute asset paths because it renders at arbitrary depths.
 
-The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css` (self-hosted Font Awesome 6.5.2, see Other notes).
+`.well-known/security.txt` (RFC 9116; `Contact` is the `notify@` relay, never
+the real mailbox) is served only because the empty `.nojekyll` marker sits
+beside it at the repo root — GitHub Pages runs Jekyll without that marker, and
+Jekyll silently drops dot-directories. Don't delete `.nojekyll`. Renew
+`Expires` yearly (currently 2027-09-04). `robots.txt` allows everything and
+points at the sitemap.
 
-### Scripts
+`.gitattributes` pins `* text=auto eol=lf` for all text and marks the binary
+asset types, so line endings stay LF no matter the platform. Leave it in place
+and write LF files — a CRLF file will be renormalized on commit and shows up as
+a spurious whole-file diff.
 
-`scripts/main.js` is loaded with `defer` on every page. It handles first-party analytics (`initAnalytics`: a `sendBeacon` pageview to `/api/analytics/hit` on every page plus a time-on-page beacon on hide; session id + per-tab depth live in `sessionStorage`, and `localStorage.npSelf = '1'` flags the owner's own browser so the dashboard can exclude it), GA4, the home latest-posts cards (rendered from `feed.xml` into `#latestPostsSection`), blog list search/filtering, gallery + lightbox, creations (featured cards, music library, bottom audio mini-player), comments, the WeChat QR modal, the theme toggle (light/dark/system, persisted in `localStorage`), blog reading extras (progress bar, reading time, back-to-top), the site AI avatar chat (`initSiteChat`: floating avatar button with an "AI" badge + `<dialog>` panel on every page, also bound to the About-page portrait — talks to `/api/site-chat`, no key client-side), the home starfield (full-page dark-mode canvas in three parallax layers — pre-rendered nebulae far, split dim/bright stars mid, meteors near, factors `SCROLL_NEBULA`/`STAR_SCROLL`/`SCROLL_NEAR` — plus the occasional rock that hits the page and the UFO easter egg: a saucer that cruises the sky, beams stars up, and flees when clicked; `#starField` + `skyBuildStars`/`skyBuildNebulae`/`skyDrawFrame`/`skyUpdateUfo`/`initStarField`, dark-mode only via CSS opacity, click caught by document-level hit-testing since the canvas is `pointer-events: none`), the cursor spotlight (`initSpotlight`: fixed screen-blend `#spotlight` layer trailing the mouse, dark mode only) and card glow (`initCardGlow`: `--mx/--my` per `.page-card`, upgraded `::after` sheen in dark mode), scroll reveal (`[data-reveal]`), code-block syntax highlighting on single-post pages (`initCodeHighlight`: lazily injects the vendored highlight.js only when `language-` fences exist), and service-worker registration. Each page's `<head>` also contains a tiny inline script that applies the saved theme before first paint to avoid a flash — update it in all of them (they are hand-copied) if the `theme` storage key changes. Key patterns:
+## PWA
 
-- Everything is initialized in the `DOMContentLoaded` listener at the bottom.
-- Each feature is guarded by `document.getElementById(...)` null-checks, so the one shared script can run on every page without erroring where a feature doesn't exist. Match this pattern for new features.
-- All user-provided content (names, emails, comment text) is passed through the local `escapeHtml()` helper before being injected into `innerHTML` — never render user input unescaped.
+`manifest.json` + `sw.js` + the icons make the site installable and available
+offline. The manifest's `icons` array lists **192 and 512 only** (each twice:
+normal + `maskable`); `images/icon-180.png` is not a manifest icon — it is the
+`apple-touch-icon` `<link>` in every page head.
 
-### Gallery data
+`sw.js` precaches ~35 shell entries and routes requests as:
 
-`data/gallery.json` is the source of truth for the gallery page (it is fetched at runtime via `fetch('../data/gallery.json')`). To add an image: drop the file in `images/` (blog images conventionally live under `images/blog-img/<date>/`), then add a JSON entry with `id`, `src`, `title`, `description`, `category`, `date`. Categories are auto-derived from the data to build the filter buttons.
+- **network-first** for navigations, `.html`, and code files
+  (`.css`/`.js`/`.json`/`.xml`) — so deploys show up;
+- **cache-first** for other static assets (images, audio, fonts);
+- offline misses fall back to the cached `404.html`, served **with a 404
+  status**; cross-origin and non-GET requests are skipped.
 
-### Creations data
+Bump `CACHE_VERSION` in `sw.js` (currently `v31`) when a deploy changes cached
+assets in a way users must see immediately.
 
-`pages/creations.html` is driven by two JSON files fetched at runtime, and is deliberately independent of the blog (no cross-links). `data/creations.json` holds the featured items: `{id, type: song|video, origin: original|favorite, title, description, src, poster, cover, date}` — paths relative to `pages/`; `origin` is recorded but not rendered. Video entries may also carry `platform: file|bilibili|youtube` (omitted/`file` = native `<video>` with a direct src; `bilibili`/`youtube` = src is the normal watch-page URL and main.js renders the platform's player iframe, YouTube via the no-cookie domain). `data/gallery.json` (same `{id, src, title, description, category, date}` shape for the Gallery page) and `creations.json` are edited in the admin **Content** tab (commits via GitHub, live in a minute) or by hand.
+## Stylesheets
 
-`data/music-library.json` is GENERATED by the Worker (`workers/music.js`) behind the admin **Music** tab: uploads go straight from the browser into the R2 bucket's `music/<Artist>/<Album>/` prefix (object keys fold any run of 2+ dots into `…` — the WAF `...` 403 rule; the same `r2Key()` mapping also builds the JSON's `src` URLs, so key and URL can never drift apart), and Sync rebuilds the whole catalog from a full R2 listing — existing JSON entries are reused verbatim (ids + covers never churn), new songs get title/id derived from the `Artist/Album/<Title>-<Album>-<Artist>.ext` filename layout plus an iTunes cover lookup (match kept conservative; jpgs are committed to `images/music-covers/`, lookups cached in R2 `music/.covers.json`), and the JSON is committed via the Contents API (same channel as the Content tab). The audio files are NOT in the repo and CI never regenerates the JSON. (Replaced 2026-09: the old local pipeline `tools/gen_music_library.py` + `tools/upload_music_r2.sh` was deleted — its string rules survive as ports inside music.js.)
+`styles/style.css` is the site's own stylesheet, organized top-to-bottom into
+sections marked with banner comments. The real banners, in order:
 
-### Blog content
+```
+GLOBAL BASICS & RESETS · LAYOUT · HEADER & NAVIGATION
+MOBILE MENU (full-screen frosted overlay, built by initMobileMenu)
+HOME PAGE · ABOUT PAGE · BLOG PAGE · GALLERY PAGE · CREATIONS PAGE · CONTACT PAGE
+COMMENTS · FOOTER
+WIDGETS: PROGRESS BAR, BACK TO TOP, TOAST
+WIDGETS: AI AVATAR CHAT
+404 PAGE · ACHIEVEMENTS PAGE · TOUCH INPUT FALLBACKS
+```
 
-Each post lives in `posts/<slug>.md`: frontmatter (`title`, `date: YYYY-MM-DD`, optional `description` — falls back to the first paragraph, `category` — one of the fixed slugs in the generator's `CATEGORIES` dict, defaults to `misc`, and `tags` — comma separated) plus a Markdown body. The generator's stdlib renderer supports headings (`#`–`####`, rendered one level deeper), bold/italic/strikethrough, inline code, links, autolinks, images (plain markdown images get the `blog-img` class), fenced code blocks with a language tag (`<pre><code class="language-…">`, highlighted client-side), blockquotes, hr, ordered/unordered/nested lists, task lists (`- [ ]`), and pipe tables with `:---` alignment. Raw HTML blocks pass through untouched (video/audio embeds, tables, images with explicit width/height); not supported: footnotes, math, loose (blank-line-separated) lists, multi-line list items. Asset paths are relative to `pages/` (`../images/...`) and are pushed one level deeper automatically for the single-post pages.
+Add new styles under the matching banner rather than at the end of the file.
 
-Publishing = edit/create the `.md` and push: CI (`.github/workflows/gen-posts.yml`) runs the generator and commits the results back to main. Running `python3 tools/gen_post_pages.py` locally does the same. Publishing is also possible from the browser via the Worker's 写作台 (see Backend below), which commits the `.md` for you. The generator (stdlib-only, idempotent) regenerates, newest post first everywhere: the category filter chips and the `<article>` cards in `pages/blog.html` between the `posts:filters` / `posts:articles` marker pairs (everything else in that file is hand-maintained — don't edit inside the markers), the single-post pages `blog/<slug>/index.html` (canonical URL, article og tags, BlogPosting JSON-LD, category badge, sidebar with the all-posts TOC, newer/older nav), `feed.xml`, and `sitemap.xml`; it also prunes `blog/<slug>/` dirs whose post no longer exists.
+All colors are CSS custom properties on `:root`. The dark palette lives in
+**two blocks that must stay in sync** (42 properties each): the automatic
+`@media (prefers-color-scheme: dark)` → `:root:not([data-theme="light"])`, and
+the manual toggle `:root[data-theme="dark"]`. Change both.
+
+`--hljs-*` properties (8 of them, declared in each palette) are the site's own
+syntax-highlighting colors; there is no stock highlight.js theme.
+
+The only other stylesheet is the vendored `fonts/fontawesome/css/all.min.css`
+(self-hosted Font Awesome 6.5.2).
+
+## Scripts
+
+`scripts/` contains exactly two files: `main.js` and
+`vendor/highlight.min.js` (highlight.js 11.9.0, BSD-3). `main.js` is loaded
+with `defer` on every page and initializes everything from a single
+`DOMContentLoaded` listener at the bottom — with one exception:
+`registerServiceWorker()` is called just outside it.
+
+Feature inventory (each a guarded `init*` function unless noted): analytics
+beacon, GA4, blog search + category filtering, nav scroll padding, mobile menu,
+gallery search + lightbox, creations filters / music search / audio player,
+comments (one-level replies), WeChat QR modal, home latest-posts cards, theme
+toggle, reading progress and reading time, back to top, About-page AI chat,
+starfield (plus the UFO easter egg, meteors, and the 404-page saucer), cursor
+spotlight, card glow, scroll reveal, code highlighting, achievements, footer.
+
+Patterns to match:
+
+- **Guard by element.** Most features start with a `document.getElementById(...)`
+  null-check so the one shared script can run on every page. A few
+  (`initCardGlow`, `initScrollReveal`, `initBackToTop`) create or query their own
+  nodes instead and have no such guard.
+- **Escape all user input.** Anything user-provided (names, emails, comment
+  text) goes through the local `escapeHtml()` helper before it reaches
+  `innerHTML`. Never render user input unescaped.
+
+### Traps in `main.js`
+
+- `initSiteChat()` is **About-page only**: it returns early unless
+  `#aboutAvatar` exists, and it creates no floating button — clicking the About
+  portrait (which gains an AI badge) opens a `<dialog>` that talks to
+  `/api/site-chat`, with no key in the client.
+- The theme toggle cycles **light ↔ dark only**. "System" is merely the default
+  when no `theme` key is stored, not a third option in the UI.
+- Each page's `<head>` has a tiny inline script that applies the saved theme
+  before first paint to avoid a flash. It is hand-copied into the 8 pages plus
+  `404.html`, and emitted by the generator for post pages — update all of them
+  if the storage key changes.
+
+## Data files
+
+| File | Shape | Notes |
+|---|---|---|
+| `data/gallery.json` | `{id, src, title, description, category, date}` | Gallery page source of truth (fetched at runtime); filter categories are auto-derived from the data |
+| `data/creations.json` | `{id, type: song\|video, origin, title, description, src, date}` | Songs carry `cover`, videos carry `poster`. Videos may add `platform: file\|bilibili\|youtube`: `file`/omitted = native `<video>`; otherwise `src` is the normal watch-page URL and `main.js` derives the embed (YouTube via the no-cookie domain). `origin` is recorded but not rendered |
+| `data/achievements.json` | `[{id, icon, title, items: [{id, title, badge, description, links: [{label, url}], date}]}]` | Rendered by `initAchievements()`; schema and limits in [docs/achievements.md](docs/achievements.md) |
+| `data/music-library.json` | `{id, type, title, artist, album, src, cover}` | **Generated** by the Worker's Music tab from a full R2 listing — never hand-edit |
+
+All four are precached by `sw.js`. The first three (gallery, creations,
+achievements) are edited in the admin **Content** tab, which commits them
+through the GitHub Contents API, or by hand.
+
+## Blog content
+
+Each post is `posts/<slug>.md`: a frontmatter block plus a Markdown body. The
+slug is the filename stem — the generator does not validate it (the Worker's
+写作台 enforces `^[a-z0-9][a-z0-9-]{0,63}$` when creating posts).
+
+Frontmatter fields (unknown keys are **silently ignored**, so a `cateogry:` typo
+silently becomes `misc`):
+
+- `title` — required, non-empty.
+- `date` — required; parsed with `datetime.date.fromisoformat`, so `YYYY-MM-DD`
+  is the canonical form but Python also accepts forms like `20260101`.
+- `description` — optional, used verbatim and untruncated. If empty, the
+  generator falls back to the first `<p>…</p>` of the **rendered** body,
+  truncated at 165 characters — so a post that opens with a heading or an image
+  gets an empty description.
+- `category` — optional, defaults to `misc`; must be one of the generator's
+  fixed slugs.
+- `tags` — optional, comma-separated, rendered as `#tag` chips. Currently
+  unexercised: no live post uses it.
+
+The nine category slugs, in chip order: `anime`, `life`, `tech`, `fun`,
+`fiction`, `travel`, `ai`, `sports`, `misc`. Every chip is always rendered,
+including zero counts.
+
+**Authoring footguns.** The frontmatter block must begin at byte 0 — a BOM
+aborts the run. Values are never de-quoted, so `date: "2026-01-01"` and
+`category: "tech"` both fail. The renderer does not escape HTML, so authored
+content is trusted — and raw HTML is the normal way to embed video/audio, or
+images with explicit width/height.
+
+### The renderer
+
+Supported: headings `#`–`####` (rendered one level deeper, as `h2`–`h5`); bold
+`**`; italic `*`; strikethrough `~~`; inline code; inline links `[text](url)`;
+autolinks `<http(s)://…>`; images — every **markdown** image gets
+`class="blog-img"` plus lazy/async attributes, while raw `<img>` does not;
+fenced code with a language tag; blockquotes (consecutive `>` lines are joined
+into a single `<p>`); `hr` (a line that is exactly `---`); ordered/unordered
+lists with indentation-based nesting; task lists (`- [ ]`); pipe tables with
+`:---` alignment; and raw HTML blocks.
+
+Not supported: `_italic_`/`__bold__`, `#####`/`######`, setext headings, hard
+line breaks (two trailing spaces are collapsed — use `<br>`), backslash
+escapes, reference links and link titles, footnotes, math, loose
+(blank-line-separated) lists, and multi-line list items.
+
+Two renderer quirks worth knowing: a **nested list is emitted as a sibling of
+the parent `</li>`**, not inside it, so `li > ul` selectors and true list
+nesting do not apply; and a **raw HTML block ends at the first blank line**.
+Pipe tables require the header *and* body rows to start with `|`, and delimiter
+cells need at least three dashes.
+
+### What the generator writes
+
+`tools/gen_post_pages.py` is stdlib-only and idempotent (two runs produce
+byte-identical output, except that `sitemap.xml` stamps static pages with
+today's date). It regenerates, newest first:
+
+- the category chips and post cards in `pages/blog.html`, **only** between the
+  marker pairs `<!-- posts:filters:start -->`/`:end` and
+  `<!-- posts:articles:start -->`/`:end` — never edit inside those markers
+  (everything else in that file is hand-maintained);
+- `blog/<slug>/index.html` — a full page (theme script, empty footer shell,
+  canonical URL, article og tags, BlogPosting JSON-LD, a category badge linking
+  to `blog.html?cat=<slug>`, the all-posts sidebar TOC, newer/older nav, and a
+  "More in <Category>" block of up to 3 same-category posts when any exist);
+- `feed.xml` and `sitemap.xml`.
+
+It also **prunes any directory under `blog/` that isn't a current slug** — so
+never put assets there. Card thumbnails come from the first relative image or
+video poster in the body, falling back to `images/og-image.jpg`. Asset paths in
+post bodies are authored relative to `pages/` (`../images/…`), and the
+generator deepens `src`/`poster`/`href` by one level for the single-post pages
+(`srcset`, `data-src`, and CSS `url()` are not touched).
+
+Ordering is by `(date, slug)` descending everywhere — so posts sharing a date
+break ties by slug **descending**, which authors cannot control.
+
+Publishing = edit/create the `.md` and push. CI
+(`.github/workflows/gen-posts.yml`) runs the generator on pushes touching
+`posts/**`, `tools/gen_post_pages.py`, or `pages/blog.html` (plus manual
+dispatch) and commits the results back to main. A separate weekly
+`link-check.yml` (Mondays 03:00 UTC, lychee) fails on genuinely unreachable
+links, excluding the social profiles and `storage.nathanpenny.fun` that block
+bots.
 
 ## Backend (Cloudflare Worker)
 
-`workers/comments.js` (with imported modules `workers/access.js`, `workers/admin_page.js`, `workers/editor_page.js`, `workers/content_page.js`, `workers/music_page.js`, `workers/stats_page.js`, `workers/comments_tab.js`, `workers/editor.js`, `workers/drafts.js`, `workers/moderation.js`, `workers/analytics.js`, `workers/music.js` and `workers/ai_proxy.js`) is a Cloudflare Worker module using a D1 binding `env.DB` and an R2 binding `env.R2` (bucket `nathanpenny-fun`). Endpoints (full details in `workers/README.md`):
+`workers/comments.js` is a Worker module with a D1 binding `env.DB` and an R2
+binding `env.R2` (bucket `nathanpenny-fun`). It directly imports `access.js`,
+`admin_page.js`, `editor.js`, `analytics.js`, `moderation.js`, `drafts.js`,
+`music.js`, and `ai_proxy.js`; `admin_page.js` pulls in the tab fragments
+`editor_page.js`, `content_page.js`, `music_page.js`, `ai_page.js`,
+`stats_page.js`, and `comments_tab.js`.
 
-| Method | Path                           | Protection        | Purpose                                       |
-|--------|--------------------------------|-------------------|-----------------------------------------------|
-| GET    | `/comments`                    | public            | List comments threaded one level (`replies[]` under each top-level comment), `email` excluded from results |
-| POST   | `/comments`                    | public            | Insert a comment or reply (optional `parent` id — must reference an existing top-level comment, so threading stays one level deep) — banned-sender check (salted `ip_hash` vs `banned_ips`, fail-open) → 5 attempts/60s per IP via the `comment_rate` D1 table (see `checkRateLimit()`), then server-side Turnstile verification (`TURNSTILE_SECRET` secret); the row stores the salted `ip_hash`, never the raw IP |
-| POST   | `/api/analytics/hit`           | public            | First-party analytics beacon (see Backend → First-party analytics below); bots dropped at ingest, 60 beacons/min/IP, always answers 204 |
-| GET    | `/admin`                       | Cloudflare Access | Admin page with seven tabs: Images (file explorer) + Editor (写作台) + Content (gallery/creations data editors) + Music (library uploads + sync) + AI playground + Stats (analytics dashboard) + Comments (moderation); the active tab persists in the URL hash (e.g. `/admin#comments`) so refreshes stay put; UI is English-only |
-| POST   | `/upload`                      | Cloudflare Access | Multipart images → R2 `img/YYYY/MM/<slug>-<6hex>.<ext>` (optional `dir` field uploads into a chosen folder); extension allowlist + 25MB cap + magic-byte sniff; objects carry `Cache-Control: public, max-age=31536000, immutable` |
-| GET    | `/upload?list=1`               | Cloudflare Access | Recent uploads, newest first; `&prefix=img/…/&delimiter=1` lists one folder level → `{folders[], objects[]}` |
-| DELETE | `/upload?key=img/…`            | Cloudflare Access | Delete one object (`img/` prefix only)        |
-| POST   | `/upload/folder`               | Cloudflare Access | Create a folder `{path}` — R2 folders are key prefixes, so this writes a `.keep` marker (listings hide it) |
-| DELETE | `/upload/folder?key=img/…/`    | Cloudflare Access | Delete a folder + everything under it (cursor list, batched delete) |
-| POST   | `/upload/move`                 | Cloudflare Access | Move/rename a file or folder `{from, to}` (R2 has no native move: get+put+delete per object) |
-| GET    | `/admin/api/posts`             | Cloudflare Access | List `posts/*.md` from GitHub (editor.js)     |
-| GET    | `/admin/api/post?slug=…`       | Cloudflare Access | Read one post (UTF-8 + blob sha)              |
-| POST   | `/admin/api/post`              | Cloudflare Access | Publish (create/update) `posts/<slug>.md` via the GitHub Contents API → CI regenerates; accepts `{slug, meta, body}` (frontmatter composed server-side, canonical key order) or a full legacy `content` string; validated like the generator (title/date/category/BOM/256KB, slug `^[a-z0-9][a-z0-9-]{0,63}$`) |
-| DELETE | `/admin/api/post?slug=…&sha=…` | Cloudflare Access | Delete a post (the generator prunes its `blog/<slug>/` page) |
-| GET    | `/admin/api/stats?days=N`      | Cloudflare Access | Analytics dashboard data for the Stats tab (`&self=1` includes the owner's flagged visits) |
-| GET    | `/admin/api/visitor?id=…`      | Cloudflare Access | One visitor's profile + sessions + page timeline |
-| GET    | `/admin/api/comments?offset=0` | Cloudflare Access | Moderation list — every comment incl. `email` + `ip_hash` (50/page, newest first; moderation.js) |
-| DELETE | `/admin/api/comment`           | Cloudflare Access | Delete one comment (`?id=`) or every comment of one sender (`?ip_hash=`) |
-| GET/POST/DELETE | `/admin/api/ban[s]`   | Cloudflare Access | The `banned_ips` blocklist `POST /comments` checks first (`{ip_hash, note}`) |
-| GET/POST/DELETE | `/admin/api/draft[s]` | Cloudflare Access | 写作台 drafts in D1 (`{slug, meta, body, publish_at}`; `publish_at` = epoch-seconds schedule) |
-| GET/POST | `/admin/api/data?file=…`       | Cloudflare Access | Whitelisted repo JSON files (`gallery`, `creations`, `achievements`): GET returns `{sha, content}`, POST `{file, content, sha}` validates the items and commits via the Contents API (no CI — static hosts serve JSON as-is) |
-| GET    | `/admin/api/music/tree`        | Cloudflare Access | Music tab: R2 `music/` listing annotated with published flags from the committed JSON |
-| POST   | `/admin/api/music/upload`      | Cloudflare Access | Multipart audio (`files[]` + parallel `artist[]`/`album[]` fields; ext allowlist + 64MB cap + magic-byte sniff) → R2 `music/<Artist>/<Album>/` |
-| DELETE | `/admin/api/music?file=…`      | Cloudflare Access | Delete one audio object (`music/` prefix only; the public JSON drops it on the next sync) |
-| POST   | `/admin/api/music/plan`        | Cloudflare Access | Dry-run of the library sync — what would be added/removed, no writes |
-| POST   | `/admin/api/music/cover`       | Cloudflare Access | iTunes cover lookup for ONE song → commit the jpg to `images/music-covers/` + cache in R2 `music/.covers.json` |
-| POST   | `/admin/api/music/commit`      | Cloudflare Access | Rebuild `data/music-library.json` from R2 + cached covers, commit via the Contents API |
-| POST   | `/api/ai/v1/chat/completions`  | Bearer API key    | OpenAI-compatible AI proxy (SSE streaming pass-through) |
-| GET    | `/api/ai/v1/models`            | Bearer API key    | Model catalog (the free Workers AI `cf-*` models) |
-| POST   | `/api/site-chat`               | public, per-IP limited | Site avatar chat used by the floating AI chat widget (no key; internal `site-avatar` api_keys row pays the quota) |
+**Never `\"`-escape inside a tab fragment.** Tab fragments are one big template
+literal, so a backslash-escaped quote is eaten at runtime, the rendered script
+gets a SyntaxError, and the whole tab dies while the page still renders. Use
+single quotes for inner quotes. After editing any tab file, run
+`node tools/check_admin_scripts.mjs`, which reconstructs every inline script as
+the browser sees it and `node --check`s it. Companion rule: `admin_page.js`
+carries a global `[hidden] { display: none !important; }`, because tab CSS
+display rules would otherwise defeat the `hidden` attribute.
 
-**Markdown editor (写作台)**: a two-pane tab — post list (+ New, slug filter) pinned left, and on the right a metadata form (title/slug/date/category/tags/description) above the markdown body and a live-preview pane (a JS port of the generator's renderer; the CI page stays the truth). The body textarea holds markdown ONLY; the form fields are composed into canonical frontmatter server-side (`composePost()` in editor.js), which also makes Import (.md file picker or drop) trivial — frontmatter is parsed into the form, the body into the textarea. Below ~900px the list becomes a drawer. Publishing = 发布 → the Worker commits the `.md` to main with a fine-grained GitHub PAT (`GITHUB_TOKEN` secret; repo `nathanpenny520/nathanpenny.fun`, Contents: Read and write) → `gen-posts.yml` regenerates. Updates carry the blob sha (409 → reload); a successful publish returns the new sha. The endpoints live under `/admin/api/*` so the edge Access app's path-prefix coverage injects the JWT (verified again in code); they emit no CORS headers and require `Content-Type: application/json` (CSRF line). The token never reaches the page or logs.
+### Route map
 
-**Drafts & scheduled publishing (草稿/定时发布)**: the editor tab's sidebar has a Drafts list; Save draft stores the form + body in the private D1 `drafts` table — deliberately not the public repo and not R2 (the bucket is publicly readable). A draft carries an optional `publish_at` (排期): the 15-minute Cron publishes due drafts through the exact interactive path (`composePost()` → `validatePost()` → `commitPost()` → GitHub Contents API, sha picked up first when the post already exists) and deletes the row on success; an invalid draft drops its schedule instead of retrying forever. Publishing from the editor deletes the originating draft. `publishDueDrafts()` in drafts.js runs from `scheduled()` with no Access context.
+Detail, including every query parameter, is in
+[workers/README.md](workers/README.md). Grouped index:
 
-**Comment moderation (评论审核)**: the Comments tab lists every comment including `email` + `ip_hash` — a 16-hex salted one-way hash of the sender's IP (same `ANALYTICS_SALT` secret; the raw IP is never stored, keeping the `/privacy` promise true). Actions: delete one comment (a top-level comment takes its replies with it), bulk-delete by `ip_hash`, ban/unban a sender (`banned_ips` table; `POST /comments` checks it first and answers 403, fail-open on D1 trouble).
+| Group | Paths | Protection |
+|---|---|---|
+| Comments | `GET`/`POST` `/comments` | public (5/min/IP + Turnstile + ban check on POST) |
+| Analytics beacon | `POST /api/analytics/hit` | public, own origin allowlist, always 204 |
+| Site avatar chat | `POST /api/site-chat` | public, 3 msgs/60s/IP |
+| Admin page | `GET /admin` (GET only) | Cloudflare Access |
+| Image library | `/upload`, `/upload/folder`, `/upload/move` | Access |
+| Posts + content data (写作台) | `/admin/api/posts`, `/admin/api/post`, `/admin/api/data` | Access |
+| Drafts | `/admin/api/draft`, `/admin/api/drafts` | Access |
+| Comment moderation | `/admin/api/comments`, `/admin/api/comment`, `/admin/api/ban`, `/admin/api/bans` | Access |
+| Stats | `/admin/api/stats`, `/admin/api/visitor` | Access |
+| Music library | `/admin/api/music`, `/admin/api/music/*` | Access |
+| AI proxy | `/api/ai/v1/models`, `/api/ai/v1/chat/completions` | Bearer `npai_…` key |
+| anything else | — | 404 |
 
-**Content data editors (gallery/creations)**: the Content tab (content_page.js) edits the two JSON files behind the Gallery and Creations pages — entry list (thumbnail, move up/down, delete, an All/Songs/Videos type filter on creations) + form per entry; image fields get a "Pick…" dialog over the recent `/upload?list=1` R2 uploads. Saving commits the whole file via `GET/POST /admin/api/data` (whitelisted filenames, per-item validation in editor.js `validateItems()`, blob-sha 409 conflict detection — same as posts). Creations video entries carry `platform: file|bilibili|youtube`: `src` stays the normal watch-page URL and `main.js videoEmbedUrl()` derives the player embed (Bilibili `player.bilibili.com?bvid=…&page=…`, YouTube via `youtube-nocookie.com`), rendered into a `.creation-embed` 16:9 iframe. Achievements is the third section: a two-level editor (sections → items; each item has badge / month-precision date / description / up to 6 links) backed by `data/achievements.json` — `validateAchv()` in editor.js validates, `initAchievements()` in main.js renders (section icons default by section id), and the same file is precached by sw.js.
+One method trap hides in that table: the **plural and singular paths differ**.
+`GET` exists only on `/admin/api/bans` and `/admin/api/drafts`; `POST`/`DELETE`
+exist only on the singular `/admin/api/ban` and `/admin/api/draft`. `GET` on the
+singular returns 405.
 
-**Admin tab inline-script rule**: tab fragments are one big template literal, so `\"`-style escapes in their page scripts are fatal — the backslash is eaten, the rendered script gets a SyntaxError and the whole tab goes dead while the page still renders. Use single-quoted strings for inner quotes, never backslash-escape inside a fragment, and after editing any tab file run `node tools/check_admin_scripts.mjs` (reconstructs every inline script as the browser sees it and `node --check`s it). Related: admin_page.js carries a global `[hidden] { display: none !important; }` because tab CSS display rules (grid/flex/block) would otherwise defeat the `hidden` attribute.
+Access is a Zero Trust dashboard app covering `/admin` and `/upload` (email
+OTP, team `square-surf-c2a6`). The Worker **also** verifies the
+`Cf-Access-Jwt-Assertion` JWT itself (`ACCESS_TEAM_DOMAIN`/`ACCESS_AUD` vars,
+fail-closed), which closes the `*.workers.dev` bypass. Local dev escape hatch:
+the gitignored `workers/.dev.vars` with `ADMIN_BYPASS=1` — never deploy with it.
 
-**Image explorer (图床)**: the Images tab is a file-explorer view over R2's `img/` prefix — breadcrumb navigation, folder cards (`.keep`-marked prefixes) + lazy thumbnails, sort, new/rename/delete folder, per-file detail dialog (copy URL/Markdown, rename, move, delete), a flat "Recent" view, and drag/drop/paste upload into the folder being viewed (root keeps the `img/YYYY/MM/` convention). Folder names are ASCII slug segments only (`normalizeFolderPath`) — dots are banned outright, same WAF `...` lesson as the upload slugify.
+### Cross-cutting conventions
 
-**Image hosting**: uploads land in the shared R2 bucket and are read via the bucket's public custom domain `storage.nathanpenny.fun` — the Worker is write-only. Slugs strip dots, structurally avoiding the WAF `...` 403 rule (same lesson as `tools/upload_music_r2.sh`). Access = Zero Trust dashboard app on `workers.nathanpenny.fun/admin` + `/upload` (email OTP, team `square-surf-c2a6`); the Worker additionally verifies the `Cf-Access-Jwt-Assertion` JWT (closes the `*.workers.dev` bypass; `ACCESS_TEAM_DOMAIN`/`ACCESS_AUD` vars; fail-closed). Local dev bypass: gitignored `workers/.dev.vars` with `ADMIN_BYPASS=1` — never deploy with it.
+- **CORS.** `/comments` and `/api/analytics/hit` each carry their own copy of
+  the same four-origin allowlist, matched exactly (schemes included):
+  `https://nathanpenny.fun`, `https://blog.nathanpenny.fun`,
+  `https://nathanpenny520.github.io`, `http://localhost:8080`. Any other origin
+  gets no `Access-Control-Allow-Origin` header at all. Only `/api/ai/*` uses
+  `*` (bearer auth, no cookies).
+- **CSRF line on admin JSON endpoints.** The JSON-body endpoints
+  (`POST /admin/api/post`, `/admin/api/data`, `/admin/api/draft`,
+  `/admin/api/music/cover`) require `Content-Type: application/json` and answer
+  415 otherwise, and they emit no CORS headers on real responses. Two
+  exceptions: `/admin/api/music/upload` is `multipart/form-data`, and
+  `/admin/api/ban` reports a bad body as 400 rather than 415.
+- **Schema.** `workers/schema.sql` is idempotent and creates **twelve** tables:
+  `api_keys`, `ai_usage`, `ai_logs`, `comments`, `comment_rate`, `chat_rate`,
+  `analytics_hits`, `analytics_visits`, `analytics_visitors`, `analytics_rate`,
+  `banned_ips`, `drafts`. Apply with
+  `npx wrangler d1 execute nathanpenny --remote --file workers/schema.sql`.
+  `comments.ip_hash` and `comments.parent_id` are present as migration notes.
+- **Privacy by construction.** The raw IP is never stored. Comments keep a
+  16-hex salted hash (`ip_hash`, same `ANALYTICS_SALT` secret); analytics
+  derives `visitor_id` as a 24-hex truncation of `sha256(salt + IP + UA)` and
+  keeps the session id in the visitor's `sessionStorage` (no cookies). Bots are
+  dropped at ingest. Day buckets are UTC+8. The owner flags their own browser
+  with `localStorage.npSelf = '1'`, and the Stats tab hides those visits unless
+  asked to include them. Keep all of this true, since `/privacy` states it.
+- **Crons.** Two triggers: `*/15 * * * *` publishes due scheduled drafts through
+  the same compose → validate → commit path the editor uses (an invalid draft
+  drops its schedule instead of retrying forever); `17 3 * * *` prunes
+  `ai_logs` (>90d), `ai_usage` (>13mo), the three analytics tables (~13 months),
+  and the rate-limit tables (>1d).
+- **New comments** fire a fire-and-forget owner email through the `NOTIFY`
+  `send_email` binding (destination `notify@nathanpenny.fun`, a relay address —
+  the real mailbox stays out of the repo). Removing the binding turns the
+  feature off.
+- **AI proxy** has a single upstream: Cloudflare Workers AI, addressed as
+  `cf-{author}/{model}` and rewritten to `@cf/…`. Only a `cf-` prefix is
+  accepted — anything else is a 400, so the catalog array is cosmetic but the
+  prefix is not. Keys are `npai_…` and only their SHA-256 hash is stored; a
+  monthly request-count breaker lives in `ai_usage` (429 when exhausted,
+  fail-open on D1 trouble). For streamed calls the usage log is written by the
+  `TransformStream` pump *before* the client stream closes, because a
+  `waitUntil` D1 write issued after a streamed response silently never lands.
 
-**First-party analytics (自建统计)**: `main.js` `initAnalytics()` sendBeacons one pageview per page (plus a time-on-page update on hide) to the public `POST /api/analytics/hit`; `workers/analytics.js` ingests into D1 and serves the Access-protected stats queries. Privacy by construction: the raw IP is never stored — `visitor_id` is a 24-hex truncation of `sha256(ANALYTICS_SALT + IP + UA)` (stable per browser+network, pseudonymous), the session id lives in the visitor's `sessionStorage`, no cookies, and bots (UA blocklist + client-reported `navigator.webdriver`) are dropped at ingest. Day buckets are UTC+8. Each pageview batch upserts `analytics_visits` (per-tab session) and `analytics_visitors` (per-visitor profile; session counter bumps only when the `visit_id` is new) and appends to `analytics_hits`; flood control rides the shared `bumpRateWindow` into `analytics_rate` (60/min/IP). The owner flags their own browser with `localStorage.npSelf = '1'` (`is_self` column) — the Stats tab excludes those hits unless "Include my visits" is ticked. The Stats tab (`workers/stats_page.js`, the `/admin` fourth tab) renders KPI tiles, a hand-rolled SVG daily trend (crosshair tooltip + keyboard + table view), top pages/referrers tables, device/browser/OS/language/country breakdowns, the per-visitor list with a sessions+timeline drill-down, and a recent-pageviews feed (series colors teal+blue, CVD-validated per theme). Disclosed by the `/privacy` policy page; all analytics tables are cron-pruned after 13 months.
-
-**AI proxy**: the single upstream is **Cloudflare Workers AI** via its OpenAI-compatible REST route (`CF_AI_TOKEN` secret + `CF_ACCOUNT_ID` var; free **10,000 Neurons/day**, no third-party keys). Models are addressed as `cf-{author}/{model}` and rewritten to `@cf/{author}/{model}` — the catalog array in ai_proxy.js is cosmetic, any model string passes through (free-tier models only; `kimi-k2.6`/`glm-5.2` etc. require Workers Paid). Third-party upstreams (OpenAI/Anthropic/Google/xAI/DeepSeek) and the AI-Gateway fronting were removed 2026-09 — an AI Gateway live-test had shown it does not bypass OpenAI's geo-block. Keys are `npai_…` generated by `python3 tools/ai_key.py <name> [monthly_limit]` — only the SHA-256 hash is stored in `api_keys`. Monthly request-count breaker lives in `ai_usage` (atomic conditional upsert, 429 when exhausted, fail-open on D1 trouble) which also accumulates token totals; per-call metadata (never prompt/response content) goes to `ai_logs` — for streamed calls the log is written by the TransformStream pump BEFORE the client stream closes, because waitUntil D1 writes issued after a streamed response silently never land (see ai_proxy.js pumpStream). CORS is `*` for `/api/ai` (bearer auth, no cookies). Two Cron triggers: a 15-minute one publishes due scheduled drafts (`publishDueDrafts()` in drafts.js) and a daily one (03:17 UTC) prunes `ai_logs` (>90d), `ai_usage` (>13mo), the analytics tables (`analytics_hits`/`analytics_visits`/`analytics_visitors` >13mo), and `comment_rate`/`chat_rate`/`analytics_rate` (>1d). The public `POST /api/site-chat` (used by the floating avatar chat on the site) reuses the same quota/logging through an internal `api_keys` row named `site-avatar` (disable that key to turn the widget off), with its own `chat_rate` per-IP limiter (3 msgs/60s). New comments fire a fire-and-forget owner email via the `NOTIFY` send_email binding (destination `notify@nathanpenny.fun` in wrangler.jsonc — a verified destination address that an Email Routing rule relays to the owner's real mailbox, kept out of the public repo; if the binding were removed the feature would be off).
-
-Any other path returns 404. Schema: all thirteen tables (`comments`, `comment_rate`, `chat_rate`, `banned_ips`, `drafts`, `analytics_hits`, `analytics_visits`, `analytics_visitors`, `analytics_rate`, `api_keys`, `ai_usage`, `ai_logs` — plus `comments.ip_hash`, added to prod via `ALTER TABLE`) are in the idempotent `workers/schema.sql` (apply with `npx wrangler d1 execute nathanpenny --remote --file workers/schema.sql`; the two comment tables were created manually 2026-07 and their DDL was dumped verbatim from prod into the file later). The frontend talks to the worker at `https://workers.nathanpenny.fun` (`API_URL` in `main.js`), and to `.../comments` for the comments feature. `/comments` CORS is restricted to an allowlist: `nathanpenny.fun`, `blog.nathanpenny.fun`, `nathanpenny520.github.io`, `localhost:8080`; other origins get no `Access-Control-Allow-Origin` header at all (`/api/ai` allows `*`).
+[workers/README.md](workers/README.md) is the detailed per-endpoint reference
+and is kept in sync with the code. When you change the Worker's routes or its
+behaviour, update that file — don't grow this section instead.
 
 ## Other notes
 
-- `audio/` holds a single mp3 used by one blog post; `pdfs/` and `docs/` hold the CV download; `docs/achievements.md` explains how to fill in the achievements page.
-- `learning-resource/` is gitignored (personal study notes) and is not part of the site.
-- Google Analytics 4 is loaded in `main.js` with a hardcoded measurement ID (`G-5X78JT0JSQ`), deferred until after window `load` + idle so unreachable regions (mainland China) don't stall page load. Cloudflare Web Analytics is also active, auto-injected by the Cloudflare dashboard.
-- Third-party assets are self-hosted for China accessibility: Open Sans (latin 400, the only weight in use) via a `@font-face` at the top of `style.css`, Font Awesome 6.5.2 as a vendored copy in `fonts/fontawesome/` (woff2 only; `fa-regular` is unused but declared), and highlight.js 11.9.0 (common bundle, BSD-3 header intact) at `scripts/vendor/highlight.min.js` — `main.js` `initCodeHighlight()` injects it only on pages that actually contain `language-`-tagged code blocks, and the token colors are the site's own `--hljs-*` vars in `style.css` (no stock theme). The pages load no CSS/JS from external CDNs.
-- The site logo is `NP-logo.svg`; `images/NathanPenny.png` is the avatar used in About/Gallery.
+- `audio/` holds one tracked mp3 used by a single blog post; the local
+  `audio/my-music/` library (~1GB) is gitignored, as is `learning-resource/`
+  (personal study notes, not part of the site).
+- `pdfs/NathanPenny-CV-for-fun.pdf` is the CV download linked from About;
+  `docs/` holds its `.docx` source plus `docs/achievements.md`.
+- GA4 is loaded in `main.js` with a hardcoded measurement ID (`G-5X78JT0JSQ`),
+  deferred until after `window` load + idle so unreachable regions (mainland
+  China) don't stall page load. Cloudflare Web Analytics is also active
+  (dashboard-side, not in this repo).
+- Third-party assets are self-hosted under `fonts/` for China accessibility:
+  Open Sans (latin 400, the only weight in use) via a `@font-face` at the top of
+  `style.css`, and Font Awesome 6.5.2 vendored woff2-only. highlight.js is
+  vendored under `scripts/vendor/` and injected lazily. No page loads CSS or JS
+  from an external CDN — keep it that way.
+- The logo is `NP-logo.svg`; the avatar is **`images/NathanPenny.webp`** (used
+  by About, Gallery, and the AI chat). `images/NP.png` exists but is referenced
+  nowhere.

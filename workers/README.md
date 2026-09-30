@@ -33,9 +33,12 @@ the AI proxy.
 | GET    | `/admin/api/visitor?id=…`      | Cloudflare Access       | One visitor's profile + sessions + page timeline |
 | GET    | `/admin/api/comments?offset=0` | Cloudflare Access       | Moderation list: every comment incl. `email` + `ip_hash` (50/page; moderation.js) |
 | DELETE | `/admin/api/comment`           | Cloudflare Access       | Delete one comment (`?id=`, replies go with it) or all comments of one sender (`?ip_hash=`) |
-| GET/POST/DELETE | `/admin/api/ban[s]`   | Cloudflare Access       | The `banned_ips` blocklist `POST /comments` checks first |
-| GET/POST/DELETE | `/admin/api/draft[s]` | Cloudflare Access       | 写作台 drafts in D1, optional `publish_at` schedule (drafts.js) |
-| GET/POST | `/admin/api/data?file=…`      | Cloudflare Access       | Whitelisted repo JSON files (`gallery`, `creations`): read `{sha, content}` / validated commit via the Contents API |
+| GET    | `/admin/api/bans`              | Cloudflare Access       | List the `banned_ips` blocklist `POST /comments` checks first (moderation.js) |
+| POST   | `/admin/api/ban`               | Cloudflare Access       | Ban a sender `{ip_hash, note}`                |
+| DELETE | `/admin/api/ban?ip_hash=…`     | Cloudflare Access       | Unban a sender                                |
+| GET    | `/admin/api/drafts`            | Cloudflare Access       | List 写作台 drafts (drafts.js)                 |
+| GET/POST/DELETE | `/admin/api/draft`    | Cloudflare Access       | Read `?slug=` / save `{slug, meta, body, publish_at}` / delete `?slug=` one draft |
+| GET/POST | `/admin/api/data?file=…`      | Cloudflare Access       | Whitelisted repo JSON files (`gallery`, `creations`, `achievements`): read `{sha, content}` / validated commit via the Contents API |
 | GET    | `/admin/api/music/tree`        | Cloudflare Access       | Music tab: R2 `music/` listing annotated with published flags from the committed JSON (music.js) |
 | POST   | `/admin/api/music/upload`      | Cloudflare Access       | Multipart audio (`files[]` + parallel `artist[]`/`album[]`; ext allowlist, 64MB cap, magic-byte sniff) → R2 `music/<Artist>/<Album>/` |
 | DELETE | `/admin/api/music?file=…`      | Cloudflare Access       | Delete one audio object (`music/` prefix only; the public JSON drops it on the next sync) |
@@ -274,12 +277,14 @@ Workers AI; account from the `CF_ACCOUNT_ID` var):
 | `cf-{author}/{model}`     | Workers AI, sent upstream as `@cf/{author}/{model}`   |
 
 The request body passes through untouched (apart from that one model-string
-rewrite). The catalog array in ai_proxy.js is cosmetic — any model string
-passes through; free-tier models only (`kimi-k2.6`, `glm-5.2` and a few
+rewrite). The catalog array in ai_proxy.js only feeds `GET /api/ai/v1/models`
+— it is not consulted for routing, but the `cf-` **prefix is**: any
+`cf-{author}/{model}` string is forwarded as-is, while a model without that
+prefix is rejected with 400, so third-party model names cannot be addressed.
+Free-tier models only (`kimi-k2.6`, `glm-5.2` and a few
 others require the paid Workers plan). **Free allocation: 10,000
 Neurons/day** (resets 00:00 UTC) ≈ 600 small `llama-3.1-8b-fast` chats or
-~110 `llama-3.3-70b` ones. Unknown prefixes return 400 listing the supported
-ones; the Workers AI secret missing returns 503.
+~110 `llama-3.3-70b` ones. A missing Workers AI secret returns 503.
 
 History: the proxy originally fronted OpenAI/Anthropic/Google/xAI/DeepSeek
 (BYOK), optionally through the account's AI Gateway. Removed 2026-09 after
@@ -301,20 +306,13 @@ went unused.
   scraped from the SSE tail when the upstream provides it (null otherwise),
   and latency is measured to full stream completion. Token totals also
   accumulate into `ai_usage.tokens_in/tokens_out` (per key+month).
-- **Streaming**: SSE bodies are passed straight through (`body.tee()` on a
-  background copy for the usage log); 300s upstream timeout, 10MB body cap.
+- **Streaming**: SSE bodies are passed straight through by a TransformStream
+  pump (`pumpStream`) that reads the upstream once; the usage log is awaited
+  by that pump **before** the client stream closes, because a `ctx.waitUntil`
+  D1 write issued after a streamed response silently never lands. 300s
+  upstream timeout, 10MB body cap.
 - **CORS**: `Access-Control-Allow-Origin: *` — safe because auth is a
   header key, never cookies.
-- **Geo caveat (2026-09, live-tested)**: Workers execute at the PoP nearest
-  the caller, and the subrequest egresses from there. OpenAI rejects
-  requests egressing from mainland-China-adjacent PoPs (HK/MO/CN) with
-  `unsupported_country_region_territory` — so `gpt-*` works only when the
-  caller's entry PoP egresses from a supported region. Google/Gemini and
-  xAI have no such block from these PoPs. Upstream model retirements (e.g.
-  `gemini-2.5-*` 404 for new keys → use `gemini-3.6-flash`) surface
-  verbatim through the proxy. Workarounds: `deepseek-*` (no geo block from
-  HK PoPs) and the AI Gateway route for `gpt-*` — the gateway live-test
-  result: PENDING (record here after testing).
 
 ### Usage
 
@@ -346,15 +344,16 @@ resp = client.chat.completions.create(
 
 JavaScript: `new OpenAI({ baseURL: "https://workers.nathanpenny.fun/api/ai/v1", apiKey: "npai_…" })`.
 
-`GET /api/ai/v1/models` lists the starter catalog (cosmetic — the proxy does
-not restrict model names; send any `cf-{author}/{model}` from the
-[Workers AI catalog](https://developers.cloudflare.com/workers-ai/models/)).
+`GET /api/ai/v1/models` lists the starter catalog. Routing only checks the
+`cf-` prefix, so any `cf-{author}/{model}` from the
+[Workers AI catalog](https://developers.cloudflare.com/workers-ai/models/) works.
 
 ## Site avatar chat (站内 AI 分身)
 
-`POST /api/site-chat` powers the floating avatar chat widget on the website
-(main.js `initSiteChat`: a floating avatar button with an "AI" badge on every
-page; the About-page portrait opens the same dialog). Body:
+`POST /api/site-chat` powers the site's AI avatar chat (main.js
+`initSiteChat`): clicking the About-page portrait, which carries an "AI" badge,
+opens a chat `<dialog>`. That portrait is the only entry point — there is no
+floating button on other pages. Body:
 `{"message": "...", "history": [{"role":"user"|"assistant","content":"..."}]}`
 → `{"reply": "..."}`. Non-streaming by design (one JSON response, ≤300
 tokens out).

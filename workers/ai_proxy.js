@@ -17,7 +17,9 @@ const PROVIDERS = [
     secret: "CF_AI_TOKEN",
     prefixes: ["cf-"],
     endpoint: null, // built per-account in upstreamUrl()
-    // Cosmetic catalog (any model string passes through as cf-… → @cf/…).
+    // Cosmetic catalog: it only feeds GET /api/ai/v1/models. Routing checks
+    // the `cf-` prefix above (a model without it is a 400) and rewrites it to
+    // @cf/…; nothing here restricts which cf-* model may be sent.
     // Free-tier chat models only — a few big ones (kimi-k2.6, glm-5.2, …)
     // require the paid Workers plan. Rough Neuron cost per small call:
     // llama-3.1-8b-fast ≈ 15, llama-3.3-70b ≈ 90 (10k free per day).
