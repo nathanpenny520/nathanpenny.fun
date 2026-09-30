@@ -262,36 +262,126 @@ function normName(s) {
     .replace(/[^a-z0-9一-鿿]+/g, "");
 }
 
-// Conservative iTunes album match: artist AND album must each overlap after
-// normalization (substring either way, shorter side at least 2 chars) — a
-// wrong cover is worse than no cover, so anything ambiguous is a miss.
-function matchCover(result, nArtist, nAlbum) {
-  const nResArtist = normName(result.artistName);
-  const nResAlbum = normName(result.collectionName);
-  const overlaps = (a, b) => {
-    if (!a || !b) return false;
-    const shorter = a.length < b.length ? a : b;
-    if (shorter.length < 2) return false;
-    return a === b || a.includes(b) || b.includes(a);
-  };
-  if (!overlaps(nResArtist, nArtist) || !overlaps(nResAlbum, nAlbum)) return null;
+// Overlap test shared by both matchers: substring either way, shorter side at
+// least 2 chars. A wrong cover is worse than no cover, so ambiguity is a miss.
+function overlaps(a, b) {
+  if (!a || !b) return false;
+  const shorter = a.length < b.length ? a : b;
+  if (shorter.length < 2) return false;
+  return a === b || a.includes(b) || b.includes(a);
+}
+
+function artOf(result) {
   const art = result.artworkUrl100;
   return typeof art === "string" ? art.replace("100x100bb.jpg", "600x600bb.jpg") : null;
 }
 
-async function lookupCoverArt(artist, album) {
-  const url = "https://itunes.apple.com/search?term=" + encodeURIComponent(artist + " " + album) + "&entity=album&limit=8";
-  const res = await fetch(url, {
-    headers: { "User-Agent": "nathanpenny-fun-admin", "Accept": "application/json" },
-    signal: AbortSignal.timeout(15000)
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  const nArtist = normName(artist);
-  const nAlbum = normName(album);
-  for (const result of (data && data.results) || []) {
-    const art = matchCover(result, nArtist, nAlbum);
-    if (art) return art;
+// CJK-tolerant similarity, for the simplified/traditional split: the catalog
+// stores simplified names while the TW storefront answers in traditional
+// script, so 搁浅 never matches 擱淺 and 周杰伦 never matches 周杰倫 — often
+// with no shared characters at all. Requires a strong shared-character overlap,
+// and only applies when both sides actually contain CJK.
+function cjkSimilar(a, b) {
+  if (!a || !b) return false;
+  if (!/[\u4e00-\u9fff]/.test(a) || !/[\u4e00-\u9fff]/.test(b)) return false;
+  const A = new Set(a);
+  const B = new Set(b);
+  let shared = 0;
+  for (const ch of A) if (B.has(ch)) shared++;
+  return shared >= Math.max(2, Math.ceil(Math.min(A.size, B.size) * 0.5));
+}
+
+function sameName(a, b) {
+  return overlaps(a, b) || cjkSimilar(a, b);
+}
+
+// artist AND album must each match.
+function matchAlbum(result, nArtist, nAlbum) {
+  if (!sameName(normName(result.artistName), nArtist)) return null;
+  if (!sameName(normName(result.collectionName), nAlbum)) return null;
+  return artOf(result);
+}
+
+// Fallback matcher for rows whose album name carries no information: the track
+// name must match too — unless relaxTitle is set, which the caller does only
+// for a CJK query that already passed the artist guard (see lookupCoverArt).
+function matchSong(result, nArtist, nTitle, relaxTitle) {
+  if (!sameName(normName(result.artistName), nArtist)) return null;
+  if (!relaxTitle && !sameName(normName(result.trackName), nTitle)) return null;
+  return artOf(result);
+}
+
+// "Unknown Album" / "未知" can never overlap a real iTunes collection, so such
+// rows must be looked up by track name — see matchSong.
+function albumIsPlaceholder(album) {
+  const a = String(album || "").trim();
+  return !a || /^unknown/i.test(a) || a.includes("未知");
+}
+
+async function itunesSearch(term, entity, country) {
+  const url = "https://itunes.apple.com/search?term=" + encodeURIComponent(term) +
+    "&entity=" + entity + "&limit=8&country=" + country;
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "nathanpenny-fun-admin", "Accept": "application/json" },
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data && data.results) || [];
+  } catch (error) {
+    return []; // network trouble: a miss, and misses are not cached
+  }
+}
+
+// Cover lookup for one song. Queries run most specific first and stop at the
+// first conservative match; a total miss returns null (and is retried later,
+// since handleCover only writes meta on a hit).
+//
+// Two storefront notes: the US store is the default, and CJK queries try TW
+// first because the CN storefront stopped returning hits for them (observed
+// 2026-09). Rows with a placeholder album are looked up by track name, because
+// an album query can never match them.
+async function lookupCoverArt(artist, album, title) {
+  const artistQ = String(artist || "").trim();
+  const albumQ = String(album || "").trim();
+  const titleQ = String(title || "").trim();
+  const cjk = /[\u4e00-\u9fff]/.test(artistQ + albumQ + titleQ);
+  const stores = cjk ? ["TW", "US"] : ["US"];
+
+  const attempts = [];
+  if (albumQ && !albumIsPlaceholder(albumQ)) {
+    for (const country of stores) {
+      attempts.push({ term: artistQ + " " + albumQ, entity: "album", country, by: "album" });
+    }
+  }
+  if (titleQ) {
+    for (const country of stores) {
+      attempts.push({ term: artistQ + " " + titleQ, entity: "song", country, by: "song" });
+    }
+  }
+
+  const nArtist = normName(artistQ);
+  const nAlbum = normName(albumQ);
+  const nTitle = normName(titleQ);
+  for (const attempt of attempts) {
+    const results = await itunesSearch(attempt.term, attempt.entity, attempt.country);
+    for (const result of results) {
+      const art = attempt.by === "album"
+        ? matchAlbum(result, nArtist, nAlbum)
+        : matchSong(result, nArtist, nTitle, false);
+      if (art) return art;
+    }
+    // Second pass, CJK only: the storefront answers in traditional script, so
+    // a title like 搁浅 can never equal 擱淺. The artist guard still applies
+    // (cjkSimilar makes it tolerant of that same split), so this only accepts a
+    // track the query already ranked for this exact act.
+    if (cjk && attempt.by === "song") {
+      for (const result of results) {
+        const art = matchSong(result, nArtist, nTitle, true);
+        if (art) return art;
+      }
+    }
   }
   return null;
 }
@@ -357,7 +447,7 @@ async function handleCover(request, env) {
   const meta = await readCoverMeta(env);
   if (!(meta[rel] && meta[rel].name)) {
     const title = titleOf(parsed.filename.replace(/\.[^.]+$/, ""), parsed.artist, parsed.album);
-    const art = await lookupCoverArt(parsed.artist.trim(), parsed.album.trim());
+    const art = await lookupCoverArt(parsed.artist.trim(), parsed.album.trim(), title);
     if (!art) return musicJson(200, { miss: true, rel });
 
     const slug = slugify(parsed.artist + "-" + parsed.album + "-" + title);

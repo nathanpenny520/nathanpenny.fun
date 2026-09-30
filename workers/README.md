@@ -165,10 +165,18 @@ characters.
      existing entries (matched by `src`) are reused verbatim so ids and
      covers never churn; new songs get title/id from the
      `Artist/Album/<Title>-<Album>-<Artist>.ext` layout.
-  2. `POST /admin/api/music/cover` per new song — conservative iTunes album
-     match (artist AND album must overlap after normalization; a wrong
-     cover is worse than no cover); the jpg is committed to
-     `images/music-covers/<slug>-<sha8>.jpg` and the lookup cached in R2
+  2. `POST /admin/api/music/cover` per new song — an iTunes lookup that stays
+     conservative (a wrong cover is worse than no cover). Queries run most
+     specific first: `entity=album`, requiring artist AND album to match, then
+     `entity=song`, requiring the track name — the song query is the only path
+     that can work for rows whose album is a placeholder such as
+     `Unknown Album`. The US storefront is the default; a CJK query tries TW
+     first (the CN storefront stopped answering those in 2026-09), and CJK
+     names compare with a shared-character tolerance because the catalog is
+     simplified while the storefronts answer in traditional script (`周杰伦`
+     vs `周杰倫`, `搁浅` vs `擱淺` — no shared characters at all). A miss is
+     not cached, so the next Sync retries it. The jpg is committed to
+     `images/music-covers/<slug>-<sha8>.jpg` and the hit cached in R2
      `music/.covers.json` (hidden from listings).
   3. `POST /admin/api/music/commit` — rebuild the whole catalog, skip the
      commit when byte-identical, else PUT `data/music-library.json` through
