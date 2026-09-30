@@ -1134,6 +1134,15 @@
     "cover": "../images/music-covers/trisha-yearwood-con-air-original-soundtrack--how-do-i-live-3d690f17.jpg"
   },
   {
+    "id": "unknown-artist-unknown-album-胡彦斌-音乐斌潮-月光-胡彦斌",
+    "type": "song",
+    "title": "胡彦斌:音乐斌潮:月光-胡彦斌",
+    "artist": "Unknown Artist",
+    "album": "Unknown Album",
+    "src": "https://storage.nathanpenny.fun/music/Unknown%20Artist/Unknown%20Album/%E8%83%A1%E5%BD%A6%E6%96%8C%3A%E9%9F%B3%E4%B9%90%E6%96%8C%E6%BD%AE%3A%E6%9C%88%E5%85%89-%E8%83%A1%E5%BD%A6%E6%96%8C.mp3",
+    "cover": null
+  },
+  {
     "id": "unknown-artist-female-cover--unknown-album-hotel-california",
     "type": "song",
     "title": "Hotel California",
