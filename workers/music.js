@@ -199,6 +199,14 @@ async function buildCatalog(env) {
 
     const prior = priorBySrc.get(src);
     if (prior) {
+      // A published song keeps its cover — but one that was published with
+      // cover: null has to pick up whatever the retry loop has since fetched
+      // into the meta file. commit() re-runs buildCatalog, so without this the
+      // lookup would succeed, the jpg would be committed, and the JSON would
+      // never learn about it.
+      const metaEntry = meta[rel];
+      const metaCover = metaEntry && metaEntry.name ? "../" + COVERS_REPO_DIR + metaEntry.name : null;
+      const cover = prior.cover == null ? metaCover : prior.cover;
       songs.push({
         id: prior.id,
         type: "song",
@@ -206,11 +214,11 @@ async function buildCatalog(env) {
         artist: prior.artist,
         album: prior.album,
         src: prior.src,
-        cover: prior.cover == null ? null : prior.cover
+        cover
       });
       // A song published without a cover used to be stuck forever, because
       // only brand-new songs were retried. Collect them for the cover loop.
-      if (prior.cover == null) needsCover.push({ rel, id: prior.id });
+      if (cover == null) needsCover.push({ rel, id: prior.id });
       continue;
     }
 
