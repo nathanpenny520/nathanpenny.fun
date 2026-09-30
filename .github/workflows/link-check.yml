@@ -1,7 +1,9 @@
 # Weekly broken-link check over the committed site files.
 # Extracts every link from the HTML/XML and verifies it; external social
-# profiles that block bots are excluded to avoid false positives. Fails the
-# run (GitHub emails on failure) when a link is genuinely unreachable.
+# profiles that block bots are excluded to avoid false positives, and
+# --root-dir lets lychee resolve the site's root-relative links (/pages/…,
+# /NP-logo.svg) against the checkout instead of failing every one of them.
+# Fails the run (GitHub emails on failure) when a link is genuinely unreachable.
 
 name: Link check
 
@@ -22,11 +24,15 @@ jobs:
             --no-progress
             --max-retries 2
             --timeout 20
+            --root-dir .
             --exclude 'linkedin\.com'
             --exclude 'instagram\.com'
             --exclude 'xiaohongshu\.com'
             --exclude 'douyin\.com'
             --exclude 'tiktok\.com'
+            --exclude 'reddit\.com'
+            --exclude 'zhihu\.com'
+            --exclude 'x\.com'
             --exclude 'https://storage\.nathanpenny\.fun'
             './**/*.html'
           fail: true
