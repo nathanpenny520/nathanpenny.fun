@@ -38,6 +38,17 @@ Nothing to install.
   to R2 `music/`, covers are looked up on iTunes and committed under
   `images/music-covers/`, and `data/music-library.json` is rebuilt and
   committed. No local tooling is involved.
+
+  Two things decide whether a cover is found: **Artist and Album must be real**
+  (a loose file dropped on its own defaults to the literal `Unknown Artist` /
+  `Unknown Album`, which nothing can ever match — the most common way to "get no
+  cover"), and the filename should be `<Title>-<Artist>.ext`, since another
+  separator leaves the derived title polluted. Sync retries any published song
+  that still lacks a cover, so a failed lookup is not permanent and never needs
+  a delete-and-re-upload. The cover *search* runs in the admin's browser because
+  Apple throttles the Worker's shared egress IP; the matching still runs
+  server-side, so don't move it back. Details, plus the `stage` codes failures
+  report: [workers/README.md](workers/README.md).
 - **Regenerate the blog pages**: `python3 tools/gen_post_pages.py` — this is
   what CI runs.
 - **Issue an AI API key**: `python3 tools/ai_key.py <name> [monthly_limit]`,
@@ -215,7 +226,7 @@ Patterns to match:
 | `data/gallery.json` | `{id, src, title, description, category, date}` | Gallery page source of truth (fetched at runtime); filter categories are auto-derived from the data |
 | `data/creations.json` | `{id, type: song\|video, origin, title, description, src, date}` | Songs carry `cover`, videos carry `poster`. Videos may add `platform: file\|bilibili\|youtube`: `file`/omitted = native `<video>`; otherwise `src` is the normal watch-page URL and `main.js` derives the embed (YouTube via the no-cookie domain). `origin` is recorded but not rendered |
 | `data/achievements.json` | `[{id, icon, title, items: [{id, title, badge, description, links: [{label, url}], date}]}]` | Rendered by `initAchievements()`; schema and limits in [docs/achievements.md](docs/achievements.md) |
-| `data/music-library.json` | `{id, type, title, artist, album, src, cover}` | **Generated** by the Worker's Music tab from a full R2 listing — never hand-edit |
+| `data/music-library.json` | `{id, type, title, artist, album, src, cover}` | **Generated** by the Worker's Music tab from a full R2 listing — never hand-edit. `cover` is null for a song whose lookup failed; the next Sync retries those (`plan.needsCover`) |
 
 All four are precached by `sw.js`. The first three (gallery, creations,
 achievements) are edited in the admin **Content** tab, which commits them

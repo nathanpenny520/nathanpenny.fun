@@ -43,7 +43,7 @@ the AI proxy.
 | POST   | `/admin/api/music/upload`      | Cloudflare Access       | Multipart audio (`files[]` + parallel `artist[]`/`album[]`; ext allowlist, 64MB cap, magic-byte sniff) → R2 `music/<Artist>/<Album>/` |
 | DELETE | `/admin/api/music?file=…`      | Cloudflare Access       | Delete one audio object (`music/` prefix only; the public JSON drops it on the next sync) |
 | POST   | `/admin/api/music/plan`        | Cloudflare Access       | Dry-run of the library sync — added/removed report, no writes |
-| POST   | `/admin/api/music/cover`       | Cloudflare Access       | iTunes cover lookup for ONE song → commit the jpg + cache in R2 `music/.covers.json` |
+| POST   | `/admin/api/music/cover`       | Cloudflare Access       | iTunes cover lookup for ONE song → commit the jpg + cache in R2 `music/.covers.json`; a lookup that cannot run from the Worker answers `{search:[urls]}` for the tab to run instead (see Music library) |
 | POST   | `/admin/api/music/commit`      | Cloudflare Access       | Rebuild `data/music-library.json` from R2 + cached covers, commit via the Contents API |
 | POST   | `/api/ai/v1/chat/completions`  | Bearer API key          | OpenAI-compatible proxy (see AI proxy below)   |
 | GET    | `/api/ai/v1/models`            | Bearer API key          | Model catalog (the free Workers AI `cf-*` models) |
@@ -158,30 +158,69 @@ characters.
   failure mode the two-file pipeline risked).
 - **Upload**: drag an artist/album folder (entries API keeps the relative
   layout; leading root segment stripped) or loose files; per-row editable
-  Artist/Album defaults; one file per request via XHR with progress.
+  Artist/Album inputs; one file per request via XHR with progress.
+  **These two fields are what make covers work.** A loose file dropped on its
+  own falls back to the literal `Unknown Artist` / `Unknown Album`, and no
+  lookup can ever match an artist by that name — it fails by design rather than
+  attaching a stranger's art. Either drop an `Artist/Album/` folder with
+  `<Title>-<Artist>.ext` (or `<Title>-<Album>-<Artist>.ext`) filenames, or fill
+  the inputs in the "Ready to upload" list before uploading. Separators other
+  than `-` (a `:` was seen) leave the derived title polluted, so the query is
+  gibberish even when artist and album are right.
 - **Sync & publish** (`plan` → `cover` loop → `commit`, all client-driven so
   subrequest counts stay tiny and an interrupted sync resumes):
   1. `POST /admin/api/music/plan` — full R2 listing vs the committed JSON;
      existing entries (matched by `src`) are reused verbatim so ids and
      covers never churn; new songs get title/id from the
-     `Artist/Album/<Title>-<Album>-<Artist>.ext` layout.
-  2. `POST /admin/api/music/cover` per new song — an iTunes lookup that stays
-     conservative (a wrong cover is worse than no cover). Queries run most
-     specific first: `entity=album`, requiring artist AND album to match, then
-     `entity=song`, requiring the track name — the song query is the only path
-     that can work for rows whose album is a placeholder such as
-     `Unknown Album`. The US storefront is the default; a CJK query tries TW
-     first (the CN storefront stopped answering those in 2026-09), and CJK
-     names compare with a shared-character tolerance because the catalog is
-     simplified while the storefronts answer in traditional script (`周杰伦`
-     vs `周杰倫`, `搁浅` vs `擱淺` — no shared characters at all). A miss is
-     not cached, so the next Sync retries it. The jpg is committed to
-     `images/music-covers/<slug>-<sha8>.jpg` and the hit cached in R2
-     `music/.covers.json` (hidden from listings).
+     `Artist/Album/<Title>-<Album>-<Artist>.ext` layout. Also returns
+     `needsCover`: already-published songs whose `cover` is null, because those
+     must be retried too (see step 2).
+  2. `POST /admin/api/music/cover` for every song in `added` + `needsCover` —
+     an iTunes lookup that stays conservative (a wrong cover is worse than no
+     cover). Queries run most specific first: `entity=album`, requiring artist
+     AND album to match, then `entity=song`, requiring the track name — the
+     song query is the only path that can work for rows whose album is a
+     placeholder such as `Unknown Album`. The US storefront is the default; a
+     CJK query tries TW first (the CN storefront stopped answering those in
+     2026-09), and CJK names compare with a shared-character tolerance because
+     the catalog is simplified while the storefronts answer in traditional
+     script (`周杰伦` vs `周杰倫`, `搁浅` vs `擱淺` — no shared characters at
+     all).
+
+     **The search deliberately runs in the admin's browser.** Apple serves this
+     Worker's shared egress IP with `HTTP 429` while the admin's own IP is
+     served normally, so a server-side-only lookup fails permanently — no
+     User-Agent or retry count fixes it. Both Apple endpoints send
+     `Access-Control-Allow-Origin: *`, so when the server-side attempt misses
+     this route answers `{miss, stage:"lookup", detail, search:[urls]}` and the
+     tab runs those exact URLs and posts the raw results back. Only the fetching
+     moves: the matching stays in `lookupCoverArt`, so there is exactly one
+     implementation of it. Do not fold this back into the Worker.
+
+     Every failure reports the stage it died at, and the tab prints it beside
+     the filename — all of these used to return a bare `{miss:true}`, which made
+     a throttled API, a blocked CDN and a GitHub error indistinguishable:
+
+     | `stage` | meaning |
+     |---|---|
+     | `lookup` | no confident match (or Apple throttled even the browser) |
+     | `artwork` | the CDN fetch failed — HTTP status in `detail` |
+     | `artwork-type` / `artwork-size` | not an image, empty, or over 2MB |
+     | `commit` | the GitHub Contents API refused it — message in `detail` |
+
+     A miss is never cached, so the next Sync retries it. On success the jpg is
+     committed to `images/music-covers/<slug>-<sha8>.jpg` and the hit cached in
+     R2 `music/.covers.json` (hidden from listings).
   3. `POST /admin/api/music/commit` — rebuild the whole catalog, skip the
      commit when byte-identical, else PUT `data/music-library.json` through
      the Contents API (sha conflict → 409, press Sync again). Live in a
      minute or two; CI never regenerates this JSON.
+- **A retried cover has to reach the JSON.** `buildCatalog` reuses
+  `prior.cover` for an already-published song, but when that is null it falls
+  back to the meta file — otherwise a cover could be looked up, downloaded,
+  committed to the repo and written to R2 meta while the catalog kept saying
+  `null` forever (exactly what happened on 2026-09-30, and the reason a "stuck"
+  song needs no delete-and-re-upload).
 - Deleting audio from the tab only deletes the R2 object — the public JSON
   drops the entry on the next Sync (`removedCount` in the plan report).
 
