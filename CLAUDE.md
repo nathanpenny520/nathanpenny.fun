@@ -91,8 +91,10 @@ carry the same nav too.
 
 **The footer is the exception.** Every page carries only an empty
 `<footer></footer>` shell; `initFooter()` in `scripts/main.js` renders its
-content (logo, "© 2026 … HTML + CSS + JavaScript · Privacy"). Edit the footer
-there, never in the pages.
+content (logo, sub-site links, "© 2026 … HTML + CSS + JavaScript · Privacy").
+Sub-sites that live on their own hostnames (e.g. `tsinghua.nathanpenny.fun`) are
+pills in the `.footer-subsites` row above the copyright line — add one `<a>`
+there, not in the pages. Edit the footer there, never in the pages.
 
 Page notes:
 

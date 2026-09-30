@@ -2283,7 +2283,8 @@ function initAchievements() {
 // <footer></footer> shell and this renders the real content into it — the old
 // hand-copied footers had already drifted (the homepage had MDN links, all
 // the others didn't). Links resolve against SITE_ROOT_URL, so they are
-// correct at any page depth. No JS, no footer.
+// correct at any page depth. Sub-sites on their own hostnames go in the
+// .footer-subsites row above the copyright line. No JS, no footer.
 // ============================================================================
 
 function initFooter() {
@@ -2296,8 +2297,7 @@ function initFooter() {
   logo.src = root + 'NP-logo.svg';
   logo.alt = 'Nathan Penny logo';
 
-  const line = document.createElement('p');
-  const techLink = (name, href) => {
+  const extLink = (name, href) => {
     const a = document.createElement('a');
     a.href = href;
     a.textContent = name;
@@ -2305,13 +2305,21 @@ function initFooter() {
     a.rel = 'noopener noreferrer';
     return a;
   };
+
+  // Sub-site row (own hostnames, not sections of this site), above the
+  // copyright line so that line keeps its credits/legal meaning.
+  const subsites = document.createElement('p');
+  subsites.className = 'footer-subsites';
+  subsites.appendChild(extLink('Tsinghua', 'https://tsinghua.nathanpenny.fun'));
+
+  const line = document.createElement('p');
   line.append(
     '© 2026 Nathan Penny’s personal website | based on ',
-    techLink('HTML', 'https://developer.mozilla.org/en-US/docs/Web/HTML'),
+    extLink('HTML', 'https://developer.mozilla.org/en-US/docs/Web/HTML'),
     ' + ',
-    techLink('CSS', 'https://developer.mozilla.org/en-US/docs/Web/CSS'),
+    extLink('CSS', 'https://developer.mozilla.org/en-US/docs/Web/CSS'),
     ' + ',
-    techLink('JavaScript', 'https://developer.mozilla.org/en-US/docs/Web/JavaScript'),
+    extLink('JavaScript', 'https://developer.mozilla.org/en-US/docs/Web/JavaScript'),
     ' · '
   );
   const privacy = document.createElement('a');
@@ -2319,7 +2327,7 @@ function initFooter() {
   privacy.textContent = 'Privacy';
   line.appendChild(privacy);
 
-  footer.replaceChildren(logo, line);
+  footer.replaceChildren(logo, subsites, line);
 }
 
 // Initialize page-specific features once the DOM is ready.

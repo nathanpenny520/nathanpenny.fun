@@ -2782,6 +2782,33 @@ footer p {
   font-size: 14px;
 }
 
+/* Sub-site links (their own hostnames, e.g. tsinghua.nathanpenny.fun) sit in a
+   row above the copyright line as pills. The band is dark in both palettes, so
+   these use the nav text colour with a translucent border instead of the
+   surface/border variables. Add one <a> per sub-site in initFooter(). */
+.footer-subsites {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.footer-subsites a {
+  padding: 3px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  color: var(--color-nav-text);
+  font-size: 13px;
+  line-height: 1.5;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.footer-subsites a:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
 
 /* ==========================================================================
    WIDGETS: PROGRESS BAR, BACK TO TOP, TOAST (the UFO easter egg is drawn
