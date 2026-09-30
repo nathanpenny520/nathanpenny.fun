@@ -322,20 +322,34 @@ function albumIsPlaceholder(album) {
   return !a || /^unknown/i.test(a) || a.includes("未知");
 }
 
+// iTunes answers datacenter requests inconsistently: this used a custom
+// User-Agent and silently swallowed every failure, so "Apple refused the
+// request" was indistinguishable from "no confident match". It now sends the
+// browser User-Agent the old Python pipeline worked with, retries once, and
+// returns the error so the admin can see it.
+const ITUNES_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
+
 async function itunesSearch(term, entity, country) {
   const url = "https://itunes.apple.com/search?term=" + encodeURIComponent(term) +
     "&entity=" + entity + "&limit=8&country=" + country;
-  try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": "nathanpenny-fun-admin", "Accept": "application/json" },
-      signal: AbortSignal.timeout(15000)
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data && data.results) || [];
-  } catch (error) {
-    return []; // network trouble: a miss, and misses are not cached
+  let error = "";
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": ITUNES_UA, "Accept": "application/json" },
+        signal: AbortSignal.timeout(15000)
+      });
+      if (!res.ok) {
+        error = "HTTP " + res.status;
+        continue;
+      }
+      const data = await res.json();
+      return { results: (data && data.results) || [] };
+    } catch (err) {
+      error = String((err && err.message) || err);
+    }
   }
+  return { results: [], error };
 }
 
 // Cover lookup for one song. Queries run most specific first and stop at the
@@ -346,7 +360,7 @@ async function itunesSearch(term, entity, country) {
 // first because the CN storefront stopped returning hits for them (observed
 // 2026-09). Rows with a placeholder album are looked up by track name, because
 // an album query can never match them.
-async function lookupCoverArt(artist, album, title) {
+async function lookupCoverArt(artist, album, title, diag) {
   const artistQ = String(artist || "").trim();
   const albumQ = String(album || "").trim();
   const titleQ = String(title || "").trim();
@@ -369,7 +383,9 @@ async function lookupCoverArt(artist, album, title) {
   const nAlbum = normName(albumQ);
   const nTitle = normName(titleQ);
   for (const attempt of attempts) {
-    const results = await itunesSearch(attempt.term, attempt.entity, attempt.country);
+    const found = await itunesSearch(attempt.term, attempt.entity, attempt.country);
+    if (found.error && diag) diag.push(attempt.entity + "/" + attempt.country + " " + found.error);
+    const results = found.results;
     for (const result of results) {
       const art = attempt.by === "album"
         ? matchAlbum(result, nArtist, nAlbum)
@@ -451,8 +467,11 @@ async function handleCover(request, env) {
   const meta = await readCoverMeta(env);
   if (!(meta[rel] && meta[rel].name)) {
     const title = titleOf(parsed.filename.replace(/\.[^.]+$/, ""), parsed.artist, parsed.album);
-    const art = await lookupCoverArt(parsed.artist.trim(), parsed.album.trim(), title);
-    if (!art) return musicJson(200, { miss: true, rel, stage: "lookup" });
+    const diag = [];
+    const art = await lookupCoverArt(parsed.artist.trim(), parsed.album.trim(), title, diag);
+    if (!art) {
+      return musicJson(200, { miss: true, rel, stage: "lookup", detail: diag.slice(0, 2).join(" | ").slice(0, 160) });
+    }
 
     const slug = slugify(parsed.artist + "-" + parsed.album + "-" + title);
     const hash = (await sha256Hex(rel)).slice(0, 8);
