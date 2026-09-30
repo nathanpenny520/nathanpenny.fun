@@ -329,9 +329,7 @@ function albumIsPlaceholder(album) {
 // returns the error so the admin can see it.
 const ITUNES_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
-async function itunesSearch(term, entity, country) {
-  const url = "https://itunes.apple.com/search?term=" + encodeURIComponent(term) +
-    "&entity=" + entity + "&limit=8&country=" + country;
+async function itunesFetch(url) {
   let error = "";
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
@@ -352,6 +350,34 @@ async function itunesSearch(term, entity, country) {
   return { results: [], error };
 }
 
+// The query plan for one song, most specific first. The album query needs both
+// artist and album to match; the song query needs the track name; and a
+// placeholder album can only ever be found by track name.
+function coverAttempts(artist, album, title) {
+  const artistQ = String(artist || "").trim();
+  const albumQ = String(album || "").trim();
+  const titleQ = String(title || "").trim();
+  const cjk = /[\u4e00-\u9fff]/.test(artistQ + albumQ + titleQ);
+  const stores = cjk ? ["TW", "US"] : ["US"];
+  const attempts = [];
+  const add = (term, entity, country) => {
+    attempts.push({
+      url: "https://itunes.apple.com/search?term=" + encodeURIComponent(term) +
+        "&entity=" + entity + "&limit=8&country=" + country,
+      entity,
+      country,
+      by: entity
+    });
+  };
+  if (albumQ && !albumIsPlaceholder(albumQ)) {
+    for (const country of stores) add(artistQ + " " + albumQ, "album", country);
+  }
+  if (titleQ) {
+    for (const country of stores) add(artistQ + " " + titleQ, "song", country);
+  }
+  return { attempts, cjk, artistQ, albumQ, titleQ };
+}
+
 // Cover lookup for one song. Queries run most specific first and stop at the
 // first conservative match; a total miss returns null (and is retried later,
 // since handleCover only writes meta on a hit).
@@ -360,32 +386,22 @@ async function itunesSearch(term, entity, country) {
 // first because the CN storefront stopped returning hits for them (observed
 // 2026-09). Rows with a placeholder album are looked up by track name, because
 // an album query can never match them.
-async function lookupCoverArt(artist, album, title, diag) {
-  const artistQ = String(artist || "").trim();
-  const albumQ = String(album || "").trim();
-  const titleQ = String(title || "").trim();
-  const cjk = /[\u4e00-\u9fff]/.test(artistQ + albumQ + titleQ);
-  const stores = cjk ? ["TW", "US"] : ["US"];
-
-  const attempts = [];
-  if (albumQ && !albumIsPlaceholder(albumQ)) {
-    for (const country of stores) {
-      attempts.push({ term: artistQ + " " + albumQ, entity: "album", country, by: "album" });
+async function lookupCoverArt(artist, album, title, diag, fetchResults) {
+  const plan = coverAttempts(artist, album, title);
+  const cjk = plan.cjk;
+  const nArtist = normName(plan.artistQ);
+  const nAlbum = normName(plan.albumQ);
+  const nTitle = normName(plan.titleQ);
+  for (const attempt of plan.attempts) {
+    let results;
+    if (fetchResults) {
+      // Supplied by the admin's browser — see handleCover for why.
+      results = fetchResults(attempt.url) || [];
+    } else {
+      const found = await itunesFetch(attempt.url);
+      if (found.error && diag) diag.push(attempt.entity + "/" + attempt.country + " " + found.error);
+      results = found.results;
     }
-  }
-  if (titleQ) {
-    for (const country of stores) {
-      attempts.push({ term: artistQ + " " + titleQ, entity: "song", country, by: "song" });
-    }
-  }
-
-  const nArtist = normName(artistQ);
-  const nAlbum = normName(albumQ);
-  const nTitle = normName(titleQ);
-  for (const attempt of attempts) {
-    const found = await itunesSearch(attempt.term, attempt.entity, attempt.country);
-    if (found.error && diag) diag.push(attempt.entity + "/" + attempt.country + " " + found.error);
-    const results = found.results;
     for (const result of results) {
       const art = attempt.by === "album"
         ? matchAlbum(result, nArtist, nAlbum)
@@ -467,8 +483,35 @@ async function handleCover(request, env) {
   const meta = await readCoverMeta(env);
   if (!(meta[rel] && meta[rel].name)) {
     const title = titleOf(parsed.filename.replace(/\.[^.]+$/, ""), parsed.artist, parsed.album);
+    const artist = parsed.artist.trim();
+    const album = parsed.album.trim();
     const diag = [];
-    const art = await lookupCoverArt(parsed.artist.trim(), parsed.album.trim(), title, diag);
+    let art = null;
+    if (Array.isArray(body.search)) {
+      // Second call: the browser ran the queries and sent the raw results back.
+      const supplied = new Map();
+      for (const item of body.search) {
+        if (item && typeof item.url === "string") {
+          supplied.set(item.url, Array.isArray(item.results) ? item.results : []);
+        }
+      }
+      art = await lookupCoverArt(artist, album, title, diag, (url) => supplied.get(url) || []);
+    } else {
+      art = await lookupCoverArt(artist, album, title, diag);
+      if (!art) {
+        // Apple throttles this Worker's shared egress IP (HTTP 429) while the
+        // admin's own IP is served fine, so hand the very same queries back to
+        // the browser. Only the fetching moves — the matching stays here, so
+        // there is exactly one implementation of it.
+        return musicJson(200, {
+          miss: true,
+          rel,
+          stage: "lookup",
+          detail: diag.slice(0, 2).join(" | ").slice(0, 160),
+          search: coverAttempts(artist, album, title).attempts.map((a) => a.url)
+        });
+      }
+    }
     if (!art) {
       return musicJson(200, { miss: true, rel, stage: "lookup", detail: diag.slice(0, 2).join(" | ").slice(0, 160) });
     }

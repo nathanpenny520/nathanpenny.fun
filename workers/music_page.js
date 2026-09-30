@@ -544,18 +544,36 @@ export const MUSIC_TAB_HTML = `
           chain = chain.then(function () {
             done++;
             setStatus("Cover lookup " + done + "/" + needCover.length + " — " + song.rel);
-            return postJson("/admin/api/music/cover", { rel: song.rel }).then(function (r) {
-              if (!r.ok || (r.data && r.data.miss)) {
-                var why = "";
-                if (r.data && r.data.stage) {
-                  why = " [" + r.data.stage + (r.data.detail ? ": " + r.data.detail : "") + "]";
-                } else if (!r.ok) {
-                  why = " [HTTP " + r.status + "]";
+            return postJson("/admin/api/music/cover", { rel: song.rel })
+              .then(function (r) {
+                // Apple throttles the Worker's shared egress IP (HTTP 429) but
+                // serves this browser fine, so when it asks, run the very same
+                // queries here and hand the raw results back for matching.
+                if (!r.data || !r.data.search || !r.data.search.length) return r;
+                return Promise.all(r.data.search.map(function (u) {
+                  return fetch(u).then(function (res) {
+                    return res.ok ? res.json() : { results: [] };
+                  }).catch(function () {
+                    return { results: [] };
+                  }).then(function (j) {
+                    return { url: u, results: (j && j.results) || [] };
+                  });
+                })).then(function (list) {
+                  return postJson("/admin/api/music/cover", { rel: song.rel, search: list });
+                });
+              })
+              .then(function (r) {
+                if (!r.ok || (r.data && r.data.miss)) {
+                  var why = "";
+                  if (r.data && r.data.stage) {
+                    why = " [" + r.data.stage + (r.data.detail ? ": " + r.data.detail : "") + "]";
+                  } else if (!r.ok) {
+                    why = " [HTTP " + r.status + "]";
+                  }
+                  misses.push(song.rel + why);
                 }
-                misses.push(song.rel + why);
-              }
-              return null;
-            });
+                return null;
+              });
           });
         });
         return chain.then(function () {
