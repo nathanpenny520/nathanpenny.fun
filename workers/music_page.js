@@ -511,7 +511,7 @@ export const MUSIC_TAB_HTML = `
       syncMisses.hidden = false;
       misses.forEach(function (rel) {
         var li = document.createElement("li");
-        li.textContent = "No confident iTunes cover match: " + rel;
+        li.textContent = "No cover: " + rel;
         syncMisses.appendChild(li);
       });
     } else {
@@ -530,7 +530,13 @@ export const MUSIC_TAB_HTML = `
         return r.data;
       })
       .then(function (plan) {
-        var needCover = plan.added.filter(function (a) { return !a.cover; });
+        var seen = {};
+        var needCover = [];
+        (plan.added || []).concat(plan.needsCover || []).forEach(function (song) {
+          if (!song || !song.rel || seen[song.rel]) return;
+          seen[song.rel] = 1;
+          needCover.push(song);
+        });
         var chain = Promise.resolve();
         var done = 0;
         var misses = [];
@@ -539,20 +545,28 @@ export const MUSIC_TAB_HTML = `
             done++;
             setStatus("Cover lookup " + done + "/" + needCover.length + " — " + song.rel);
             return postJson("/admin/api/music/cover", { rel: song.rel }).then(function (r) {
-              if (!r.ok || (r.data && r.data.miss)) misses.push(song.rel);
+              if (!r.ok || (r.data && r.data.miss)) {
+                var why = "";
+                if (r.data && r.data.stage) {
+                  why = " [" + r.data.stage + (r.data.detail ? ": " + r.data.detail : "") + "]";
+                } else if (!r.ok) {
+                  why = " [HTTP " + r.status + "]";
+                }
+                misses.push(song.rel + why);
+              }
               return null;
             });
           });
         });
         return chain.then(function () {
-          if (!plan.added.length && !plan.removedCount) {
-            setStatus("Already up to date (" + plan.total + " songs)");
-            showSyncBox("Already up to date — " + plan.total + " songs, nothing to publish.", misses.length ? misses : null);
-            return null;
-          }
           setStatus("Committing data/music-library.json…");
           return postJson("/admin/api/music/commit").then(function (r) {
             if (!r.ok) throw new Error(r.data.error || "HTTP " + r.status);
+            if (r.data && r.data.committed === false) {
+              setStatus("Already up to date (" + plan.total + " songs)", false);
+              showSyncBox("Already up to date — nothing to publish.", misses.length ? misses : null);
+              return null;
+            }
             var parts = [plan.total + " songs"];
             if (plan.added.length) parts.push("+" + plan.added.length + " new");
             if (plan.removedCount) parts.push("-" + plan.removedCount + " removed");

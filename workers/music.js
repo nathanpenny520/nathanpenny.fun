@@ -187,6 +187,7 @@ async function buildCatalog(env) {
 
   const songs = [];
   const added = [];
+  const needsCover = []; // already published with cover: null — retry these too
   const presentSrcs = new Set();
 
   for (const item of listing) {
@@ -207,6 +208,9 @@ async function buildCatalog(env) {
         src: prior.src,
         cover: prior.cover == null ? null : prior.cover
       });
+      // A song published without a cover used to be stuck forever, because
+      // only brand-new songs were retried. Collect them for the cover loop.
+      if (prior.cover == null) needsCover.push({ rel, id: prior.id });
       continue;
     }
 
@@ -238,7 +242,7 @@ async function buildCatalog(env) {
     return a3 < b3 ? -1 : a3 > b3 ? 1 : 0;
   });
 
-  return { songs, added, removedCount, meta, librarySha: library.sha, libraryRaw: library.raw, total: songs.length };
+  return { songs, added, needsCover, removedCount, meta, librarySha: library.sha, libraryRaw: library.raw, total: songs.length };
 }
 
 function catalogJsonText(songs) {
@@ -448,19 +452,51 @@ async function handleCover(request, env) {
   if (!(meta[rel] && meta[rel].name)) {
     const title = titleOf(parsed.filename.replace(/\.[^.]+$/, ""), parsed.artist, parsed.album);
     const art = await lookupCoverArt(parsed.artist.trim(), parsed.album.trim(), title);
-    if (!art) return musicJson(200, { miss: true, rel });
+    if (!art) return musicJson(200, { miss: true, rel, stage: "lookup" });
 
     const slug = slugify(parsed.artist + "-" + parsed.album + "-" + title);
     const hash = (await sha256Hex(rel)).slice(0, 8);
     const name = slug + "-" + hash + ".jpg";
-    const artRes = await fetch(art, { signal: AbortSignal.timeout(20000) });
+
+    // Every failure below used to return a bare {miss:true}, which made a
+    // blocked CDN, a wrong Content-Type and a GitHub error indistinguishable
+    // from "no confident match". Each one now reports its stage, and the tab
+    // shows it, so a broken cover is diagnosable from the admin alone.
+    // The User-Agent matters: Apple's CDN answers datacenter requests without
+    // one with a 403. One retry covers a transient hiccup.
+    let artRes = null;
+    let artError = "";
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        artRes = await fetch(art, {
+          headers: { "User-Agent": "nathanpenny-fun-admin", "Accept": "image/*" },
+          signal: AbortSignal.timeout(20000)
+        });
+        if (artRes.ok) break;
+        artError = "HTTP " + artRes.status;
+      } catch (error) {
+        artRes = null;
+        artError = String((error && error.message) || error);
+      }
+    }
+    if (!artRes || !artRes.ok) {
+      return musicJson(200, { miss: true, rel, stage: "artwork", detail: artError.slice(0, 120) });
+    }
     const type = artRes.headers.get("Content-Type") || "";
-    if (!artRes.ok || !type.startsWith("image/")) return musicJson(200, { miss: true, rel });
+    if (!type.startsWith("image/")) {
+      return musicJson(200, { miss: true, rel, stage: "artwork-type", detail: type.slice(0, 60) });
+    }
     const bytes = await artRes.arrayBuffer();
     if (bytes.byteLength === 0 || bytes.byteLength > 2 * 1024 * 1024) {
-      return musicJson(200, { miss: true, rel });
+      return musicJson(200, { miss: true, rel, stage: "artwork-size", detail: String(bytes.byteLength) });
     }
-    await commitCoverFile(env, name, bytes);
+    try {
+      await commitCoverFile(env, name, bytes);
+    } catch (error) {
+      // This route is admin-only and the message is the GitHub API's own
+      // reason, not a credential — the token is never echoed.
+      return musicJson(200, { miss: true, rel, stage: "commit", detail: String((error && error.message) || error).slice(0, 200) });
+    }
     meta[rel] = { name, art, by: "itunes", at: new Date().toISOString() };
     await writeCoverMeta(env, meta);
   }
@@ -581,6 +617,7 @@ async function handlePlan(env) {
   return musicJson(200, {
     total: catalog.total,
     added: catalog.added,
+    needsCover: catalog.needsCover,
     removedCount: catalog.removedCount,
     unchanged: catalog.total - catalog.added.length
   });
