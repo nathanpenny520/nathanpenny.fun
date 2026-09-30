@@ -1350,6 +1350,15 @@
     "cover": "../images/music-covers/周杰伦-黄金甲-菊花台-周杰伦钢琴演奏-47412528.jpg"
   },
   {
+    "id": "周深-大鱼-大鱼",
+    "type": "song",
+    "title": "大鱼",
+    "artist": "周深",
+    "album": "大鱼",
+    "src": "https://storage.nathanpenny.fun/music/%E5%91%A8%E6%B7%B1/%E5%A4%A7%E9%B1%BC/%E5%A4%A7%E9%B1%BC.mp3",
+    "cover": "../images/music-covers/周深-大鱼-大鱼-33d6d354.jpg"
+  },
+  {
     "id": "大壮-我还是没改变-单曲--我还是没改变",
     "type": "song",
     "title": "我还是没改变",
